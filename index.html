@@ -29,7 +29,7 @@
             pointer-events: none;
         }
 
-        .ae-blur-mask {
+        .blur-mask {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -42,6 +42,14 @@
             animation: openHole 5s cubic-bezier(.05, 0, .1, 1) .1s forwards;
             will-change: width, height;
         }
+
+        .block-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
 
         @keyframes openHole {
             0% {
@@ -60,6 +68,7 @@
         <source src="video.webm" type="video/webm">
         <source src="video.mp4" type="video/mp4">
     </video>
-    <div class="ae-blur-mask"></div>
+    <div class="block-overlay"></div>
+    <div class="blur-mask"></div>
 </body>
 </html>
