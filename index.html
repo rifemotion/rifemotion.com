@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rifemotion</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #0a0a0a
+        }
+
+        .bg-video {
+            position: fixed;
+            top: 0;
+            left: 50%;
+
+            width: max(100vw, 177.78vh);
+            height: max(100vh, 56.25vw);
+
+            transform: translateX(-50%) translateY(calc(-1 * clamp(0px, 56.25vw - 100vh, 30px)));
+
+            z-index: 1;
+        }
+
+        .ae-blur-mask {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate3d(-50%, -50%, 0);
+            border-radius: 50%;
+            border: 200vmax solid #0a0a0a;
+            filter: blur(10vmin);
+            z-index: 2;
+            pointer-events: none;
+            animation: openHole 5s cubic-bezier(.05, 0, .1, 1) .1s forwards;
+            will-change: width, height;
+        }
+
+        @keyframes openHole {
+            0% {
+                width: 0;
+                height: 0
+            }
+
+            100% {
+                width: 250vmax;
+                height: 180vmax
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <video class="bg-video" autoplay muted loop playsinline>
+        <source src="video.webm" type="video/webm">
+        <source src="video.mp4" type="video/mp4">
+    </video>
+
+    <div class="ae-blur-mask"></div>
+
+</body>
+
+</html>
