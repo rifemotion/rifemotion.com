@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    container_name: rifemotion_web
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./app/static:/app/app/static
+    env_file:
+      - .env

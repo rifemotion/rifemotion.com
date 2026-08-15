@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}RifeMotion Admin{% endblock %}</title>
+    <link rel="icon" type="image/png" href="/static/icones/favicon.png">
+    <link rel="stylesheet" href="/static/css/admin.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="app-layout">
+        <header class="navbar">
+            <a href="/admin/dashboard" class="brand">
+                <div class="brand-icon">R</div>
+                <span>rifemotion <span style="font-weight: 400; color: var(--text-muted);">panel</span></span>
+            </a>
+            
+            <div class="nav-user">
+                <a href="/" target="_blank" class="btn btn-secondary btn-sm" style="margin-right: 0.5rem;">
+                    🌐 На сайт
+                </a>
+                {% if admin %}
+                <div class="user-badge">
+                    <div class="status-dot"></div>
+                    <span>{{ admin.username }}</span>
+                </div>
+                <a href="/admin/logout" class="btn btn-secondary btn-sm">Выйти</a>
+                {% endif %}
+            </div>
+        </header>
+
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Двухфакторная проверка | rifemotion</title>
+    <link rel="icon" type="image/png" href="/static/icones/favicon.png">
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="brand-icon" style="margin: 0 auto 1rem auto; width: 44px; height: 44px; font-size: 1.25rem;">📱</div>
+                <h1>Подтверждение 2FA</h1>
+                <p>Введите 6-значный код из вашего приложения аутентификатора</p>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-danger">
+                <span>⚠️</span>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/admin/2fa" autocomplete="off">
+                <div class="form-group">
+                    <label for="totp_code" style="text-align: center;">Код аутентификации</label>
+                    <input 
+                        type="text" 
+                        id="totp_code" 
+                        name="totp_code" 
+                        class="form-input code-input" 
+                        maxlength="8"
+                        required 
+                        autofocus
+                        placeholder="000000"
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                    Подтвердить и войти
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <a href="/admin/login" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem;">
+                    ← Вернуться к форме входа
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

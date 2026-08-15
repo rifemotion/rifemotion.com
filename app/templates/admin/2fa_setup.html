@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройка 2FA | rifemotion</title>
+    <link rel="icon" type="image/png" href="/static/icones/favicon.png">
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card" style="max-width: 480px;">
+            <div class="auth-header">
+                <div class="brand-icon" style="margin: 0 auto 1rem auto; width: 44px; height: 44px; font-size: 1.25rem;">🔐</div>
+                <h1>Настройка двухфакторной защиты</h1>
+                <p>Отсканируйте QR-код в приложении аутентификатора (Google Authenticator, Яндекс Ключ, 1Password или Apple)</p>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-danger">
+                <span>⚠️</span>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <div style="text-align: center;">
+                <div class="qr-box">
+                    <img src="{{ qr_code }}" alt="2FA QR Code">
+                </div>
+
+                <div style="margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+                    Или введите секретный ключ вручную:
+                </div>
+                <div class="secret-key-box">
+                    {{ secret }}
+                </div>
+            </div>
+
+            <form method="POST" action="/admin/setup-2fa" autocomplete="off">
+                <input type="hidden" name="secret" value="{{ secret }}">
+                
+                <div class="form-group">
+                    <label for="totp_code" style="text-align: center;">Введите 6-значный код из приложения</label>
+                    <input 
+                        type="text" 
+                        id="totp_code" 
+                        name="totp_code" 
+                        class="form-input code-input" 
+                        maxlength="8"
+                        required 
+                        autofocus
+                        placeholder="123456"
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                    Активировать 2FA и войти
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

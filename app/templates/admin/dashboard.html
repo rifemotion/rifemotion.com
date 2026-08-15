@@ -1,0 +1,114 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Дашборд | rifemotion admin{% endblock %}
+
+{% block content %}
+<div class="hero-card">
+    <h1 class="hero-title">👋 Hello World, {{ admin.username }}!</h1>
+    <p class="hero-desc">
+        Панель администратора rifemotion.com успешно развернута и защищена двухфакторной аутентификацией (2FA). Сервер готов к дальнейшему расширению функционала.
+    </p>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <span class="badge badge-active">🟢 Сервер в сети</span>
+        <span class="badge badge-active">🔐 2FA Активна</span>
+        <span class="badge badge-ready">⚡ FastAPI Core</span>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Python Backend</div>
+        <div class="stat-val">{{ server_info.python_version }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Безопасность</div>
+        <div class="stat-val" style="color: var(--success);">2FA TOTP (Active)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">База данных</div>
+        <div class="stat-val">{{ server_info.database }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Серверное время</div>
+        <div class="stat-val" style="font-size: 0.95rem; font-family: var(--font-mono);">{{ server_info.current_time }}</div>
+    </div>
+</div>
+
+<div style="margin-bottom: 1.5rem;">
+    <h2 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.35rem;">Будущие разделы</h2>
+    <p style="color: var(--text-secondary); font-size: 0.875rem;">Структура подготовлена для подключения модулей управления:</p>
+</div>
+
+<div class="modules-grid">
+    <div class="module-card">
+        <div>
+            <h3>📁 Загрузка файлов</h3>
+            <p>Загрузка и замена фоновых видео (webm / mp4), постеров и медиафайлов прямо через веб-интерфейс.</p>
+        </div>
+        <div>
+            <span class="badge badge-ready">Модуль подготовлен</span>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div>
+            <h3>🌐 Запросы по API</h3>
+            <p>Тестирование внешних API-интеграций, отправка запросов и настройка вебхуков.</p>
+        </div>
+        <div>
+            <span class="badge badge-ready">Модуль подготовлен</span>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div>
+            <h3>⚙️ Управление сайтом</h3>
+            <p>Редактирование ссылок на соцсети, почты, мета-тегов и фавикона без правки исходников.</p>
+        </div>
+        <div>
+            <span class="badge badge-ready">Модуль подготовлен</span>
+        </div>
+    </div>
+</div>
+
+<div class="table-card">
+    <div class="table-header">
+        <h3>🛡️ Журнал безопасности и входов (Audit Log)</h3>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Последние события</span>
+    </div>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Время (UTC)</th>
+                    <th>Действие</th>
+                    <th>Пользователь</th>
+                    <th>IP адрес</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if recent_logs %}
+                    {% for log in recent_logs %}
+                    <tr>
+                        <td style="font-family: var(--font-mono);">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td><strong>{{ log.action }}</strong></td>
+                        <td>{{ log.username or '—' }}</td>
+                        <td style="font-family: var(--font-mono);">{{ log.ip_address or '—' }}</td>
+                        <td>
+                            <span class="status-tag {{ log.status }}">{{ log.status }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                            События безопасности пока отсутствуют
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
