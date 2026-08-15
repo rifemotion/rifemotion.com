@@ -1,33 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 export default function HomePage() {
   const videoRef = useRef(null);
-  const [videoLoaded, setVideoLoaded] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
       video.muted = true;
       video.defaultMuted = true;
-      
-      const playVideo = () => {
-        video.play().catch((err) => {
-          console.warn("Autoplay was prevented, attempting muted play:", err);
-          video.muted = true;
-          video.play().catch(() => {});
-        });
-      };
-
-      if (video.readyState >= 2) {
-        playVideo();
-      } else {
-        video.addEventListener("loadeddata", () => {
-          setVideoLoaded(true);
-          playVideo();
-        });
-      }
+      video.play().catch(() => {});
     }
   }, []);
 
@@ -42,19 +25,10 @@ export default function HomePage() {
         playsInline
         webkit-playsinline="true"
         preload="auto"
-        onCanPlay={() => {
-          if (videoRef.current) {
-            videoRef.current.muted = true;
-            videoRef.current.play().catch(() => {});
-          }
-        }}
       >
         <source src="/video.mp4" type="video/mp4" />
         <source src="/video.webm" type="video/webm" />
       </video>
-
-      {/* Анимационная маска открытия */}
-      <div className="ae-blur-mask"></div>
 
       <div className="social-links">
         <a href="#" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
