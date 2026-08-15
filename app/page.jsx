@@ -1,20 +1,38 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function HomePage() {
   const videoRef = useRef(null);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.muted = true;
-      videoRef.current.defaultMuted = true;
-      videoRef.current.play().catch(() => {});
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.defaultMuted = true;
+      
+      const playVideo = () => {
+        video.play().catch((err) => {
+          console.warn("Autoplay was prevented, attempting muted play:", err);
+          video.muted = true;
+          video.play().catch(() => {});
+        });
+      };
+
+      if (video.readyState >= 2) {
+        playVideo();
+      } else {
+        video.addEventListener("loadeddata", () => {
+          setVideoLoaded(true);
+          playVideo();
+        });
+      }
     }
   }, []);
 
   return (
-    <main>
+    <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", background: "#0a0a0a" }}>
       <video
         ref={videoRef}
         className="bg-video"
@@ -22,11 +40,20 @@ export default function HomePage() {
         muted
         loop
         playsInline
+        webkit-playsinline="true"
+        preload="auto"
+        onCanPlay={() => {
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            videoRef.current.play().catch(() => {});
+          }
+        }}
       >
         <source src="/video.mp4" type="video/mp4" />
         <source src="/video.webm" type="video/webm" />
       </video>
 
+      {/* Анимационная маска открытия */}
       <div className="ae-blur-mask"></div>
 
       <div className="social-links">
