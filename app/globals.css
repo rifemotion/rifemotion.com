@@ -45,7 +45,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Background Video */
+/* Background Video with Soft Feathered Mask */
 .bg-video {
   position: fixed;
   top: 0;
@@ -54,18 +54,36 @@ body {
   height: 100vh;
   object-fit: cover;
   z-index: 1;
-  animation: irisOpen 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  -webkit-mask-image: radial-gradient(circle at center, black 35%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.3) 65%, transparent 80%);
+  mask-image: radial-gradient(circle at center, black 35%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.3) 65%, transparent 80%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+
+  animation: softFeatheredOpen 4.5s cubic-bezier(0.1, 0, 0.15, 1) forwards;
 }
 
-/* Modern GPU-accelerated Iris opening effect */
-@keyframes irisOpen {
+/* Soft Feathered Iris Opening Animation */
+@keyframes softFeatheredOpen {
   0% {
-    clip-path: circle(0% at center);
+    -webkit-mask-size: 0vmax 0vmax;
+    mask-size: 0vmax 0vmax;
     filter: brightness(0.2);
   }
   100% {
-    clip-path: circle(150% at center);
+    -webkit-mask-size: 350vmax 350vmax;
+    mask-size: 350vmax 350vmax;
     filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-video {
+    -webkit-mask-image: none;
+    mask-image: none;
+    animation: none;
   }
 }
 
