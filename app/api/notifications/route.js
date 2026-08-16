@@ -71,15 +71,6 @@ export async function GET(request) {
       }
     });
 
-    notifications.push({
-      id: 10001,
-      title: "LaPath 1.2.0 Connected",
-      subtitle: "System Notice",
-      body: "Your extension is synchronized with rifemotion control hub.",
-      date: "16.08.2026",
-      unread: false
-    });
-
     return NextResponse.json({
       ok: true,
       isMuted: isMuted,

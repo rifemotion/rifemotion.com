@@ -522,7 +522,12 @@ export default function AdminDashboardPage() {
                                       <span style={{ fontWeight: 700, fontSize: "0.82rem" }}>#{sub.id}</span>
                                       <span style={{ fontWeight: 600, fontSize: "0.82rem" }}>{sub.title}</span>
                                     </div>
-                                    <div style={{ display: "flex", gap: "0.3rem" }}>
+                                    <div style={{ display: "flex", gap: "0.3rem", alignItems: "center" }}>
+                                      {sub.rating && (
+                                        <span className="pillTag active" style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>
+                                          {"★".repeat(sub.rating)} {sub.rating}/5 Stars
+                                        </span>
+                                      )}
                                       <span className="pillTag">{sub.extensionName}</span>
                                       <span className={`pillTag ${sub.type === "bug" ? "banned" : "ok"}`}>{sub.typeName}</span>
                                     </div>
