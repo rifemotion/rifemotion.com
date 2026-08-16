@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { readDb, writeDb } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Verify admin authorization
 async function isAuthorizedAdmin() {
   const session = await getServerSession(authOptions);
@@ -34,7 +37,7 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { action, userId, ticketId, status, durationDays, message } = body;
+    const { action, userId, ticketId, durationDays, message } = body;
 
     const db = readDb();
 
