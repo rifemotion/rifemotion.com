@@ -171,7 +171,7 @@ export default function AdminDashboardPage() {
   if (status === "loading") {
     return (
       <div className="adminContainer" style={{ justifyContent: "center", alignItems: "center" }}>
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem" }}>Loading portal...</p>
+        <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Loading portal...</p>
       </div>
     );
   }
@@ -216,7 +216,7 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      {/* Sub Navigation Bar */}
+      {/* Segmented Sub Navigation */}
       <nav className="subNavBar">
         <div className="subNavInner">
           <button
@@ -258,66 +258,62 @@ export default function AdminDashboardPage() {
         {/* ========================================================================= */}
         {activeTab === "broadcast" && (
           <div>
+            <div style={{ marginBottom: "1.25rem" }}>
+              <h1 className="pageTitle">Broadcast & Notification Center</h1>
+              <p className="pageSubtitle">
+                Dispatch announcements, system notices, and replies directly to in-app extension centers:
+              </p>
+            </div>
+
             {/* INITIAL 4 CARDS (Shown when broadcastTarget is null) */}
             {broadcastTarget === null ? (
-              <div>
-                <div style={{ marginBottom: "1.25rem" }}>
-                  <h2 style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "-0.01em", marginBottom: "0.2rem" }}>
-                    Broadcast & Notification Channels
-                  </h2>
-                  <p style={{ color: "var(--text-secondary)", fontSize: "0.78rem" }}>
-                    Select a channel to configure announcements, user notices, and replies:
-                  </p>
+              <div className="initialCardsGrid">
+                <div className="gridCard" onClick={() => setBroadcastTarget("email")}>
+                  <div>
+                    <div className="gridCardTitle">Email Broadcast</div>
+                    <p className="gridCardDesc">Audience newsletters & mass customer email campaigns.</p>
+                  </div>
+                  <div className="gridCardMeta">
+                    <span className="tagBadge">Standby</span>
+                    <span style={{ color: "var(--text-secondary)", fontSize: "0.75rem", fontWeight: 600 }}>Select →</span>
+                  </div>
                 </div>
 
-                <div className="initialCardsGrid">
-                  <div className="gridCard" onClick={() => setBroadcastTarget("email")}>
-                    <div>
-                      <div className="gridCardTitle">Email Broadcast</div>
-                      <p className="gridCardDesc">Audience newsletters & mass customer email campaigns.</p>
-                    </div>
-                    <div className="gridCardMeta">
-                      <span className="tagBadge">Standby</span>
-                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Select →</span>
-                    </div>
+                <div className="gridCard" onClick={() => setBroadcastTarget("lapath")}>
+                  <div>
+                    <div className="gridCardTitle">LaPath Extension</div>
+                    <p className="gridCardDesc">Direct in-app notification center for After Effects extension.</p>
                   </div>
-
-                  <div className="gridCard" onClick={() => setBroadcastTarget("lapath")}>
-                    <div>
-                      <div className="gridCardTitle">LaPath Extension</div>
-                      <p className="gridCardDesc">Direct in-app notification center for After Effects extension.</p>
-                    </div>
-                    <div className="gridCardMeta">
-                      <span className="tagBadge" style={{ color: "#2ed573" }}>Active</span>
-                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Open Hub →</span>
-                    </div>
+                  <div className="gridCardMeta">
+                    <span className="tagBadge" style={{ background: "var(--accent-black)", color: "#ffffff" }}>Active Hub</span>
+                    <span style={{ color: "var(--text-main)", fontSize: "0.75rem", fontWeight: 600 }}>Open Hub →</span>
                   </div>
+                </div>
 
-                  <div className="gridCard" onClick={() => setBroadcastTarget("kliner")}>
-                    <div>
-                      <div className="gridCardTitle">KLiner Extension</div>
-                      <p className="gridCardDesc">Direct in-app notification center for After Effects extension.</p>
-                    </div>
-                    <div className="gridCardMeta">
-                      <span className="tagBadge" style={{ color: "#2ed573" }}>Active</span>
-                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Open Hub →</span>
-                    </div>
+                <div className="gridCard" onClick={() => setBroadcastTarget("kliner")}>
+                  <div>
+                    <div className="gridCardTitle">KLiner Extension</div>
+                    <p className="gridCardDesc">Direct in-app notification center for After Effects extension.</p>
                   </div>
+                  <div className="gridCardMeta">
+                    <span className="tagBadge" style={{ background: "var(--accent-black)", color: "#ffffff" }}>Active Hub</span>
+                    <span style={{ color: "var(--text-main)", fontSize: "0.75rem", fontWeight: 600 }}>Open Hub →</span>
+                  </div>
+                </div>
 
-                  <div className="gridCard" onClick={() => setBroadcastTarget("telegram")}>
-                    <div>
-                      <div className="gridCardTitle">Telegram & Webhooks</div>
-                      <p className="gridCardDesc">Automated studio feed releases and bot channel dispatch.</p>
-                    </div>
-                    <div className="gridCardMeta">
-                      <span className="tagBadge">Standby</span>
-                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Select →</span>
-                    </div>
+                <div className="gridCard" onClick={() => setBroadcastTarget("telegram")}>
+                  <div>
+                    <div className="gridCardTitle">Telegram & Webhooks</div>
+                    <p className="gridCardDesc">Automated studio feed releases and bot channel dispatch.</p>
+                  </div>
+                  <div className="gridCardMeta">
+                    <span className="tagBadge">Standby</span>
+                    <span style={{ color: "var(--text-secondary)", fontSize: "0.75rem", fontWeight: 600 }}>Select →</span>
                   </div>
                 </div>
               </div>
             ) : (
-              /* COLLAPSED SINGLE-LINE SELECTOR ROW (When a channel is active) */
+              /* COLLAPSED SINGLE-LINE SELECTOR ROW (When a channel is selected) */
               <div>
                 <div className="collapsedSelectorBar">
                   <div className="collapsedTabsList">
@@ -367,7 +363,7 @@ export default function AdminDashboardPage() {
                       <span className="panelHeadingTitle">Email Broadcast</span>
                       <span className="tagBadge">Module In Development</span>
                     </div>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem", lineHeight: 1.6 }}>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: 1.6 }}>
                       Email newsletter dispatch engine is currently on standby. Use the extension channels above for live notification broadcasting.
                     </p>
                   </div>
@@ -380,7 +376,7 @@ export default function AdminDashboardPage() {
                       <span className="panelHeadingTitle">Telegram & Webhooks</span>
                       <span className="tagBadge">Module In Development</span>
                     </div>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem", lineHeight: 1.6 }}>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: 1.6 }}>
                       Connect studio Telegram bot tokens and webhook endpoints to stream automated updates.
                     </p>
                   </div>
@@ -391,18 +387,20 @@ export default function AdminDashboardPage() {
                   <div>
                     {dispatchSuccess && (
                       <div style={{
-                        background: "rgba(46, 213, 115, 0.08)",
-                        border: "1px solid rgba(46, 213, 115, 0.25)",
-                        color: "#2ed573",
-                        borderRadius: "var(--radius-sm)",
-                        padding: "0.6rem 0.85rem",
-                        fontSize: "0.78rem",
-                        marginBottom: "1rem",
+                        background: "var(--accent-green-soft)",
+                        border: "1px solid var(--accent-green)",
+                        color: "var(--accent-green)",
+                        borderRadius: "var(--radius-pill)",
+                        padding: "0.65rem 1.25rem",
+                        fontSize: "0.825rem",
+                        fontWeight: 500,
+                        marginBottom: "1.25rem",
                         display: "flex",
                         alignItems: "center",
                         gap: "0.5rem"
                       }}>
-                        <span>Notification dispatched to {broadcastTarget === "lapath" ? "LaPath" : "KLiner"} and recorded to database.</span>
+                        <span>✓</span>
+                        <span>Notification successfully dispatched to <strong>{broadcastTarget === "lapath" ? "LaPath" : "KLiner"}</strong> and recorded to database.</span>
                       </div>
                     )}
 
@@ -413,12 +411,14 @@ export default function AdminDashboardPage() {
                           <span className="panelHeadingTitle">
                             Dispatch to {broadcastTarget === "lapath" ? "LaPath" : "KLiner"}
                           </span>
-                          <span className="tagBadge">{broadcastTarget.toUpperCase()}</span>
+                          <span className="tagBadge" style={{ background: "var(--accent-black)", color: "#ffffff" }}>
+                            {broadcastTarget.toUpperCase()}
+                          </span>
                         </div>
 
                         <form onSubmit={handleSendNotification}>
                           <div className="fieldGroup">
-                            <label className="fieldLabel">Title</label>
+                            <label className="fieldLabel">Notification Title</label>
                             <input
                               type="text"
                               className="compactInput"
@@ -444,7 +444,7 @@ export default function AdminDashboardPage() {
 
                           {dispatchForm.category === "system" && (
                             <div className="fieldGroup">
-                              <label className="fieldLabel">Audience</label>
+                              <label className="fieldLabel">Audience Target</label>
                               <select
                                 className="compactSelect"
                                 value={dispatchForm.targetType}
@@ -506,8 +506,8 @@ export default function AdminDashboardPage() {
                       <div className="historyPanel">
                         <div className="panelHeading">
                           <span className="panelHeadingTitle">Broadcast History</span>
-                          <span style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>
-                            {currentHistory.length} logged
+                          <span style={{ color: "var(--text-secondary)", fontSize: "0.75rem", fontWeight: 500 }}>
+                            {currentHistory.length} sent
                           </span>
                         </div>
 
@@ -570,6 +570,9 @@ export default function AdminDashboardPage() {
         {/* ========================================================================= */}
         {activeTab === "dashboard" && (
           <div>
+            <h1 className="pageTitle">Dashboard & Studio Overview</h1>
+            <p className="pageSubtitle">Live visitor telemetry and infrastructure health status:</p>
+
             <div className="metricsGrid">
               <div className="metricCard">
                 <div className="metricCardLabel">Live Visitors</div>
@@ -604,7 +607,9 @@ export default function AdminDashboardPage() {
             <div className="formPanel">
               <div className="panelHeading">
                 <span className="panelHeadingTitle">System Telemetry</span>
-                <span className="tagBadge">Local Dev</span>
+                <span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>
+                  Local Dev Active
+                </span>
               </div>
 
               <table className="cleanTable">
@@ -620,19 +625,19 @@ export default function AdminDashboardPage() {
                   <tr>
                     <td>Next.js App Engine</td>
                     <td>Node.js (App Router)</td>
-                    <td><span className="tagBadge" style={{ color: "#2ed573" }}>Running</span></td>
+                    <td><span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>Running</span></td>
                     <td><code>http://localhost:3000</code></td>
                   </tr>
                   <tr>
                     <td>Google OAuth 2.0</td>
                     <td>NextAuth.js (JWT)</td>
-                    <td><span className="tagBadge" style={{ color: "#2ed573" }}>Authorized</span></td>
+                    <td><span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>Authorized</span></td>
                     <td><code>{user.email}</code></td>
                   </tr>
                   <tr>
                     <td>Production Edge CDN</td>
-                    <td>Vercel Edge Network</td>
-                    <td><span className="tagBadge" style={{ color: "#54a0ff" }}>Linked</span></td>
+                    <td>Vercel Global Edge</td>
+                    <td><span className="tagBadge">Linked</span></td>
                     <td><code>https://rifemotion.com</code></td>
                   </tr>
                 </tbody>
@@ -646,13 +651,16 @@ export default function AdminDashboardPage() {
         {/* ========================================================================= */}
         {activeTab === "site" && (
           <div>
-            <div className="formPanel" style={{ marginBottom: "1.25rem" }}>
+            <h1 className="pageTitle">Site Management</h1>
+            <p className="pageSubtitle">Manage background showreels, social media channels, and SEO tags:</p>
+
+            <div className="formPanel" style={{ marginBottom: "1.5rem" }}>
               <div className="panelHeading">
                 <span className="panelHeadingTitle">Hero Video Assets</span>
                 <button type="button" className="expandAllBtn">Replace Video</button>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
                 <div className="fieldGroup">
                   <label className="fieldLabel">Primary Video</label>
                   <input type="text" className="compactInput" readOnly value="/video.mp4 (7.0 MB)" />
@@ -676,7 +684,7 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
                 <div className="fieldGroup">
                   <label className="fieldLabel">Instagram</label>
                   <input
@@ -741,6 +749,9 @@ export default function AdminDashboardPage() {
         {/* ========================================================================= */}
         {activeTab === "subscriptions" && (
           <div>
+            <h1 className="pageTitle">Subscription Management</h1>
+            <p className="pageSubtitle">Manage member plans, active subscribers, and monthly recurring revenue:</p>
+
             <div className="metricsGrid">
               <div className="metricCard">
                 <div className="metricCardLabel">Monthly Revenue</div>
@@ -794,21 +805,21 @@ export default function AdminDashboardPage() {
                     <td>Monthly</td>
                     <td>$29 / mo</td>
                     <td>84 members</td>
-                    <td><span className="tagBadge" style={{ color: "#2ed573" }}>Active</span></td>
+                    <td><span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>Active</span></td>
                   </tr>
                   <tr>
                     <td><strong>Studio Retainer</strong></td>
                     <td>Monthly</td>
                     <td>$149 / mo</td>
                     <td>42 members</td>
-                    <td><span className="tagBadge" style={{ color: "#2ed573" }}>Active</span></td>
+                    <td><span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>Active</span></td>
                   </tr>
                   <tr>
                     <td><strong>Enterprise Dedicated</strong></td>
                     <td>Annual</td>
                     <td>$1,200 / yr</td>
                     <td>16 members</td>
-                    <td><span className="tagBadge" style={{ color: "#2ed573" }}>Active</span></td>
+                    <td><span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>Active</span></td>
                   </tr>
                 </tbody>
               </table>
