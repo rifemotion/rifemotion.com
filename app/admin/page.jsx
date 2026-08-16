@@ -9,9 +9,11 @@ import "./admin.css";
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  // Active top navigation tab: 'dashboard', 'site', 'broadcast', 'subscriptions'
   const [activeTab, setActiveTab] = useState("broadcast");
 
-  // Broadcast Center Sub-cards: 'email', 'lapath', 'kliner', 'telegram'
+  // Broadcast module view: null (showing initial 4 cards) or 'email' | 'lapath' | 'kliner' | 'telegram' (collapsed into single row)
   const [broadcastTarget, setBroadcastTarget] = useState("lapath");
 
   // Form states for Dispatching Extension Notifications
@@ -27,7 +29,7 @@ export default function AdminDashboardPage() {
   const [expandedCardId, setExpandedCardId] = useState(1);
   const [dispatchSuccess, setDispatchSuccess] = useState(false);
 
-  // Initial Mock History Database for LaPath & KLiner
+  // History Database for LaPath & KLiner
   const [lapathHistory, setLapathHistory] = useState([
     {
       id: 1,
@@ -100,13 +102,13 @@ export default function AdminDashboardPage() {
     }
   }, [status, router]);
 
-  // Handle category changes to enforce audience rules
+  // Handle category change logic
   const handleCategoryChange = (newCategory) => {
     let newTargetType = dispatchForm.targetType;
     if (newCategory === "announcements") {
-      newTargetType = "all"; // Announcements are strictly for all
+      newTargetType = "all";
     } else if (newCategory === "personal") {
-      newTargetType = "user"; // Personal replies are strictly for single user
+      newTargetType = "user";
     }
     setDispatchForm({
       ...dispatchForm,
@@ -115,15 +117,15 @@ export default function AdminDashboardPage() {
     });
   };
 
-  // Handle Dispatch submission
+  // Handle Dispatch submit
   const handleSendNotification = (e) => {
     e.preventDefault();
     if (!dispatchForm.title.trim() || !dispatchForm.message.trim()) {
-      alert("Please fill in both the Notification Title and Message.");
+      alert("Please enter a title and message.");
       return;
     }
     if (dispatchForm.targetType === "user" && !dispatchForm.userId.trim()) {
-      alert("Please provide a User ID for personal notification.");
+      alert("Please provide a User ID.");
       return;
     }
 
@@ -154,9 +156,8 @@ export default function AdminDashboardPage() {
 
     setExpandedCardId(newEntry.id);
     setDispatchSuccess(true);
-    setTimeout(() => setDispatchSuccess(false), 4000);
+    setTimeout(() => setDispatchSuccess(false), 3500);
 
-    // Reset fields
     setDispatchForm({
       title: "",
       category: dispatchForm.category,
@@ -169,8 +170,8 @@ export default function AdminDashboardPage() {
 
   if (status === "loading") {
     return (
-      <div className="adminContainer" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Loading portal...</p>
+      <div className="adminContainer" style={{ justifyContent: "center", alignItems: "center" }}>
+        <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem" }}>Loading portal...</p>
       </div>
     );
   }
@@ -190,7 +191,7 @@ export default function AdminDashboardPage() {
           <div className="brandGroup">
             <Link href="/admin" className="brandLogo">
               <span>rifemotion</span>
-              <span className="brandPill">Admin</span>
+              <span className="brandPill">Studio</span>
             </Link>
           </div>
 
@@ -215,7 +216,7 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      {/* Minimal Sub-Navigation */}
+      {/* Sub Navigation Bar */}
       <nav className="subNavBar">
         <div className="subNavInner">
           <button
@@ -223,28 +224,28 @@ export default function AdminDashboardPage() {
             className={`navTab ${activeTab === "dashboard" ? "navTabActive" : ""}`}
             onClick={() => setActiveTab("dashboard")}
           >
-            1. Dashboard
+            Dashboard
           </button>
           <button
             type="button"
             className={`navTab ${activeTab === "site" ? "navTabActive" : ""}`}
             onClick={() => setActiveTab("site")}
           >
-            2. Site Management
+            Site Management
           </button>
           <button
             type="button"
             className={`navTab ${activeTab === "broadcast" ? "navTabActive" : ""}`}
             onClick={() => setActiveTab("broadcast")}
           >
-            3. Broadcast Center
+            Broadcast Center
           </button>
           <button
             type="button"
             className={`navTab ${activeTab === "subscriptions" ? "navTabActive" : ""}`}
             onClick={() => setActiveTab("subscriptions")}
           >
-            4. Subscription Management
+            Subscription Management
           </button>
         </div>
       </nav>
@@ -253,398 +254,385 @@ export default function AdminDashboardPage() {
       <main className="mainWorkspace">
 
         {/* ========================================================================= */}
-        {/* BLOCK 3: BROADCAST CENTER */}
+        {/* BLOCK: BROADCAST CENTER */}
         {/* ========================================================================= */}
         {activeTab === "broadcast" && (
           <div>
-            <div style={{ marginBottom: "1.25rem" }}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.25rem" }}>
-                📢 Broadcast & Notification Center
-              </h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
-                Select a channel below to dispatch announcements, system notices, and replies directly to users:
-              </p>
-            </div>
-
-            {/* 4 Cards Selector */}
-            <div className="subCardsGrid">
-              {/* Card 1: Email Broadcast */}
-              <div
-                className={`subCardItem ${broadcastTarget === "email" ? "subCardItemActive" : ""}`}
-                onClick={() => setBroadcastTarget("email")}
-              >
-                <div>
-                  <div className="subCardHeader">
-                    <span className="subCardIcon">✉️</span>
-                    <span className="subCardTitle">1. Email Broadcast</span>
-                  </div>
-                  <p className="subCardDesc">Newsletter campaigns & customer email blasts.</p>
-                </div>
-                <div style={{ marginTop: "0.5rem" }}>
-                  <span className="statusPill draft">Stub / Standby</span>
-                </div>
-              </div>
-
-              {/* Card 2: LaPath Extension */}
-              <div
-                className={`subCardItem ${broadcastTarget === "lapath" ? "subCardItemActive" : ""}`}
-                onClick={() => setBroadcastTarget("lapath")}
-              >
-                <div>
-                  <div className="subCardHeader">
-                    <span className="subCardIcon">🔔</span>
-                    <span className="subCardTitle">2. LaPath Extension</span>
-                  </div>
-                  <p className="subCardDesc">In-app Notification Center for LaPath AE extension.</p>
-                </div>
-                <div style={{ marginTop: "0.5rem" }}>
-                  <span className="statusPill active">Live Hub (Active)</span>
-                </div>
-              </div>
-
-              {/* Card 3: KLiner Extension */}
-              <div
-                className={`subCardItem ${broadcastTarget === "kliner" ? "subCardItemActive" : ""}`}
-                onClick={() => setBroadcastTarget("kliner")}
-              >
-                <div>
-                  <div className="subCardHeader">
-                    <span className="subCardIcon">⚡</span>
-                    <span className="subCardTitle">3. KLiner Extension</span>
-                  </div>
-                  <p className="subCardDesc">In-app Notification Center for KLiner AE extension.</p>
-                </div>
-                <div style={{ marginTop: "0.5rem" }}>
-                  <span className="statusPill active">Live Hub (Active)</span>
-                </div>
-              </div>
-
-              {/* Card 4: Webhook & Telegram */}
-              <div
-                className={`subCardItem ${broadcastTarget === "telegram" ? "subCardItemActive" : ""}`}
-                onClick={() => setBroadcastTarget("telegram")}
-              >
-                <div>
-                  <div className="subCardHeader">
-                    <span className="subCardIcon">🤖</span>
-                    <span className="subCardTitle">4. Telegram & Webhooks</span>
-                  </div>
-                  <p className="subCardDesc">Automated studio feed & push dispatch.</p>
-                </div>
-                <div style={{ marginTop: "0.5rem" }}>
-                  <span className="statusPill draft">Standby</span>
-                </div>
-              </div>
-            </div>
-
-            {/* CARD 1: EMAIL STUB */}
-            {broadcastTarget === "email" && (
-              <div className="panelCard">
-                <div className="panelHeader">
-                  <div>
-                    <h2 className="panelTitle">✉️ Email Newsletter Dispatcher</h2>
-                    <p className="panelDescription">Audience email list management & studio announcements</p>
-                  </div>
-                  <span className="statusPill draft">Module In Development</span>
-                </div>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
-                  This section will handle mass HTML email delivery and subscriber list segmentation. For live extension notifications, switch to <strong>LaPath</strong> or <strong>KLiner</strong> above.
-                </p>
-              </div>
-            )}
-
-            {/* CARD 4: TELEGRAM STUB */}
-            {broadcastTarget === "telegram" && (
-              <div className="panelCard">
-                <div className="panelHeader">
-                  <div>
-                    <h2 className="panelTitle">🤖 Telegram & Webhook Dispatcher</h2>
-                    <p className="panelDescription">Direct broadcast to Telegram community channels and webhooks</p>
-                  </div>
-                  <span className="statusPill draft">Module In Development</span>
-                </div>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
-                  Connect your studio Telegram Bot token and channel ID to auto-post showreel releases and license updates.
-                </p>
-              </div>
-            )}
-
-            {/* CARDS 2 & 3: LAPATH & KLINER (2-COLUMN DISPATCH & HISTORY) */}
-            {(broadcastTarget === "lapath" || broadcastTarget === "kliner") && (
+            {/* INITIAL 4 CARDS (Shown when broadcastTarget is null) */}
+            {broadcastTarget === null ? (
               <div>
-                {dispatchSuccess && (
-                  <div style={{
-                    background: "var(--success-soft)",
-                    border: "1px solid var(--success)",
-                    color: "#6ee7b7",
-                    borderRadius: "8px",
-                    padding: "0.75rem 1rem",
-                    fontSize: "0.85rem",
-                    marginBottom: "1.25rem",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem"
-                  }}>
-                    <span>✅</span>
-                    <span>Notification successfully dispatched to <strong>{broadcastTarget === "lapath" ? "LaPath" : "KLiner"}</strong> extension interface and saved to database!</span>
+                <div style={{ marginBottom: "1.25rem" }}>
+                  <h2 style={{ fontSize: "1.1rem", fontWeight: 700, letterSpacing: "-0.01em", marginBottom: "0.2rem" }}>
+                    Broadcast & Notification Channels
+                  </h2>
+                  <p style={{ color: "var(--text-secondary)", fontSize: "0.78rem" }}>
+                    Select a channel to configure announcements, user notices, and replies:
+                  </p>
+                </div>
+
+                <div className="initialCardsGrid">
+                  <div className="gridCard" onClick={() => setBroadcastTarget("email")}>
+                    <div>
+                      <div className="gridCardTitle">Email Broadcast</div>
+                      <p className="gridCardDesc">Audience newsletters & mass customer email campaigns.</p>
+                    </div>
+                    <div className="gridCardMeta">
+                      <span className="tagBadge">Standby</span>
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Select →</span>
+                    </div>
+                  </div>
+
+                  <div className="gridCard" onClick={() => setBroadcastTarget("lapath")}>
+                    <div>
+                      <div className="gridCardTitle">LaPath Extension</div>
+                      <p className="gridCardDesc">Direct in-app notification center for After Effects extension.</p>
+                    </div>
+                    <div className="gridCardMeta">
+                      <span className="tagBadge" style={{ color: "#2ed573" }}>Active</span>
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Open Hub →</span>
+                    </div>
+                  </div>
+
+                  <div className="gridCard" onClick={() => setBroadcastTarget("kliner")}>
+                    <div>
+                      <div className="gridCardTitle">KLiner Extension</div>
+                      <p className="gridCardDesc">Direct in-app notification center for After Effects extension.</p>
+                    </div>
+                    <div className="gridCardMeta">
+                      <span className="tagBadge" style={{ color: "#2ed573" }}>Active</span>
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Open Hub →</span>
+                    </div>
+                  </div>
+
+                  <div className="gridCard" onClick={() => setBroadcastTarget("telegram")}>
+                    <div>
+                      <div className="gridCardTitle">Telegram & Webhooks</div>
+                      <p className="gridCardDesc">Automated studio feed releases and bot channel dispatch.</p>
+                    </div>
+                    <div className="gridCardMeta">
+                      <span className="tagBadge">Standby</span>
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Select →</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* COLLAPSED SINGLE-LINE SELECTOR ROW (When a channel is active) */
+              <div>
+                <div className="collapsedSelectorBar">
+                  <div className="collapsedTabsList">
+                    <button
+                      type="button"
+                      className={`collapsedTabBtn ${broadcastTarget === "email" ? "collapsedTabBtnActive" : ""}`}
+                      onClick={() => setBroadcastTarget("email")}
+                    >
+                      Email Broadcast
+                    </button>
+                    <button
+                      type="button"
+                      className={`collapsedTabBtn ${broadcastTarget === "lapath" ? "collapsedTabBtnActive" : ""}`}
+                      onClick={() => setBroadcastTarget("lapath")}
+                    >
+                      LaPath Extension
+                    </button>
+                    <button
+                      type="button"
+                      className={`collapsedTabBtn ${broadcastTarget === "kliner" ? "collapsedTabBtnActive" : ""}`}
+                      onClick={() => setBroadcastTarget("kliner")}
+                    >
+                      KLiner Extension
+                    </button>
+                    <button
+                      type="button"
+                      className={`collapsedTabBtn ${broadcastTarget === "telegram" ? "collapsedTabBtnActive" : ""}`}
+                      onClick={() => setBroadcastTarget("telegram")}
+                    >
+                      Telegram & Webhooks
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="expandAllBtn"
+                    onClick={() => setBroadcastTarget(null)}
+                  >
+                    View All Cards
+                  </button>
+                </div>
+
+                {/* EMAIL STUB */}
+                {broadcastTarget === "email" && (
+                  <div className="formPanel">
+                    <div className="panelHeading">
+                      <span className="panelHeadingTitle">Email Broadcast</span>
+                      <span className="tagBadge">Module In Development</span>
+                    </div>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem", lineHeight: 1.6 }}>
+                      Email newsletter dispatch engine is currently on standby. Use the extension channels above for live notification broadcasting.
+                    </p>
                   </div>
                 )}
 
-                <div className="broadcastTwoCol">
-                  {/* LEFT COLUMN: DISPATCH FORM */}
-                  <div className="panelCard" style={{ marginBottom: 0 }}>
-                    <div className="panelHeader">
-                      <div>
-                        <h2 className="panelTitle">
-                          📤 Dispatch to {broadcastTarget === "lapath" ? "LaPath" : "KLiner"}
-                        </h2>
-                        <p className="panelDescription">Compose broadcast for the in-extension Notification Center</p>
-                      </div>
-                      <span className="statusPill active">{broadcastTarget.toUpperCase()}</span>
+                {/* TELEGRAM STUB */}
+                {broadcastTarget === "telegram" && (
+                  <div className="formPanel">
+                    <div className="panelHeading">
+                      <span className="panelHeadingTitle">Telegram & Webhooks</span>
+                      <span className="tagBadge">Module In Development</span>
                     </div>
-
-                    <form onSubmit={handleSendNotification}>
-                      {/* Notification Title */}
-                      <div className="formField">
-                        <label className="formLabel">Notification Title</label>
-                        <input
-                          type="text"
-                          className="textInput"
-                          placeholder="e.g. Summer Motion Giveaway!"
-                          value={dispatchForm.title}
-                          onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value })}
-                          required
-                        />
-                      </div>
-
-                      {/* Category Selection (3 Categories) */}
-                      <div className="formField">
-                        <label className="formLabel">Notification Category</label>
-                        <select
-                          className="selectInput"
-                          value={dispatchForm.category}
-                          onChange={(e) => handleCategoryChange(e.target.value)}
-                        >
-                          <option value="announcements">📢 Announcements (Global to All Users)</option>
-                          <option value="system">⚠️ System Notice (All Users or Specific User)</option>
-                          <option value="personal">💬 Personal Reply (Targeted to Specific User ID)</option>
-                        </select>
-                      </div>
-
-                      {/* Audience / Target Selection */}
-                      {dispatchForm.category === "system" && (
-                        <div className="formField">
-                          <label className="formLabel">Target Audience</label>
-                          <select
-                            className="selectInput"
-                            value={dispatchForm.targetType}
-                            onChange={(e) => setDispatchForm({ ...dispatchForm, targetType: e.target.value })}
-                          >
-                            <option value="all">🌐 Broadcast to All Extension Users</option>
-                            <option value="user">👤 Single Specific User (By User ID)</option>
-                          </select>
-                        </div>
-                      )}
-
-                      {/* User ID Field (when target is a specific user) */}
-                      {(dispatchForm.targetType === "user" || dispatchForm.category === "personal") && (
-                        <div className="formField">
-                          <label className="formLabel">User ID / License Key</label>
-                          <input
-                            type="text"
-                            className="textInput"
-                            placeholder="e.g. USR-84920 or License Key"
-                            value={dispatchForm.userId}
-                            onChange={(e) => setDispatchForm({ ...dispatchForm, userId: e.target.value })}
-                            required
-                          />
-                        </div>
-                      )}
-
-                      {/* In Reply To (Only for Personal Reply) */}
-                      {dispatchForm.category === "personal" && (
-                        <div className="formField">
-                          <label className="formLabel">In Response To (Ticket / Inquiry Reference)</label>
-                          <input
-                            type="text"
-                            className="textInput"
-                            placeholder="e.g. Feature Request #402 (Bezier Tangents)"
-                            value={dispatchForm.inReplyTo}
-                            onChange={(e) => setDispatchForm({ ...dispatchForm, inReplyTo: e.target.value })}
-                          />
-                        </div>
-                      )}
-
-                      {/* Notification Message Body */}
-                      <div className="formField">
-                        <label className="formLabel">Notification Message</label>
-                        <textarea
-                          className="textArea"
-                          style={{ minHeight: "110px" }}
-                          placeholder="Type the message that will appear inside the extension notification center..."
-                          value={dispatchForm.message}
-                          onChange={(e) => setDispatchForm({ ...dispatchForm, message: e.target.value })}
-                          required
-                        />
-                      </div>
-
-                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
-                        <button type="submit" className="btnPrimary" style={{ padding: "0.6rem 1.25rem" }}>
-                          🚀 Dispatch to Extension
-                        </button>
-                      </div>
-                    </form>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem", lineHeight: 1.6 }}>
+                      Connect studio Telegram bot tokens and webhook endpoints to stream automated updates.
+                    </p>
                   </div>
+                )}
 
-                  {/* RIGHT COLUMN: HISTORY & DATABASE LOG */}
-                  <div className="panelCard" style={{ marginBottom: 0 }}>
-                    <div className="panelHeader">
-                      <div>
-                        <h2 className="panelTitle">
-                          📋 {broadcastTarget === "lapath" ? "LaPath" : "KLiner"} Broadcast History
-                        </h2>
-                        <p className="panelDescription">
-                          {currentHistory.length} sent notifications in database (click card to expand details)
-                        </p>
+                {/* 2-COLUMN DISPATCH & HISTORY (LaPath or KLiner) */}
+                {(broadcastTarget === "lapath" || broadcastTarget === "kliner") && (
+                  <div>
+                    {dispatchSuccess && (
+                      <div style={{
+                        background: "rgba(46, 213, 115, 0.08)",
+                        border: "1px solid rgba(46, 213, 115, 0.25)",
+                        color: "#2ed573",
+                        borderRadius: "var(--radius-sm)",
+                        padding: "0.6rem 0.85rem",
+                        fontSize: "0.78rem",
+                        marginBottom: "1rem",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem"
+                      }}>
+                        <span>Notification dispatched to {broadcastTarget === "lapath" ? "LaPath" : "KLiner"} and recorded to database.</span>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="historyList">
-                      {currentHistory.map((item) => {
-                        const isExpanded = expandedCardId === item.id;
-                        return (
-                          <div
-                            key={item.id}
-                            className={`historyCard ${isExpanded ? "historyCardActive" : ""}`}
-                            onClick={() => setExpandedCardId(isExpanded ? null : item.id)}
-                          >
-                            <div className="historyCardTop">
-                              <span className="historyCardTitle">{item.title}</span>
-                              <span className={`statusPill ${
-                                item.category === "Announcements"
-                                  ? "announcement"
-                                  : item.category === "System Notice"
-                                  ? "system"
-                                  : "personal"
-                              }`}>
-                                {item.category}
-                              </span>
-                            </div>
+                    <div className="broadcastDenseLayout">
+                      {/* LEFT COLUMN: DENSE DISPATCH FORM */}
+                      <div className="formPanel">
+                        <div className="panelHeading">
+                          <span className="panelHeadingTitle">
+                            Dispatch to {broadcastTarget === "lapath" ? "LaPath" : "KLiner"}
+                          </span>
+                          <span className="tagBadge">{broadcastTarget.toUpperCase()}</span>
+                        </div>
 
-                            <div className="historyCardMeta">
-                              <span>📅 {item.date}</span>
-                              <span>•</span>
-                              <span>🎯 {item.target}</span>
-                            </div>
-
-                            {!isExpanded && (
-                              <p className="historyCardSnippet">{item.message}</p>
-                            )}
-
-                            {isExpanded && (
-                              <div className="historyCardExpanded">
-                                <p className="historyFullMessage">{item.message}</p>
-
-                                <div className="historyMetaGrid">
-                                  <div>
-                                    <div className="historyMetaLabel">Target</div>
-                                    <div className="historyMetaVal">{item.target}</div>
-                                  </div>
-                                  <div>
-                                    <div className="historyMetaLabel">Status</div>
-                                    <div className="historyMetaVal" style={{ color: "var(--success)" }}>Delivered</div>
-                                  </div>
-                                  {item.inReplyTo && (
-                                    <div style={{ gridColumn: "1 / -1" }}>
-                                      <div className="historyMetaLabel">In Response To</div>
-                                      <div className="historyMetaVal" style={{ color: "#93c5fd" }}>{item.inReplyTo}</div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
+                        <form onSubmit={handleSendNotification}>
+                          <div className="fieldGroup">
+                            <label className="fieldLabel">Title</label>
+                            <input
+                              type="text"
+                              className="compactInput"
+                              placeholder="e.g. Summer Motion Giveaway!"
+                              value={dispatchForm.title}
+                              onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value })}
+                              required
+                            />
                           </div>
-                        );
-                      })}
+
+                          <div className="fieldGroup">
+                            <label className="fieldLabel">Category</label>
+                            <select
+                              className="compactSelect"
+                              value={dispatchForm.category}
+                              onChange={(e) => handleCategoryChange(e.target.value)}
+                            >
+                              <option value="announcements">Announcements (All Users)</option>
+                              <option value="system">System Notice (All or Single User)</option>
+                              <option value="personal">Personal Reply (Single User)</option>
+                            </select>
+                          </div>
+
+                          {dispatchForm.category === "system" && (
+                            <div className="fieldGroup">
+                              <label className="fieldLabel">Audience</label>
+                              <select
+                                className="compactSelect"
+                                value={dispatchForm.targetType}
+                                onChange={(e) => setDispatchForm({ ...dispatchForm, targetType: e.target.value })}
+                              >
+                                <option value="all">Broadcast to All Users</option>
+                                <option value="user">Specific User ID</option>
+                              </select>
+                            </div>
+                          )}
+
+                          {(dispatchForm.targetType === "user" || dispatchForm.category === "personal") && (
+                            <div className="fieldGroup">
+                              <label className="fieldLabel">User ID</label>
+                              <input
+                                type="text"
+                                className="compactInput"
+                                placeholder="e.g. USR-84920"
+                                value={dispatchForm.userId}
+                                onChange={(e) => setDispatchForm({ ...dispatchForm, userId: e.target.value })}
+                                required
+                              />
+                            </div>
+                          )}
+
+                          {dispatchForm.category === "personal" && (
+                            <div className="fieldGroup">
+                              <label className="fieldLabel">In Response To</label>
+                              <input
+                                type="text"
+                                className="compactInput"
+                                placeholder="e.g. Feature Request #402"
+                                value={dispatchForm.inReplyTo}
+                                onChange={(e) => setDispatchForm({ ...dispatchForm, inReplyTo: e.target.value })}
+                              />
+                            </div>
+                          )}
+
+                          <div className="fieldGroup">
+                            <label className="fieldLabel">Notification Message</label>
+                            <textarea
+                              className="compactTextarea"
+                              placeholder="Type notification text..."
+                              value={dispatchForm.message}
+                              onChange={(e) => setDispatchForm({ ...dispatchForm, message: e.target.value })}
+                              required
+                            />
+                          </div>
+
+                          <div className="sendActionRow">
+                            <button type="submit" className="submitBtn">
+                              Dispatch Notification
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+
+                      {/* RIGHT COLUMN: HISTORY & DATABASE LOG */}
+                      <div className="historyPanel">
+                        <div className="panelHeading">
+                          <span className="panelHeadingTitle">Broadcast History</span>
+                          <span style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>
+                            {currentHistory.length} logged
+                          </span>
+                        </div>
+
+                        <div className="historyList">
+                          {currentHistory.map((item) => {
+                            const isSelected = expandedCardId === item.id;
+                            return (
+                              <div
+                                key={item.id}
+                                className={`noticeCard ${isSelected ? "noticeCardSelected" : ""}`}
+                                onClick={() => setExpandedCardId(isSelected ? null : item.id)}
+                              >
+                                <div className="noticeCardHeader">
+                                  <span className="noticeTitle">{item.title}</span>
+                                  <span className={`tagBadge ${
+                                    item.category === "Announcements"
+                                      ? "announcements"
+                                      : item.category === "System Notice"
+                                      ? "system"
+                                      : "personal"
+                                  }`}>
+                                    {item.category}
+                                  </span>
+                                </div>
+
+                                <div className="noticeMetaLine">
+                                  <span>{item.date}</span>
+                                  <span>•</span>
+                                  <span>{item.target}</span>
+                                </div>
+
+                                {!isSelected ? (
+                                  <p className="noticeSnippet">{item.message}</p>
+                                ) : (
+                                  <div>
+                                    <p className="noticeFullBody">{item.message}</p>
+                                    <div className="noticeDetailFooter">
+                                      <span>Target: <strong>{item.target}</strong></span>
+                                      {item.inReplyTo && (
+                                        <span>In reply to: <em>{item.inReplyTo}</em></span>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>
         )}
 
         {/* ========================================================================= */}
-        {/* BLOCK 1: DASHBOARD */}
+        {/* BLOCK: DASHBOARD */}
         {/* ========================================================================= */}
         {activeTab === "dashboard" && (
           <div>
-            <div className="metricsRow">
-              <div className="metricTile">
-                <div className="metricLabel">Live Visitors</div>
-                <div className="metricValue">
+            <div className="metricsGrid">
+              <div className="metricCard">
+                <div className="metricCardLabel">Live Visitors</div>
+                <div className="metricCardValue">
                   <span>24</span>
-                  <span className="metricSubtext">● Active now</span>
+                  <span className="metricCardNote">● Active</span>
                 </div>
               </div>
-              <div className="metricTile">
-                <div className="metricLabel">Total Views (30d)</div>
-                <div className="metricValue">
+              <div className="metricCard">
+                <div className="metricCardLabel">30d Views</div>
+                <div className="metricCardValue">
                   <span>14,820</span>
-                  <span className="metricSubtext">+18.4%</span>
+                  <span className="metricCardNote">+18.4%</span>
                 </div>
               </div>
-              <div className="metricTile">
-                <div className="metricLabel">Edge CDN Latency</div>
-                <div className="metricValue">
+              <div className="metricCard">
+                <div className="metricCardLabel">Edge Latency</div>
+                <div className="metricCardValue">
                   <span>18ms</span>
-                  <span className="metricSubtext">Optimal</span>
+                  <span className="metricCardNote">Optimal</span>
                 </div>
               </div>
-              <div className="metricTile">
-                <div className="metricLabel">System Health</div>
-                <div className="metricValue">
-                  <span style={{ color: "var(--success)" }}>100%</span>
-                  <span className="metricSubtext">All services nominal</span>
+              <div className="metricCard">
+                <div className="metricCardLabel">System Health</div>
+                <div className="metricCardValue">
+                  <span>100%</span>
+                  <span className="metricCardNote">Nominal</span>
                 </div>
               </div>
             </div>
 
-            <div className="panelCard">
-              <div className="panelHeader">
-                <div>
-                  <h2 className="panelTitle">Environment & System Telemetry</h2>
-                  <p className="panelDescription">Current runtime environment and authentication parameters</p>
-                </div>
-                <span className="statusPill active">Local Dev Active</span>
+            <div className="formPanel">
+              <div className="panelHeading">
+                <span className="panelHeadingTitle">System Telemetry</span>
+                <span className="tagBadge">Local Dev</span>
               </div>
 
-              <table className="minimalTable">
+              <table className="cleanTable">
                 <thead>
                   <tr>
                     <th>Service</th>
                     <th>Runtime</th>
                     <th>Status</th>
-                    <th>Host URL</th>
+                    <th>Endpoint</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Next.js Core Engine</td>
-                    <td>Node.js v25 (App Router)</td>
-                    <td><span className="statusPill active">Running</span></td>
+                    <td>Next.js App Engine</td>
+                    <td>Node.js (App Router)</td>
+                    <td><span className="tagBadge" style={{ color: "#2ed573" }}>Running</span></td>
                     <td><code>http://localhost:3000</code></td>
                   </tr>
                   <tr>
                     <td>Google OAuth 2.0</td>
                     <td>NextAuth.js (JWT)</td>
-                    <td><span className="statusPill active">Verified</span></td>
+                    <td><span className="tagBadge" style={{ color: "#2ed573" }}>Authorized</span></td>
                     <td><code>{user.email}</code></td>
                   </tr>
                   <tr>
                     <td>Production Edge CDN</td>
-                    <td>Vercel Global Edge</td>
-                    <td><span className="statusPill active">Linked</span></td>
+                    <td>Vercel Edge Network</td>
+                    <td><span className="tagBadge" style={{ color: "#54a0ff" }}>Linked</span></td>
                     <td><code>https://rifemotion.com</code></td>
                   </tr>
                 </tbody>
@@ -654,186 +642,149 @@ export default function AdminDashboardPage() {
         )}
 
         {/* ========================================================================= */}
-        {/* BLOCK 2: SITE MANAGEMENT */}
+        {/* BLOCK: SITE MANAGEMENT */}
         {/* ========================================================================= */}
         {activeTab === "site" && (
           <div>
-            <div className="panelCard">
-              <div className="panelHeader">
-                <div>
-                  <h2 className="panelTitle">Background Video Assets</h2>
-                  <p className="panelDescription">Primary showreel files displayed on the landing page</p>
-                </div>
-                <button type="button" className="btnSecondary">Upload New Video</button>
+            <div className="formPanel" style={{ marginBottom: "1.25rem" }}>
+              <div className="panelHeading">
+                <span className="panelHeadingTitle">Hero Video Assets</span>
+                <button type="button" className="expandAllBtn">Replace Video</button>
               </div>
 
-              <div className="formRow">
-                <div className="formField">
-                  <label className="formLabel">Primary MP4 Video</label>
-                  <input type="text" className="textInput" readOnly value="/video.mp4 (7.0 MB)" />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
+                <div className="fieldGroup">
+                  <label className="fieldLabel">Primary Video</label>
+                  <input type="text" className="compactInput" readOnly value="/video.mp4 (7.0 MB)" />
                 </div>
-                <div className="formField">
-                  <label className="formLabel">Fallback WEBM Video</label>
-                  <input type="text" className="textInput" readOnly value="/video.webm (6.6 MB)" />
+                <div className="fieldGroup">
+                  <label className="fieldLabel">Fallback Video</label>
+                  <input type="text" className="compactInput" readOnly value="/video.webm (6.6 MB)" />
                 </div>
-                <div className="formField">
-                  <label className="formLabel">Mask Iris Animation</label>
-                  <input type="text" className="textInput" readOnly value="Soft Feathered Radial (4.5s)" />
+                <div className="fieldGroup">
+                  <label className="fieldLabel">Mask Animation</label>
+                  <input type="text" className="compactInput" readOnly value="Soft Feathered Radial (4.5s)" />
                 </div>
               </div>
             </div>
 
-            <div className="panelCard">
-              <div className="panelHeader">
-                <div>
-                  <h2 className="panelTitle">Social Media & Contact Links</h2>
-                  <p className="panelDescription">Direct URLs connected to the icons on the landing page</p>
-                </div>
-                <button type="button" className="btnPrimary" onClick={() => alert("Settings saved successfully!")}>
+            <div className="formPanel">
+              <div className="panelHeading">
+                <span className="panelHeadingTitle">Social Media & Bio Links</span>
+                <button type="button" className="submitBtn" onClick={() => alert("Links updated!")}>
                   Save Links
                 </button>
               </div>
 
-              <div className="formRow">
-                <div className="formField">
-                  <label className="formLabel">Instagram URL</label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
+                <div className="fieldGroup">
+                  <label className="fieldLabel">Instagram</label>
                   <input
                     type="text"
-                    className="textInput"
+                    className="compactInput"
                     value={socials.instagram}
                     onChange={(e) => setSocials({ ...socials, instagram: e.target.value })}
                   />
                 </div>
-                <div className="formField">
-                  <label className="formLabel">TikTok URL</label>
+                <div className="fieldGroup">
+                  <label className="fieldLabel">TikTok</label>
                   <input
                     type="text"
-                    className="textInput"
+                    className="compactInput"
                     value={socials.tiktok}
                     onChange={(e) => setSocials({ ...socials, tiktok: e.target.value })}
                   />
                 </div>
-                <div className="formField">
-                  <label className="formLabel">X (Twitter) URL</label>
+                <div className="fieldGroup">
+                  <label className="fieldLabel">X (Twitter)</label>
                   <input
                     type="text"
-                    className="textInput"
+                    className="compactInput"
                     value={socials.twitter}
                     onChange={(e) => setSocials({ ...socials, twitter: e.target.value })}
                   />
                 </div>
-              </div>
-
-              <div className="formRow">
-                <div className="formField">
-                  <label className="formLabel">YouTube URL</label>
+                <div className="fieldGroup">
+                  <label className="fieldLabel">YouTube</label>
                   <input
                     type="text"
-                    className="textInput"
+                    className="compactInput"
                     value={socials.youtube}
                     onChange={(e) => setSocials({ ...socials, youtube: e.target.value })}
                   />
                 </div>
-                <div className="formField">
-                  <label className="formLabel">Telegram URL</label>
+                <div className="fieldGroup">
+                  <label className="fieldLabel">Telegram</label>
                   <input
                     type="text"
-                    className="textInput"
+                    className="compactInput"
                     value={socials.telegram}
                     onChange={(e) => setSocials({ ...socials, telegram: e.target.value })}
                   />
                 </div>
-                <div className="formField">
-                  <label className="formLabel">Contact Email</label>
+                <div className="fieldGroup">
+                  <label className="fieldLabel">Contact Email</label>
                   <input
                     type="email"
-                    className="textInput"
+                    className="compactInput"
                     value={socials.email}
                     onChange={(e) => setSocials({ ...socials, email: e.target.value })}
                   />
                 </div>
               </div>
             </div>
-
-            <div className="panelCard">
-              <div className="panelHeader">
-                <div>
-                  <h2 className="panelTitle">SEO & Metadata Configuration</h2>
-                  <p className="panelDescription">Search engine indexing and OpenGraph social previews</p>
-                </div>
-                <button type="button" className="btnPrimary" onClick={() => alert("SEO metadata updated!")}>
-                  Save Meta
-                </button>
-              </div>
-
-              <div className="formField">
-                <label className="formLabel">Page Title</label>
-                <input
-                  type="text"
-                  className="textInput"
-                  value={metaInfo.title}
-                  onChange={(e) => setMetaInfo({ ...metaInfo, title: e.target.value })}
-                />
-              </div>
-
-              <div className="formField">
-                <label className="formLabel">Meta Description</label>
-                <textarea
-                  className="textArea"
-                  value={metaInfo.description}
-                  onChange={(e) => setMetaInfo({ ...metaInfo, description: e.target.value })}
-                />
-              </div>
-            </div>
           </div>
         )}
 
         {/* ========================================================================= */}
-        {/* BLOCK 4: SUBSCRIPTION MANAGEMENT */}
+        {/* BLOCK: SUBSCRIPTION MANAGEMENT */}
         {/* ========================================================================= */}
         {activeTab === "subscriptions" && (
           <div>
-            <div className="metricsRow">
-              <div className="metricTile">
-                <div className="metricLabel">Monthly Recurring Revenue</div>
-                <div className="metricValue">
+            <div className="metricsGrid">
+              <div className="metricCard">
+                <div className="metricCardLabel">Monthly Revenue</div>
+                <div className="metricCardValue">
                   <span>$8,450</span>
-                  <span className="metricSubtext">+12.6% MRR</span>
+                  <span className="metricCardNote">+12.6% MRR</span>
                 </div>
               </div>
-              <div className="metricTile">
-                <div className="metricLabel">Active Paid Members</div>
-                <div className="metricValue">
+              <div className="metricCard">
+                <div className="metricCardLabel">Active Subscribers</div>
+                <div className="metricCardValue">
                   <span>142</span>
-                  <span className="metricSubtext">98% Retention</span>
+                  <span className="metricCardNote">98% Retention</span>
                 </div>
               </div>
-              <div className="metricTile">
-                <div className="metricLabel">Average Revenue / User</div>
-                <div className="metricValue">
+              <div className="metricCard">
+                <div className="metricCardLabel">ARPU</div>
+                <div className="metricCardValue">
                   <span>$59.50</span>
-                  <span className="metricSubtext">Per month</span>
+                  <span className="metricCardNote">Per User</span>
+                </div>
+              </div>
+              <div className="metricCard">
+                <div className="metricCardLabel">Active Tiers</div>
+                <div className="metricCardValue">
+                  <span>3</span>
+                  <span className="metricCardNote">Configured</span>
                 </div>
               </div>
             </div>
 
-            <div className="panelCard">
-              <div className="panelHeader">
-                <div>
-                  <h2 className="panelTitle">Active Membership Tiers</h2>
-                  <p className="panelDescription">Configure subscription tiers, creative retainers, and access levels</p>
-                </div>
-                <button type="button" className="btnSecondary">+ Add New Tier</button>
+            <div className="formPanel">
+              <div className="panelHeading">
+                <span className="panelHeadingTitle">Membership Tiers</span>
+                <button type="button" className="expandAllBtn">+ Add Tier</button>
               </div>
 
-              <table className="minimalTable">
+              <table className="cleanTable">
                 <thead>
                   <tr>
                     <th>Tier Name</th>
-                    <th>Billing Cycle</th>
+                    <th>Interval</th>
                     <th>Price</th>
-                    <th>Active Members</th>
-                    <th>Perks / Deliverables</th>
+                    <th>Subscribers</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -843,68 +794,21 @@ export default function AdminDashboardPage() {
                     <td>Monthly</td>
                     <td>$29 / mo</td>
                     <td>84 members</td>
-                    <td>Asset library access, monthly templates</td>
-                    <td><span className="statusPill active">Active</span></td>
+                    <td><span className="tagBadge" style={{ color: "#2ed573" }}>Active</span></td>
                   </tr>
                   <tr>
                     <td><strong>Studio Retainer</strong></td>
                     <td>Monthly</td>
                     <td>$149 / mo</td>
                     <td>42 members</td>
-                    <td>Priority motion rendering, source project files</td>
-                    <td><span className="statusPill active">Active</span></td>
+                    <td><span className="tagBadge" style={{ color: "#2ed573" }}>Active</span></td>
                   </tr>
                   <tr>
                     <td><strong>Enterprise Dedicated</strong></td>
                     <td>Annual</td>
                     <td>$1,200 / yr</td>
                     <td>16 members</td>
-                    <td>Full bespoke animation production & dedicated channel</td>
-                    <td><span className="statusPill active">Active</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div className="panelCard">
-              <div className="panelHeader">
-                <div>
-                  <h2 className="panelTitle">Recent Subscription Activity</h2>
-                  <p className="panelDescription">Real-time payment webhooks and member renewals</p>
-                </div>
-              </div>
-
-              <table className="minimalTable">
-                <thead>
-                  <tr>
-                    <th>Customer</th>
-                    <th>Tier</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                    <th>Payment Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>alex.creative@studio.io</td>
-                    <td>Studio Retainer</td>
-                    <td>$149.00</td>
-                    <td>Just now</td>
-                    <td><span className="statusPill active">Paid</span></td>
-                  </tr>
-                  <tr>
-                    <td>marcus.vfx@agency.com</td>
-                    <td>Creator Pass</td>
-                    <td>$29.00</td>
-                    <td>2 hours ago</td>
-                    <td><span className="statusPill active">Paid</span></td>
-                  </tr>
-                  <tr>
-                    <td>elena.motion@design.de</td>
-                    <td>Creator Pass</td>
-                    <td>$29.00</td>
-                    <td>5 hours ago</td>
-                    <td><span className="statusPill active">Paid</span></td>
+                    <td><span className="tagBadge" style={{ color: "#2ed573" }}>Active</span></td>
                   </tr>
                 </tbody>
               </table>
