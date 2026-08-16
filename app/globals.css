@@ -113,9 +113,10 @@ body {
   filter: brightness(0) invert(1);
 }
 
+/* Мобильные устройства (внизу, по центру, отступ 20px вместо 40px) */
 @media (max-width: 768px) {
   .social-links {
-    bottom: 40px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     flex-direction: row;
