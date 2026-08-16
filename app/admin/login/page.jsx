@@ -21,7 +21,7 @@ function LoginForm() {
     <div className="loginCard">
       <div className="loginLogo">R</div>
       <h1 className="loginTitle">rifemotion admin</h1>
-      <p className="loginSubtitle">Вход в панель управления в 1 клик</p>
+      <p className="loginSubtitle">1-Click Secure Management Portal</p>
 
       {error && (
         <div
@@ -36,8 +36,8 @@ function LoginForm() {
           }}
         >
           {error === "AccessDenied"
-            ? "Доступ запрещен: этот Google-аккаунт не найден в списке разрешенных администраторов."
-            : `Ошибка входа: ${error}`}
+            ? "Access Denied: Your Google account is not in the authorized administrator whitelist."
+            : `Login error: ${error}`}
         </div>
       )}
 
@@ -64,11 +64,11 @@ function LoginForm() {
             d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
           />
         </svg>
-        <span>Продолжить с Google</span>
+        <span>Continue with Google</span>
       </button>
 
       <p className="loginFooter">
-        Безопасная авторизация через Google OAuth. Сессия сохраняется автоматически на 30 дней.
+        Protected by Google OAuth 2.0. Session stays signed in for 30 days.
       </p>
     </div>
   );
@@ -77,7 +77,7 @@ function LoginForm() {
 export default function AdminLoginPage() {
   return (
     <div className="loginContainer">
-      <Suspense fallback={<div className="loginCard"><p style={{ color: "#9ca3af" }}>Загрузка...</p></div>}>
+      <Suspense fallback={<div className="loginCard"><p style={{ color: "#9ca3af" }}>Loading...</p></div>}>
         <LoginForm />
       </Suspense>
     </div>
