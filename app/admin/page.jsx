@@ -9,9 +9,77 @@ import "./admin.css";
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("broadcast");
 
-  // Form states for quick local editing
+  // Broadcast Center Sub-cards: 'email', 'lapath', 'kliner', 'telegram'
+  const [broadcastTarget, setBroadcastTarget] = useState("lapath");
+
+  // Form states for Dispatching Extension Notifications
+  const [dispatchForm, setDispatchForm] = useState({
+    title: "",
+    category: "announcements", // 'system', 'announcements', 'personal'
+    targetType: "all", // 'all' or 'user'
+    userId: "",
+    inReplyTo: "",
+    message: "",
+  });
+
+  const [expandedCardId, setExpandedCardId] = useState(1);
+  const [dispatchSuccess, setDispatchSuccess] = useState(false);
+
+  // Initial Mock History Database for LaPath & KLiner
+  const [lapathHistory, setLapathHistory] = useState([
+    {
+      id: 1,
+      title: "Summer Motion Giveaway!",
+      category: "Announcements",
+      date: "16.08.26 15:45",
+      target: "All Users",
+      inReplyTo: null,
+      message: "We are giving away 10 lifetime licenses for our upcoming premium suite. Join the community Discord to participate before August 25.",
+    },
+    {
+      id: 2,
+      title: "Custom Presets Feature Coming Soon",
+      category: "System Notice",
+      date: "14.08.26 11:20",
+      target: "All Users",
+      inReplyTo: null,
+      message: "Our next update will allow saving, exporting, and sharing custom motion curve presets directly in After Effects timeline.",
+    },
+    {
+      id: 3,
+      title: "Your Feature Request Was Approved!",
+      category: "Personal Reply",
+      date: "12.08.26 18:05",
+      target: "User #USR-84920",
+      inReplyTo: "Ticket #402 (Bezier Tangent Snapping)",
+      message: "Hey Alex! Thanks for reporting the tangent snapping issue on macOS. We verified the bug and released a hotfix in version 2.4.1.",
+    },
+  ]);
+
+  const [klinerHistory, setKlinerHistory] = useState([
+    {
+      id: 101,
+      title: "KLiner v2.1 Major Performance Upgrade",
+      category: "Announcements",
+      date: "15.08.26 14:10",
+      target: "All Users",
+      inReplyTo: null,
+      message: "Rendering keyframe velocity graphs is now 4x faster on complex multi-layer compositions. Update via the extension panel.",
+    },
+    {
+      id: 102,
+      title: "License Sync Confirmation",
+      category: "System Notice",
+      date: "11.08.26 09:30",
+      target: "User #USR-31904",
+      inReplyTo: null,
+      message: "Your Studio license has been synchronized and extended for 12 months. All premium modules are now unlocked.",
+    },
+  ]);
+
+  // Site Management Form states
   const [socials, setSocials] = useState({
     instagram: "https://instagram.com",
     tiktok: "https://tiktok.com",
@@ -32,6 +100,73 @@ export default function AdminDashboardPage() {
     }
   }, [status, router]);
 
+  // Handle category changes to enforce audience rules
+  const handleCategoryChange = (newCategory) => {
+    let newTargetType = dispatchForm.targetType;
+    if (newCategory === "announcements") {
+      newTargetType = "all"; // Announcements are strictly for all
+    } else if (newCategory === "personal") {
+      newTargetType = "user"; // Personal replies are strictly for single user
+    }
+    setDispatchForm({
+      ...dispatchForm,
+      category: newCategory,
+      targetType: newTargetType,
+    });
+  };
+
+  // Handle Dispatch submission
+  const handleSendNotification = (e) => {
+    e.preventDefault();
+    if (!dispatchForm.title.trim() || !dispatchForm.message.trim()) {
+      alert("Please fill in both the Notification Title and Message.");
+      return;
+    }
+    if (dispatchForm.targetType === "user" && !dispatchForm.userId.trim()) {
+      alert("Please provide a User ID for personal notification.");
+      return;
+    }
+
+    const now = new Date();
+    const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear().toString().slice(2)} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+
+    const categoryMap = {
+      system: "System Notice",
+      announcements: "Announcements",
+      personal: "Personal Reply",
+    };
+
+    const newEntry = {
+      id: Date.now(),
+      title: dispatchForm.title.trim(),
+      category: categoryMap[dispatchForm.category],
+      date: dateStr,
+      target: dispatchForm.targetType === "all" ? "All Users" : `User #${dispatchForm.userId.trim()}`,
+      inReplyTo: dispatchForm.category === "personal" && dispatchForm.inReplyTo.trim() ? dispatchForm.inReplyTo.trim() : null,
+      message: dispatchForm.message.trim(),
+    };
+
+    if (broadcastTarget === "lapath") {
+      setLapathHistory([newEntry, ...lapathHistory]);
+    } else if (broadcastTarget === "kliner") {
+      setKlinerHistory([newEntry, ...klinerHistory]);
+    }
+
+    setExpandedCardId(newEntry.id);
+    setDispatchSuccess(true);
+    setTimeout(() => setDispatchSuccess(false), 4000);
+
+    // Reset fields
+    setDispatchForm({
+      title: "",
+      category: dispatchForm.category,
+      targetType: dispatchForm.targetType,
+      userId: "",
+      inReplyTo: "",
+      message: "",
+    });
+  };
+
   if (status === "loading") {
     return (
       <div className="adminContainer" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
@@ -45,6 +180,7 @@ export default function AdminDashboardPage() {
   }
 
   const user = session.user;
+  const currentHistory = broadcastTarget === "lapath" ? lapathHistory : klinerHistory;
 
   return (
     <div className="adminContainer">
@@ -115,7 +251,329 @@ export default function AdminDashboardPage() {
 
       {/* Main Workspace */}
       <main className="mainWorkspace">
-        
+
+        {/* ========================================================================= */}
+        {/* BLOCK 3: BROADCAST CENTER */}
+        {/* ========================================================================= */}
+        {activeTab === "broadcast" && (
+          <div>
+            <div style={{ marginBottom: "1.25rem" }}>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.25rem" }}>
+                📢 Broadcast & Notification Center
+              </h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                Select a channel below to dispatch announcements, system notices, and replies directly to users:
+              </p>
+            </div>
+
+            {/* 4 Cards Selector */}
+            <div className="subCardsGrid">
+              {/* Card 1: Email Broadcast */}
+              <div
+                className={`subCardItem ${broadcastTarget === "email" ? "subCardItemActive" : ""}`}
+                onClick={() => setBroadcastTarget("email")}
+              >
+                <div>
+                  <div className="subCardHeader">
+                    <span className="subCardIcon">✉️</span>
+                    <span className="subCardTitle">1. Email Broadcast</span>
+                  </div>
+                  <p className="subCardDesc">Newsletter campaigns & customer email blasts.</p>
+                </div>
+                <div style={{ marginTop: "0.5rem" }}>
+                  <span className="statusPill draft">Stub / Standby</span>
+                </div>
+              </div>
+
+              {/* Card 2: LaPath Extension */}
+              <div
+                className={`subCardItem ${broadcastTarget === "lapath" ? "subCardItemActive" : ""}`}
+                onClick={() => setBroadcastTarget("lapath")}
+              >
+                <div>
+                  <div className="subCardHeader">
+                    <span className="subCardIcon">🔔</span>
+                    <span className="subCardTitle">2. LaPath Extension</span>
+                  </div>
+                  <p className="subCardDesc">In-app Notification Center for LaPath AE extension.</p>
+                </div>
+                <div style={{ marginTop: "0.5rem" }}>
+                  <span className="statusPill active">Live Hub (Active)</span>
+                </div>
+              </div>
+
+              {/* Card 3: KLiner Extension */}
+              <div
+                className={`subCardItem ${broadcastTarget === "kliner" ? "subCardItemActive" : ""}`}
+                onClick={() => setBroadcastTarget("kliner")}
+              >
+                <div>
+                  <div className="subCardHeader">
+                    <span className="subCardIcon">⚡</span>
+                    <span className="subCardTitle">3. KLiner Extension</span>
+                  </div>
+                  <p className="subCardDesc">In-app Notification Center for KLiner AE extension.</p>
+                </div>
+                <div style={{ marginTop: "0.5rem" }}>
+                  <span className="statusPill active">Live Hub (Active)</span>
+                </div>
+              </div>
+
+              {/* Card 4: Webhook & Telegram */}
+              <div
+                className={`subCardItem ${broadcastTarget === "telegram" ? "subCardItemActive" : ""}`}
+                onClick={() => setBroadcastTarget("telegram")}
+              >
+                <div>
+                  <div className="subCardHeader">
+                    <span className="subCardIcon">🤖</span>
+                    <span className="subCardTitle">4. Telegram & Webhooks</span>
+                  </div>
+                  <p className="subCardDesc">Automated studio feed & push dispatch.</p>
+                </div>
+                <div style={{ marginTop: "0.5rem" }}>
+                  <span className="statusPill draft">Standby</span>
+                </div>
+              </div>
+            </div>
+
+            {/* CARD 1: EMAIL STUB */}
+            {broadcastTarget === "email" && (
+              <div className="panelCard">
+                <div className="panelHeader">
+                  <div>
+                    <h2 className="panelTitle">✉️ Email Newsletter Dispatcher</h2>
+                    <p className="panelDescription">Audience email list management & studio announcements</p>
+                  </div>
+                  <span className="statusPill draft">Module In Development</span>
+                </div>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
+                  This section will handle mass HTML email delivery and subscriber list segmentation. For live extension notifications, switch to <strong>LaPath</strong> or <strong>KLiner</strong> above.
+                </p>
+              </div>
+            )}
+
+            {/* CARD 4: TELEGRAM STUB */}
+            {broadcastTarget === "telegram" && (
+              <div className="panelCard">
+                <div className="panelHeader">
+                  <div>
+                    <h2 className="panelTitle">🤖 Telegram & Webhook Dispatcher</h2>
+                    <p className="panelDescription">Direct broadcast to Telegram community channels and webhooks</p>
+                  </div>
+                  <span className="statusPill draft">Module In Development</span>
+                </div>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
+                  Connect your studio Telegram Bot token and channel ID to auto-post showreel releases and license updates.
+                </p>
+              </div>
+            )}
+
+            {/* CARDS 2 & 3: LAPATH & KLINER (2-COLUMN DISPATCH & HISTORY) */}
+            {(broadcastTarget === "lapath" || broadcastTarget === "kliner") && (
+              <div>
+                {dispatchSuccess && (
+                  <div style={{
+                    background: "var(--success-soft)",
+                    border: "1px solid var(--success)",
+                    color: "#6ee7b7",
+                    borderRadius: "8px",
+                    padding: "0.75rem 1rem",
+                    fontSize: "0.85rem",
+                    marginBottom: "1.25rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
+                  }}>
+                    <span>✅</span>
+                    <span>Notification successfully dispatched to <strong>{broadcastTarget === "lapath" ? "LaPath" : "KLiner"}</strong> extension interface and saved to database!</span>
+                  </div>
+                )}
+
+                <div className="broadcastTwoCol">
+                  {/* LEFT COLUMN: DISPATCH FORM */}
+                  <div className="panelCard" style={{ marginBottom: 0 }}>
+                    <div className="panelHeader">
+                      <div>
+                        <h2 className="panelTitle">
+                          📤 Dispatch to {broadcastTarget === "lapath" ? "LaPath" : "KLiner"}
+                        </h2>
+                        <p className="panelDescription">Compose broadcast for the in-extension Notification Center</p>
+                      </div>
+                      <span className="statusPill active">{broadcastTarget.toUpperCase()}</span>
+                    </div>
+
+                    <form onSubmit={handleSendNotification}>
+                      {/* Notification Title */}
+                      <div className="formField">
+                        <label className="formLabel">Notification Title</label>
+                        <input
+                          type="text"
+                          className="textInput"
+                          placeholder="e.g. Summer Motion Giveaway!"
+                          value={dispatchForm.title}
+                          onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      {/* Category Selection (3 Categories) */}
+                      <div className="formField">
+                        <label className="formLabel">Notification Category</label>
+                        <select
+                          className="selectInput"
+                          value={dispatchForm.category}
+                          onChange={(e) => handleCategoryChange(e.target.value)}
+                        >
+                          <option value="announcements">📢 Announcements (Global to All Users)</option>
+                          <option value="system">⚠️ System Notice (All Users or Specific User)</option>
+                          <option value="personal">💬 Personal Reply (Targeted to Specific User ID)</option>
+                        </select>
+                      </div>
+
+                      {/* Audience / Target Selection */}
+                      {dispatchForm.category === "system" && (
+                        <div className="formField">
+                          <label className="formLabel">Target Audience</label>
+                          <select
+                            className="selectInput"
+                            value={dispatchForm.targetType}
+                            onChange={(e) => setDispatchForm({ ...dispatchForm, targetType: e.target.value })}
+                          >
+                            <option value="all">🌐 Broadcast to All Extension Users</option>
+                            <option value="user">👤 Single Specific User (By User ID)</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {/* User ID Field (when target is a specific user) */}
+                      {(dispatchForm.targetType === "user" || dispatchForm.category === "personal") && (
+                        <div className="formField">
+                          <label className="formLabel">User ID / License Key</label>
+                          <input
+                            type="text"
+                            className="textInput"
+                            placeholder="e.g. USR-84920 or License Key"
+                            value={dispatchForm.userId}
+                            onChange={(e) => setDispatchForm({ ...dispatchForm, userId: e.target.value })}
+                            required
+                          />
+                        </div>
+                      )}
+
+                      {/* In Reply To (Only for Personal Reply) */}
+                      {dispatchForm.category === "personal" && (
+                        <div className="formField">
+                          <label className="formLabel">In Response To (Ticket / Inquiry Reference)</label>
+                          <input
+                            type="text"
+                            className="textInput"
+                            placeholder="e.g. Feature Request #402 (Bezier Tangents)"
+                            value={dispatchForm.inReplyTo}
+                            onChange={(e) => setDispatchForm({ ...dispatchForm, inReplyTo: e.target.value })}
+                          />
+                        </div>
+                      )}
+
+                      {/* Notification Message Body */}
+                      <div className="formField">
+                        <label className="formLabel">Notification Message</label>
+                        <textarea
+                          className="textArea"
+                          style={{ minHeight: "110px" }}
+                          placeholder="Type the message that will appear inside the extension notification center..."
+                          value={dispatchForm.message}
+                          onChange={(e) => setDispatchForm({ ...dispatchForm, message: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
+                        <button type="submit" className="btnPrimary" style={{ padding: "0.6rem 1.25rem" }}>
+                          🚀 Dispatch to Extension
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  {/* RIGHT COLUMN: HISTORY & DATABASE LOG */}
+                  <div className="panelCard" style={{ marginBottom: 0 }}>
+                    <div className="panelHeader">
+                      <div>
+                        <h2 className="panelTitle">
+                          📋 {broadcastTarget === "lapath" ? "LaPath" : "KLiner"} Broadcast History
+                        </h2>
+                        <p className="panelDescription">
+                          {currentHistory.length} sent notifications in database (click card to expand details)
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="historyList">
+                      {currentHistory.map((item) => {
+                        const isExpanded = expandedCardId === item.id;
+                        return (
+                          <div
+                            key={item.id}
+                            className={`historyCard ${isExpanded ? "historyCardActive" : ""}`}
+                            onClick={() => setExpandedCardId(isExpanded ? null : item.id)}
+                          >
+                            <div className="historyCardTop">
+                              <span className="historyCardTitle">{item.title}</span>
+                              <span className={`statusPill ${
+                                item.category === "Announcements"
+                                  ? "announcement"
+                                  : item.category === "System Notice"
+                                  ? "system"
+                                  : "personal"
+                              }`}>
+                                {item.category}
+                              </span>
+                            </div>
+
+                            <div className="historyCardMeta">
+                              <span>📅 {item.date}</span>
+                              <span>•</span>
+                              <span>🎯 {item.target}</span>
+                            </div>
+
+                            {!isExpanded && (
+                              <p className="historyCardSnippet">{item.message}</p>
+                            )}
+
+                            {isExpanded && (
+                              <div className="historyCardExpanded">
+                                <p className="historyFullMessage">{item.message}</p>
+
+                                <div className="historyMetaGrid">
+                                  <div>
+                                    <div className="historyMetaLabel">Target</div>
+                                    <div className="historyMetaVal">{item.target}</div>
+                                  </div>
+                                  <div>
+                                    <div className="historyMetaLabel">Status</div>
+                                    <div className="historyMetaVal" style={{ color: "var(--success)" }}>Delivered</div>
+                                  </div>
+                                  {item.inReplyTo && (
+                                    <div style={{ gridColumn: "1 / -1" }}>
+                                      <div className="historyMetaLabel">In Response To</div>
+                                      <div className="historyMetaVal" style={{ color: "#93c5fd" }}>{item.inReplyTo}</div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ========================================================================= */}
         {/* BLOCK 1: DASHBOARD */}
         {/* ========================================================================= */}
@@ -191,38 +649,6 @@ export default function AdminDashboardPage() {
                   </tr>
                 </tbody>
               </table>
-            </div>
-
-            <div className="panelCard">
-              <div className="panelHeader">
-                <div>
-                  <h2 className="panelTitle">Quick Module Navigation</h2>
-                  <p className="panelDescription">Direct access to primary studio control centers</p>
-                </div>
-              </div>
-              <div className="cardGrid">
-                <div className="cardItem" onClick={() => setActiveTab("site")}>
-                  <div className="cardItemTitle">
-                    <span>Site Management</span>
-                    <span style={{ color: "var(--text-dim)" }}>→</span>
-                  </div>
-                  <p className="cardItemDesc">Configure hero showreels, update 6 social channels, and fine-tune SEO metadata.</p>
-                </div>
-                <div className="cardItem" onClick={() => setActiveTab("broadcast")}>
-                  <div className="cardItemTitle">
-                    <span>Broadcast Center</span>
-                    <span style={{ color: "var(--text-dim)" }}>→</span>
-                  </div>
-                  <p className="cardItemDesc">Send email newsletters, push notifications, and dispatch announcements to your audience.</p>
-                </div>
-                <div className="cardItem" onClick={() => setActiveTab("subscriptions")}>
-                  <div className="cardItemTitle">
-                    <span>Subscription Management</span>
-                    <span style={{ color: "var(--text-dim)" }}>→</span>
-                  </div>
-                  <p className="cardItemDesc">Manage creative membership tiers, monitor customer accounts, and track monthly recurring revenue.</p>
-                </div>
-              </div>
             </div>
           </div>
         )}
@@ -358,116 +784,6 @@ export default function AdminDashboardPage() {
                   onChange={(e) => setMetaInfo({ ...metaInfo, description: e.target.value })}
                 />
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* BLOCK 3: BROADCAST CENTER */}
-        {/* ========================================================================= */}
-        {activeTab === "broadcast" && (
-          <div>
-            <div className="metricsRow">
-              <div className="metricTile">
-                <div className="metricLabel">Total Subscribers</div>
-                <div className="metricValue">
-                  <span>1,248</span>
-                  <span className="metricSubtext">+42 this week</span>
-                </div>
-              </div>
-              <div className="metricTile">
-                <div className="metricLabel">Average Open Rate</div>
-                <div className="metricValue">
-                  <span>68.4%</span>
-                  <span className="metricSubtext">Industry Top 5%</span>
-                </div>
-              </div>
-              <div className="metricTile">
-                <div className="metricLabel">Click-Through Rate</div>
-                <div className="metricValue">
-                  <span>24.1%</span>
-                  <span className="metricSubtext">+3.2%</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="panelCard">
-              <div className="panelHeader">
-                <div>
-                  <h2 className="panelTitle">Compose New Broadcast</h2>
-                  <p className="panelDescription">Send an instant newsletter blast or portfolio update to subscribers</p>
-                </div>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <button type="button" className="btnSecondary">Save Draft</button>
-                  <button type="button" className="btnPrimary" onClick={() => alert("Broadcast scheduled!")}>
-                    Send Broadcast →
-                  </button>
-                </div>
-              </div>
-
-              <div className="formRow">
-                <div className="formField">
-                  <label className="formLabel">Campaign Subject</label>
-                  <input type="text" className="textInput" placeholder="New Motion Reel Drop & Autumn Availability" />
-                </div>
-                <div className="formField">
-                  <label className="formLabel">Audience Segment</label>
-                  <input type="text" className="textInput" value="All Active Subscribers (1,248)" readOnly />
-                </div>
-              </div>
-
-              <div className="formField">
-                <label className="formLabel">Broadcast Content (Markdown / HTML Supported)</label>
-                <textarea
-                  className="textArea"
-                  style={{ minHeight: "130px" }}
-                  placeholder="Hey everyone! We just published our latest 3D showreel..."
-                />
-              </div>
-            </div>
-
-            <div className="panelCard">
-              <div className="panelHeader">
-                <div>
-                  <h2 className="panelTitle">Recent Broadcast History</h2>
-                  <p className="panelDescription">Previous campaign delivery stats and audience engagement</p>
-                </div>
-              </div>
-
-              <table className="minimalTable">
-                <thead>
-                  <tr>
-                    <th>Campaign</th>
-                    <th>Date</th>
-                    <th>Recipients</th>
-                    <th>Open Rate</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Summer Creative Drop</td>
-                    <td>Aug 10, 2026</td>
-                    <td>1,210</td>
-                    <td>71.2%</td>
-                    <td><span className="statusPill active">Delivered</span></td>
-                  </tr>
-                  <tr>
-                    <td>New Commercial Work Showcase</td>
-                    <td>Jul 24, 2026</td>
-                    <td>1,150</td>
-                    <td>66.8%</td>
-                    <td><span className="statusPill active">Delivered</span></td>
-                  </tr>
-                  <tr>
-                    <td>Studio Booking Announcement</td>
-                    <td>Jul 02, 2026</td>
-                    <td>1,090</td>
-                    <td>64.5%</td>
-                    <td><span className="statusPill active">Delivered</span></td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </div>
         )}
