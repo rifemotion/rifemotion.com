@@ -62,9 +62,20 @@ export async function POST(request) {
 
     const db = readDb();
 
-    // Check Mute / Ban Status
+    // Check Mute & Shadow Ban Status
     if (db.mutes && db.mutes[userId]) {
       const muteRecord = db.mutes[userId];
+      
+      // SHADOW BAN: Silently pretend success without saving to DB
+      if (muteRecord.shadowBanned) {
+        return NextResponse.json({
+          ok: true,
+          ticketId: 100,
+          message: "Feedback successfully recorded."
+        }, { status: 200, headers: corsHeaders });
+      }
+
+      // STANDARD MUTE: Block request with error
       if (muteRecord.bannedUntil) {
         const banExpiry = new Date(muteRecord.bannedUntil).getTime();
         const now = Date.now();
@@ -81,9 +92,7 @@ export async function POST(request) {
     const now = new Date();
     const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
-    // Clean Short Ticket ID (e.g. 101, 102...)
-    const lastTicket = db.feedback && db.feedback.length > 0 ? db.feedback[0] : null;
-    const newTicketId = lastTicket && typeof lastTicket.id === 'number' && lastTicket.id < 1000000 ? lastTicket.id + 1 : 101;
+    const lastSeq = db.feedback && db.feedback.length > 0 ? db.feedback.length + 1 : 1;
 
     const typeNames = {
       review: "General Review",
@@ -92,14 +101,15 @@ export async function POST(request) {
     };
 
     const newFeedback = {
-      id: newTicketId,
+      id: Date.now(),
+      seqId: lastSeq,
       userId: userId,
-      email: email || 'anonymous@user',
+      email: email && email.includes('@') ? email : 'none',
       extension: metaObj.extName || 'lapath',
       extensionName: metaObj.extName === 'kliner' ? 'KLiner' : 'LaPath',
       type: type,
       typeName: typeNames[type] || "General Feedback",
-      title: text.length > 50 ? text.substring(0, 50) + '...' : (text || "Feedback Submission"),
+      title: text.length > 50 ? text.substring(0, 50) + '...' : (text || "Submission"),
       message: text,
       urgency: urgency,
       rating: rating,
@@ -122,7 +132,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       ok: true,
-      ticketId: newTicketId,
+      ticketId: newFeedback.id,
       message: "Feedback successfully recorded."
     }, { status: 200, headers: corsHeaders });
 

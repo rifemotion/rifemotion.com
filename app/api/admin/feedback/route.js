@@ -37,9 +37,13 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { action, userId, ticketId, durationDays, message } = body;
+    const { action, userId, ticketId, durationDays, message, customNotificationMessage } = body;
 
     const db = readDb();
+    const now = new Date();
+    const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+
+    if (!db.mutes) db.mutes = {};
 
     if (action === 'mute_user') {
       if (!userId) return NextResponse.json({ error: "User ID required" }, { status: 400 });
@@ -52,15 +56,40 @@ export async function POST(request) {
         bannedUntil = new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000).toISOString(); // 10 years
       }
 
-      const now = new Date();
-      const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-
-      if (!db.mutes) db.mutes = {};
       db.mutes[userId] = {
         userId: userId,
         bannedUntil: bannedUntil,
         bannedAt: dateStr,
-        durationDays: durationDays
+        durationDays: durationDays,
+        customMessage: customNotificationMessage || null,
+        shadowBanned: false
+      };
+
+      // Also record custom mute notification in user replies log if message provided
+      if (customNotificationMessage && customNotificationMessage.trim()) {
+        if (!db.replies) db.replies = [];
+        db.replies.unshift({
+          id: Date.now(),
+          ticketId: null,
+          userId: userId,
+          message: customNotificationMessage.trim(),
+          date: dateStr
+        });
+      }
+
+      writeDb(db);
+      return NextResponse.json({ ok: true, mutes: db.mutes, replies: db.replies });
+    }
+
+    if (action === 'shadow_ban_user') {
+      if (!userId) return NextResponse.json({ error: "User ID required" }, { status: 400 });
+
+      db.mutes[userId] = {
+        userId: userId,
+        bannedUntil: new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000).toISOString(),
+        bannedAt: dateStr,
+        durationDays: 'shadow',
+        shadowBanned: true
       };
 
       writeDb(db);
@@ -77,26 +106,8 @@ export async function POST(request) {
       return NextResponse.json({ ok: true, mutes: db.mutes });
     }
 
-    if (action === 'update_status') {
-      if (!ticketId || !status) return NextResponse.json({ error: "Ticket ID & Status required" }, { status: 400 });
-
-      if (db.feedback) {
-        db.feedback = db.feedback.map(item => {
-          if (item.id === ticketId) {
-            return { ...item, status: status };
-          }
-          return item;
-        });
-        writeDb(db);
-      }
-      return NextResponse.json({ ok: true, feedback: db.feedback });
-    }
-
     if (action === 'reply_user') {
       if (!userId || !message) return NextResponse.json({ error: "User ID & message required" }, { status: 400 });
-
-      const now = new Date();
-      const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
       const newReply = {
         id: Date.now(),
@@ -108,16 +119,6 @@ export async function POST(request) {
 
       if (!db.replies) db.replies = [];
       db.replies.unshift(newReply);
-
-      // Auto update ticket status to Resolved if replied
-      if (ticketId && db.feedback) {
-        db.feedback = db.feedback.map(item => {
-          if (item.id === ticketId) {
-            return { ...item, status: "Resolved" };
-          }
-          return item;
-        });
-      }
 
       writeDb(db);
       return NextResponse.json({ ok: true, replies: db.replies, feedback: db.feedback });

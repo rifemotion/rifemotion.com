@@ -28,7 +28,10 @@ function CustomSelect({ options, value, onChange, placeholder = "Select option..
       <button
         type="button"
         className={`customSelectBtn ${isOpen ? "customSelectBtnFocused" : ""}`}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
       >
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
         <img
@@ -39,7 +42,7 @@ function CustomSelect({ options, value, onChange, placeholder = "Select option..
       </button>
 
       {isOpen && (
-        <div className="customDropdownMenu">
+        <div className="customDropdownMenu" onClick={(e) => e.stopPropagation()}>
           {options.map((option) => (
             <div
               key={option.value}
@@ -78,7 +81,18 @@ export default function AdminDashboardPage() {
   const [feedbackFilter, setFeedbackFilter] = useState("all");
   const [feedbackSearchQuery, setFeedbackSearchQuery] = useState("");
   const [expandedUserId, setExpandedUserId] = useState(null);
-  const [banDurationMap, setBanDurationMap] = useState({});
+  const [expandedSpecsMap, setExpandedSpecsMap] = useState({});
+
+  // 3-Dots Action Menu State
+  const [activeMenuUserId, setActiveMenuUserId] = useState(null);
+
+  // Mute Modal State
+  const [muteModalTargetUser, setMuteModalTargetUser] = useState(null);
+  const [muteModalDuration, setMuteModalDuration] = useState("1");
+  const [muteModalMessage, setMuteModalMessage] = useState("");
+
+  // Quick Reply Inputs per User
+  const [quickReplyMap, setQuickReplyMap] = useState({});
 
   // Dispatch Form states
   const [dispatchChannel, setDispatchChannel] = useState("lapath");
@@ -92,7 +106,7 @@ export default function AdminDashboardPage() {
   });
   const [dispatchSuccess, setDispatchSuccess] = useState(false);
 
-  // Fetch Database function (DOES NOT auto-expand any card on interval polling!)
+  // Fetch Database function
   const fetchDb = async () => {
     try {
       const res = await fetch('/api/admin/feedback');
@@ -120,10 +134,35 @@ export default function AdminDashboardPage() {
     }
   }, [status, router]);
 
-  // Handle Mute / Ban User Action with explicit confirmation
-  const handleMuteUser = async (userId, durationDays) => {
-    const durationLabel = durationDays === "permanent" ? "Permanently" : `for ${durationDays} day(s)`;
-    const confirmed = window.confirm(`Are you sure you want to mute feedback submissions for user ${userId} ${durationLabel}?`);
+  // Handle Mute Modal submit
+  const handleConfirmMuteModal = async () => {
+    if (!muteModalTargetUser) return;
+    try {
+      const res = await fetch('/api/admin/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'mute_user',
+          userId: muteModalTargetUser.userId,
+          durationDays: muteModalDuration,
+          customNotificationMessage: muteModalMessage
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setMutes(data.mutes || {});
+        setReplies(data.replies || []);
+        setMuteModalTargetUser(null);
+        setMuteModalMessage("");
+      }
+    } catch (err) {
+      console.error("Error muting user:", err);
+    }
+  };
+
+  // Handle Shadow Ban User Action
+  const handleShadowBanUser = async (userId) => {
+    const confirmed = window.confirm(`Shadow ban user ${userId}? Their requests will be silently accepted without processing.`);
     if (!confirmed) return;
 
     try {
@@ -131,9 +170,8 @@ export default function AdminDashboardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'mute_user',
-          userId: userId,
-          durationDays: durationDays
+          action: 'shadow_ban_user',
+          userId: userId
         })
       });
       const data = await res.json();
@@ -141,7 +179,7 @@ export default function AdminDashboardPage() {
         setMutes(data.mutes || {});
       }
     } catch (err) {
-      console.error("Error muting user:", err);
+      console.error("Error shadow banning user:", err);
     }
   };
 
@@ -165,17 +203,68 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Handle Reply to User Action
-  const handleReplyToUser = (userTarget, ticketRef = null) => {
-    setActiveTab("dispatch");
-    setDispatchChannel(userTarget.extension === "kliner" ? "kliner" : "lapath");
-    setDispatchForm({
-      ...dispatchForm,
-      category: "personal",
-      targetType: "user",
-      userId: userTarget.userId,
-      inReplyTo: ticketRef ? `Ticket #${ticketRef.id} (${ticketRef.title})` : `Direct Reply to ${userTarget.userId}`,
-    });
+  // Handle Quick Reply submit inside expanded card
+  const handleSendQuickReply = async (userId) => {
+    const msg = quickReplyMap[userId];
+    if (!msg || !msg.trim()) return;
+
+    try {
+      const res = await fetch('/api/admin/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reply_user',
+          userId: userId,
+          message: msg.trim()
+        })
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        setReplies(data.replies || []);
+        setQuickReplyMap({ ...quickReplyMap, [userId]: "" });
+      }
+    } catch (err) {
+      console.error("Quick reply error:", err);
+    }
+  };
+
+  // Handle Dispatch Notification form submit
+  const handleSendNotification = async (e) => {
+    e.preventDefault();
+    if (!dispatchForm.title.trim() || !dispatchForm.message.trim()) {
+      alert("Please enter a title and message.");
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reply_user',
+          userId: dispatchForm.userId || 'all',
+          message: `${dispatchForm.title}: ${dispatchForm.message}`
+        })
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        setDispatchSuccess(true);
+        setTimeout(() => setDispatchSuccess(false), 3500);
+        fetchDb();
+        setDispatchForm({
+          title: "",
+          category: dispatchForm.category,
+          targetType: dispatchForm.targetType,
+          userId: "",
+          inReplyTo: "",
+          message: "",
+        });
+      }
+    } catch (err) {
+      console.error("Dispatch error:", err);
+    }
   };
 
   // Group Feedback items by User ID (1 User = 1 Unified Profile Card)
@@ -184,12 +273,13 @@ export default function AdminDashboardPage() {
     if (!usersGrouped[item.userId]) {
       usersGrouped[item.userId] = {
         userId: item.userId,
-        email: item.email,
+        email: item.email && item.email.includes('@') ? item.email : 'none',
         extensionName: item.extensionName,
         hardware: item.hardware,
         stats: item.stats,
         os: item.os,
         appVersion: item.appVersion,
+        installDate: item.installDate,
         daysInstalled: item.daysInstalled,
         items: []
       };
@@ -215,45 +305,6 @@ export default function AdminDashboardPage() {
 
     return matchesSearch;
   });
-
-  // Handle Dispatch Notification form submit
-  const handleSendNotification = async (e) => {
-    e.preventDefault();
-    if (!dispatchForm.title.trim() || !dispatchForm.message.trim()) {
-      alert("Please enter a title and message.");
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/admin/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'reply_user',
-          userId: dispatchForm.userId || 'all',
-          ticketId: null,
-          message: `${dispatchForm.title}: ${dispatchForm.message}`
-        })
-      });
-
-      const data = await res.json();
-      if (data.ok) {
-        setDispatchSuccess(true);
-        setTimeout(() => setDispatchSuccess(false), 3500);
-        fetchDb();
-        setDispatchForm({
-          title: "",
-          category: dispatchForm.category,
-          targetType: dispatchForm.targetType,
-          userId: "",
-          inReplyTo: "",
-          message: "",
-        });
-      }
-    } catch (err) {
-      console.error("Dispatch error:", err);
-    }
-  };
 
   if (status === "loading" || loadingDb) {
     return (
@@ -322,7 +373,7 @@ export default function AdminDashboardPage() {
               className={`navButton ${activeTab === "feedback" ? "navButtonActive" : ""}`}
               onClick={() => setActiveTab("feedback")}
             >
-              <img src="/icons_admin/message.svg" alt="Feedback & Reports" className="iconImg" />
+              <img src="/icons_admin/message.svg" alt="Feedback & User Profiles" className="iconImg" />
               <span>Feedback & User Profiles</span>
             </button>
             <button
@@ -359,7 +410,7 @@ export default function AdminDashboardPage() {
             <span>rifemotion</span>
           </div>
           <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-            v3.3.0
+            v4.0.0
           </span>
         </div>
       </aside>
@@ -377,7 +428,7 @@ export default function AdminDashboardPage() {
             <div className="viewHeader">
               <div>
                 <h1 className="viewTitle">User Profiles & Feedback Database</h1>
-                <p className="viewSubtitle">Unified user cards with hardware telemetry, extension stats, submission timeline, and feedback ban controls</p>
+                <p className="viewSubtitle">Unified user cards with system telemetry, submission history, direct responses, and mute/shadow ban controls</p>
               </div>
             </div>
 
@@ -435,7 +486,7 @@ export default function AdminDashboardPage() {
               </div>
 
               {/* UNIFIED USER PROFILE CARDS FEED */}
-              <div className="historyFeed" style={{ maxHeight: "760px" }}>
+              <div className="historyFeed" style={{ maxHeight: "780px" }}>
                 {filteredUserProfiles.length === 0 ? (
                   <div style={{ padding: "3rem 1rem", textAlign: "center" }}>
                     <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem", marginBottom: "0.25rem" }}>
@@ -448,8 +499,13 @@ export default function AdminDashboardPage() {
                 ) : (
                   filteredUserProfiles.map((profile) => {
                     const isExpanded = expandedUserId === profile.userId;
-                    const isMuted = mutes[profile.userId] && new Date(mutes[profile.userId].bannedUntil).getTime() > Date.now();
-                    const selectedDuration = banDurationMap[profile.userId] || "1";
+                    const muteRecord = mutes[profile.userId];
+                    const isMuted = muteRecord && !muteRecord.shadowBanned && new Date(muteRecord.bannedUntil).getTime() > Date.now();
+                    const isShadowBanned = muteRecord && muteRecord.shadowBanned;
+
+                    // User specific replies feed
+                    const userReplies = replies.filter(r => r.userId === profile.userId);
+                    const isSpecsExpanded = expandedSpecsMap[profile.userId] || false;
 
                     return (
                       <div
@@ -457,25 +513,83 @@ export default function AdminDashboardPage() {
                         className={`historyItemCard ${isExpanded ? "historyItemCardSelected" : ""}`}
                         onClick={() => setExpandedUserId(isExpanded ? null : profile.userId)}
                       >
+                        {/* USER CARD HEADER */}
                         <div className="historyItemTop">
                           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                            <strong style={{ fontSize: "0.9rem", color: "var(--text-primary)" }}>{profile.userId}</strong>
-                            <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>({profile.email})</span>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                            <span className={`pillTag ${isMuted ? "banned" : "ok"}`}>
-                              {isMuted ? "Muted / Banned" : "Active"}
+                            <strong style={{ fontSize: "0.88rem", color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}>
+                              {profile.userId}
+                            </strong>
+                            <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                              ({profile.email})
                             </span>
-                            <span className="pillTag active">{profile.items.length} {profile.items.length === 1 ? 'Submission' : 'Submissions'}</span>
+                            <span style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>
+                              • Installed: <strong>{profile.installDate}</strong>
+                            </span>
                           </div>
-                        </div>
 
-                        <div className="historyItemMeta">
-                          <span>OS: <strong>{profile.os}</strong></span>
-                          <span>•</span>
-                          <span>AE: <strong>{profile.appVersion}</strong></span>
-                          <span>•</span>
-                          <span>Installed: <strong>{profile.daysInstalled}</strong></span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }} onClick={(e) => e.stopPropagation()}>
+                            {/* Status Tag */}
+                            {isShadowBanned ? (
+                              <span className="pillTag shadow">Shadow Banned</span>
+                            ) : isMuted ? (
+                              <span className="pillTag banned">Muted</span>
+                            ) : (
+                              <span className="pillTag ok">Active</span>
+                            )}
+
+                            {/* Submissions count tag */}
+                            <span className="pillTag active">
+                              {profile.items.length} {profile.items.length === 1 ? 'submission' : 'submissions'}
+                            </span>
+
+                            {/* 3-DOTS ACTION MENU */}
+                            <div style={{ position: "relative" }}>
+                              <button
+                                type="button"
+                                className="dotsMenuBtn"
+                                onClick={() => setActiveMenuUserId(activeMenuUserId === profile.userId ? null : profile.userId)}
+                              >
+                                ⋮
+                              </button>
+
+                              {activeMenuUserId === profile.userId && (
+                                <div className="dotsDropdown">
+                                  {isMuted || isShadowBanned ? (
+                                    <div
+                                      className="dotsDropdownItem"
+                                      onClick={() => {
+                                        handleUnmuteUser(profile.userId);
+                                        setActiveMenuUserId(null);
+                                      }}
+                                    >
+                                      ✓ Unmute User
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div
+                                        className="dotsDropdownItem"
+                                        onClick={() => {
+                                          setMuteModalTargetUser(profile);
+                                          setActiveMenuUserId(null);
+                                        }}
+                                      >
+                                        🚫 Mute User...
+                                      </div>
+                                      <div
+                                        className="dotsDropdownItem"
+                                        onClick={() => {
+                                          handleShadowBanUser(profile.userId);
+                                          setActiveMenuUserId(null);
+                                        }}
+                                      >
+                                        👻 Shadow Ban User
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
 
                         {!isExpanded ? (
@@ -485,134 +599,163 @@ export default function AdminDashboardPage() {
                         ) : (
                           <div style={{ marginTop: "0.85rem", paddingTop: "0.85rem", borderTop: "1px solid var(--border-subtle)" }}>
                             
-                            {/* Hardware & Telemetry Accordion */}
-                            <div style={{
-                              background: "var(--bg-app)",
-                              border: "1px solid var(--border-subtle)",
-                              borderRadius: "var(--radius-sm)",
-                              padding: "0.85rem",
-                              marginBottom: "1rem"
-                            }}>
-                              <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.4rem" }}>
-                                Hardware & System Telemetry
-                              </div>
-                              <div style={{ fontSize: "0.78rem", color: "var(--text-primary)", fontFamily: "var(--font-mono)", marginBottom: "0.45rem" }}>
-                                {profile.hardware}
-                              </div>
-                              <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>
-                                Extension Stats: <code>{profile.stats}</code>
-                              </div>
+                            {/* COLLAPSIBLE SYSTEM TELEMETRY ACCORDION */}
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedSpecsMap({ ...expandedSpecsMap, [profile.userId]: !isSpecsExpanded });
+                              }}
+                              style={{
+                                background: "var(--bg-app)",
+                                border: "1px solid var(--border-subtle)",
+                                borderRadius: "var(--radius-sm)",
+                                padding: "0.6rem 0.85rem",
+                                cursor: "pointer",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                marginBottom: "1rem"
+                              }}
+                            >
+                              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)" }}>
+                                PC Telemetry & Hardware Specs {isSpecsExpanded ? '▴' : '▾'}
+                              </span>
+                              <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                                OS: {profile.os} | AE: {profile.appVersion}
+                              </span>
                             </div>
 
-                            {/* Submission Timeline */}
-                            <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
-                              Submission Timeline ({profile.items.length})
-                            </div>
-                            
-                            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1rem" }}>
-                              {profile.items.map((sub) => (
-                                <div key={sub.id} style={{
-                                  background: "#17181d",
-                                  border: "1px solid var(--border-subtle)",
-                                  borderRadius: "var(--radius-xs)",
-                                  padding: "0.75rem 0.85rem"
-                                }}>
-                                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                                      <span style={{ fontWeight: 700, fontSize: "0.82rem" }}>#{sub.id}</span>
-                                      <span style={{ fontWeight: 600, fontSize: "0.82rem" }}>{sub.title}</span>
-                                    </div>
-                                    <div style={{ display: "flex", gap: "0.3rem", alignItems: "center" }}>
-                                      {sub.rating && (
-                                        <span className="pillTag active" style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>
-                                          {"★".repeat(sub.rating)} {sub.rating}/5 Stars
-                                        </span>
-                                      )}
-                                      <span className="pillTag">{sub.extensionName}</span>
-                                      <span className={`pillTag ${sub.type === "bug" ? "banned" : "ok"}`}>{sub.typeName}</span>
-                                    </div>
-                                  </div>
-
-                                  <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)", lineHeight: 1.45, marginBottom: "0.45rem" }}>
-                                    {sub.message}
-                                  </p>
-
-                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                                    <span>Submitted: {sub.date}</span>
-                                    {sub.telegramMediaUrl ? (
-                                      <Link
-                                        href={sub.telegramMediaUrl}
-                                        target="_blank"
-                                        onClick={(e) => e.stopPropagation()}
-                                        style={{ color: "var(--text-primary)", textDecoration: "underline" }}
-                                      >
-                                        View Media in Telegram ↗
-                                      </Link>
-                                    ) : (
-                                      <span>No Media Attachment</span>
-                                    )}
-                                  </div>
+                            {isSpecsExpanded && (
+                              <div style={{
+                                background: "#111217",
+                                border: "1px solid var(--border-subtle)",
+                                borderRadius: "var(--radius-sm)",
+                                padding: "0.85rem",
+                                marginBottom: "1rem"
+                              }}>
+                                <div style={{ fontSize: "0.75rem", color: "var(--text-primary)", fontFamily: "var(--font-mono)", marginBottom: "0.4rem" }}>
+                                  Hardware: {profile.hardware}
                                 </div>
-                              ))}
-                            </div>
+                                <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>
+                                  Extension Telemetry: <code>{profile.stats}</code> | Installed: {profile.daysInstalled}
+                                </div>
+                              </div>
+                            )}
 
-                            {/* Controls Footer (Clean Separated Buttons with gap: 1rem) */}
-                            <div style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              paddingTop: "0.75rem",
-                              borderTop: "1px dashed var(--border-subtle)",
-                              gap: "1rem"
-                            }}>
-                              {/* Ban / Mute Controls */}
-                              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }} onClick={(e) => e.stopPropagation()}>
-                                {isMuted ? (
-                                  <button
-                                    type="button"
-                                    className="successPillBtn"
-                                    onClick={() => handleUnmuteUser(profile.userId)}
-                                  >
-                                    Unmute User Access
-                                  </button>
-                                ) : (
-                                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                    <div style={{ width: "110px" }}>
-                                      <CustomSelect
-                                        options={[
-                                          { label: "1 Day", value: "1" },
-                                          { label: "3 Days", value: "3" },
-                                          { label: "7 Days", value: "7" },
-                                          { label: "30 Days", value: "30" },
-                                          { label: "Permanent", value: "permanent" },
-                                        ]}
-                                        value={selectedDuration}
-                                        onChange={(val) => setBanDurationMap({ ...banDurationMap, [profile.userId]: val })}
-                                      />
+                            {/* 2-COLUMN SPLIT LAYOUT */}
+                            <div className="twoColSplit" onClick={(e) => e.stopPropagation()}>
+                              
+                              {/* LEFT COLUMN: USER SUBMISSIONS CHAIN */}
+                              <div className="twoColCol">
+                                <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.4rem" }}>
+                                  Submissions Chain ({profile.items.length})
+                                </div>
+
+                                {profile.items.map((sub, idx) => (
+                                  <div key={sub.id} style={{
+                                    background: "#17181d",
+                                    border: "1px solid var(--border-subtle)",
+                                    borderRadius: "var(--radius-xs)",
+                                    padding: "0.75rem 0.85rem"
+                                  }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem" }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                        <span style={{ fontWeight: 700, fontSize: "0.8rem", color: "var(--text-muted)" }}>#{profile.items.length - idx}</span>
+                                        <span style={{ fontWeight: 600, fontSize: "0.82rem" }}>{sub.title}</span>
+                                      </div>
+                                      <div style={{ display: "flex", gap: "0.3rem", alignItems: "center" }}>
+                                        {sub.rating && (
+                                          <span className="pillTag active" style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>
+                                            {"★".repeat(sub.rating)} {sub.rating}/5 Stars
+                                          </span>
+                                        )}
+                                        <span className="pillTag">{sub.extensionName}</span>
+                                        <span className={`pillTag ${sub.type === "bug" ? "banned" : "ok"}`}>{sub.typeName}</span>
+                                      </div>
                                     </div>
+
+                                    <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)", lineHeight: 1.45, marginBottom: "0.45rem" }}>
+                                      {sub.message}
+                                    </p>
+
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                                      <span>Submitted: {sub.date}</span>
+                                      {sub.telegramMediaUrl ? (
+                                        <Link
+                                          href={sub.telegramMediaUrl}
+                                          target="_blank"
+                                          style={{ color: "var(--text-primary)", textDecoration: "underline" }}
+                                        >
+                                          View Media in Telegram ↗
+                                        </Link>
+                                      ) : (
+                                        <span>No Media</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* RIGHT COLUMN: PERSONAL REPLIES & DIRECT RESPONSE FORM */}
+                              <div className="twoColCol">
+                                <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.4rem" }}>
+                                  Direct Messages & Responses ({userReplies.length})
+                                </div>
+
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1, minHeight: "120px" }}>
+                                  {userReplies.length === 0 ? (
+                                    <div style={{
+                                      background: "#17181d",
+                                      border: "1px solid var(--border-subtle)",
+                                      borderRadius: "var(--radius-xs)",
+                                      padding: "1rem",
+                                      textAlign: "center",
+                                      color: "var(--text-muted)",
+                                      fontSize: "0.75rem"
+                                    }}>
+                                      No direct messages sent to this user yet.
+                                    </div>
+                                  ) : (
+                                    userReplies.map((r) => (
+                                      <div key={r.id} style={{
+                                        background: "rgba(255, 255, 255, 0.03)",
+                                        border: "1px solid var(--border-subtle)",
+                                        borderRadius: "var(--radius-xs)",
+                                        padding: "0.65rem 0.75rem"
+                                      }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.2rem", fontSize: "0.72rem" }}>
+                                          <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>Response from Team</span>
+                                          <span style={{ color: "var(--text-muted)" }}>{r.date}</span>
+                                        </div>
+                                        <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>{r.message}</p>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+
+                                {/* QUICK RESPONSE FORM BOX */}
+                                <div style={{ marginTop: "0.5rem" }}>
+                                  <textarea
+                                    className="pillTextarea"
+                                    placeholder={`Write response to ${profile.userId}...`}
+                                    style={{ minHeight: "60px", marginBottom: "0.4rem" }}
+                                    value={quickReplyMap[profile.userId] || ""}
+                                    onChange={(e) => setQuickReplyMap({ ...quickReplyMap, [profile.userId]: e.target.value })}
+                                  />
+                                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
                                     <button
                                       type="button"
-                                      className="dangerPillBtn"
-                                      onClick={() => handleMuteUser(profile.userId, selectedDuration)}
+                                      className="submitPillBtn"
+                                      style={{ padding: "0.35rem 0.85rem", fontSize: "0.75rem" }}
+                                      onClick={() => handleSendQuickReply(profile.userId)}
                                     >
-                                      Mute Feedback
+                                      Send Direct Reply →
                                     </button>
                                   </div>
-                                )}
+                                </div>
+
                               </div>
 
-                              {/* Reply Button */}
-                              <button
-                                type="button"
-                                className="submitPillBtn"
-                                style={{ padding: "0.35rem 0.95rem", fontSize: "0.75rem", flexShrink: 0 }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleReplyToUser(profile, profile.items[0]);
-                                }}
-                              >
-                                Reply to User →
-                              </button>
                             </div>
 
                           </div>
@@ -718,19 +861,6 @@ export default function AdminDashboardPage() {
                     </div>
                   )}
 
-                  {dispatchForm.category === "personal" && (
-                    <div className="inputField">
-                      <label className="inputLabel">In Response To</label>
-                      <input
-                        type="text"
-                        className="pillInput"
-                        placeholder="e.g. Feature Request #402"
-                        value={dispatchForm.inReplyTo}
-                        onChange={(e) => setDispatchForm({ ...dispatchForm, inReplyTo: e.target.value })}
-                      />
-                    </div>
-                  )}
-
                   <div className="inputField">
                     <label className="inputLabel">Notification Message</label>
                     <textarea
@@ -821,6 +951,66 @@ export default function AdminDashboardPage() {
         )}
 
       </main>
+
+      {/* ========================================================================= */}
+      {/* MUTE USER MODAL WITH DURATION & CUSTOM NOTIFICATION MESSAGE */}
+      {/* ========================================================================= */}
+      {muteModalTargetUser && (
+        <div className="modalBackdrop" onClick={() => setMuteModalTargetUser(null)}>
+          <div className="modalWindow" onClick={(e) => e.stopPropagation()}>
+            <div className="modalTitle">Mute User Feedback</div>
+            <div className="modalSub">
+              Restrict feedback submissions for <strong>{muteModalTargetUser.userId}</strong> ({muteModalTargetUser.email})
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block", marginBottom: "0.3rem" }}>
+                Restriction Duration
+              </label>
+              <CustomSelect
+                options={[
+                  { label: "1 Day", value: "1" },
+                  { label: "3 Days", value: "3" },
+                  { label: "7 Days", value: "7" },
+                  { label: "30 Days", value: "30" },
+                  { label: "Permanent", value: "permanent" },
+                ]}
+                value={muteModalDuration}
+                onChange={(val) => setMuteModalDuration(val)}
+              />
+            </div>
+
+            <div style={{ marginBottom: "1.2rem" }}>
+              <label style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block", marginBottom: "0.3rem" }}>
+                Notification Message to User (Optional)
+              </label>
+              <textarea
+                className="pillTextarea"
+                placeholder="Explain the restriction reason to the user..."
+                value={muteModalMessage}
+                onChange={(e) => setMuteModalMessage(e.target.value)}
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.6rem" }}>
+              <button
+                type="button"
+                className="cancelPillBtn"
+                onClick={() => setMuteModalTargetUser(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="submitPillBtn"
+                onClick={handleConfirmMuteModal}
+              >
+                Confirm Mute
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
