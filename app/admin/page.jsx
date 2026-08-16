@@ -509,6 +509,9 @@ export default function AdminDashboardPage() {
                     // User specific replies feed
                     const userReplies = replies.filter(r => r.userId === profile.userId);
                     const isSpecsExpanded = expandedSpecsMap[profile.userId] || false;
+                    const latestItem = profile.items[0];
+                    const latestCategoryClass = latestItem ? (latestItem.type === 'review' ? 'cat-review' : latestItem.type === 'suggest' ? 'cat-suggest' : 'cat-report') : '';
+                    const latestCategoryName = latestItem ? latestItem.typeName : 'Submission';
 
                     return (
                       <div
@@ -516,10 +519,10 @@ export default function AdminDashboardPage() {
                         className={`historyItemCard ${isExpanded ? "historyItemCardSelected" : ""}`}
                         onClick={() => setExpandedUserId(isExpanded ? null : profile.userId)}
                       >
-                        {/* USER CARD HEADER */}
+                        {/* SLIM USER CARD HEADER */}
                         <div className="historyItemTop">
                           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                            <strong style={{ fontSize: "0.88rem", color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}>
+                            <strong style={{ fontSize: "0.85rem", color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}>
                               {profile.userId}
                             </strong>
                             <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
@@ -530,7 +533,14 @@ export default function AdminDashboardPage() {
                             </span>
                           </div>
 
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }} onClick={(e) => e.stopPropagation()}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }} onClick={(e) => e.stopPropagation()}>
+                            {/* Latest Submission Category Tag */}
+                            {latestItem && (
+                              <span className={`pillTag ${latestCategoryClass}`}>
+                                {latestCategoryName}
+                              </span>
+                            )}
+
                             {/* Status Tag */}
                             {isShadowBanned ? (
                               <span className="pillTag shadow">Shadow Banned</span>
@@ -595,11 +605,8 @@ export default function AdminDashboardPage() {
                           </div>
                         </div>
 
-                        {!isExpanded ? (
-                          <p className="historyItemSnippet">
-                            Latest: "{profile.items[0]?.title}" — {profile.items[0]?.message}
-                          </p>
-                        ) : (
+                        {/* EXPANDED CONTENT VIEW */}
+                        {isExpanded && (
                           <div style={{ marginTop: "0.85rem", paddingTop: "0.85rem", borderTop: "1px solid var(--border-subtle)" }}>
                             
                             {/* COLLAPSIBLE SYSTEM TELEMETRY ACCORDION */}
@@ -704,13 +711,13 @@ export default function AdminDashboardPage() {
                                   })}
                               </div>
 
-                              {/* RIGHT COLUMN: PERSONAL REPLIES & DIRECT RESPONSE FORM */}
+                              {/* RIGHT COLUMN: PERSONAL REPLIES & REDIRECT TO REPLY */}
                               <div className="twoColCol">
                                 <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.4rem" }}>
                                   Direct Messages & Responses ({userReplies.length})
                                 </div>
 
-                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1, minHeight: "120px" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1, minHeight: "100px" }}>
                                   {userReplies.length === 0 ? (
                                     <div style={{
                                       background: "#17181d",
@@ -741,25 +748,21 @@ export default function AdminDashboardPage() {
                                   )}
                                 </div>
 
-                                {/* QUICK RESPONSE FORM BOX */}
-                                <div style={{ marginTop: "0.5rem" }}>
-                                  <textarea
-                                    className="pillTextarea"
-                                    placeholder={`Write response to ${profile.userId}...`}
-                                    style={{ minHeight: "60px", marginBottom: "0.4rem" }}
-                                    value={quickReplyMap[profile.userId] || ""}
-                                    onChange={(e) => setQuickReplyMap({ ...quickReplyMap, [profile.userId]: e.target.value })}
-                                  />
-                                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                                    <button
-                                      type="button"
-                                      className="submitPillBtn"
-                                      style={{ padding: "0.35rem 0.85rem", fontSize: "0.75rem" }}
-                                      onClick={() => handleSendQuickReply(profile.userId)}
-                                    >
-                                      Send Direct Reply →
-                                    </button>
-                                  </div>
+                                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.75rem" }}>
+                                  <button
+                                    type="button"
+                                    className="submitPillBtn"
+                                    onClick={() => {
+                                      setActiveTab("dispatch");
+                                      setDispatchForm({
+                                        ...dispatchForm,
+                                        category: "personal",
+                                        userId: profile.userId
+                                      });
+                                    }}
+                                  >
+                                    Reply to User →
+                                  </button>
                                 </div>
 
                               </div>

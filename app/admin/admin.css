@@ -271,25 +271,27 @@ body {
   background-color: var(--bg-panel);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 0.9rem 1rem;
+  padding: 0.55rem 0.9rem;
   transition: border-color 0.2s ease, background 0.2s ease;
   position: relative;
+  cursor: pointer;
 }
 
 .historyItemCard:hover {
   border-color: var(--border-medium);
+  background-color: #21222b;
 }
 
 .historyItemCardSelected {
   border-color: var(--border-focus);
   background-color: var(--bg-card);
+  padding: 0.85rem 1rem;
 }
 
 .historyItemTop {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.4rem;
 }
 
 .historyItemTitle {
