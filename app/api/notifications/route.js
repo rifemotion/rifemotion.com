@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { readDb } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -22,10 +25,39 @@ export async function GET(request) {
 
     const db = readDb();
     const allReplies = db.replies || [];
+    const mutes = db.mutes || {};
+
+    let isMuted = false;
+    let mutedUntil = null;
+    let muteReason = null;
+
+    if (userId && mutes[userId]) {
+      const muteRecord = mutes[userId];
+      if (muteRecord.bannedUntil) {
+        const banExpiry = new Date(muteRecord.bannedUntil).getTime();
+        if (banExpiry > Date.now()) {
+          isMuted = true;
+          mutedUntil = new Date(banExpiry).toLocaleDateString('en-GB');
+          muteReason = muteRecord.reason || 'Feedback submission temporarily suspended';
+        }
+      }
+    }
 
     const notifications = [];
 
-    // Convert replies sent to this user or all users into notifications
+    // 1. If muted, add automatic Mute Notification to user feed
+    if (isMuted) {
+      notifications.push({
+        id: 99999,
+        title: "Feedback Access Restricted",
+        subtitle: "System Notice",
+        body: `Your feedback submission access has been temporarily restricted until ${mutedUntil}.`,
+        date: "Today",
+        unread: true
+      });
+    }
+
+    // 2. Convert replies sent to this user or all users into notifications
     allReplies.forEach((r) => {
       if (r.userId === 'all' || r.userId === userId) {
         notifications.push({
@@ -50,11 +82,13 @@ export async function GET(request) {
 
     return NextResponse.json({
       ok: true,
+      isMuted: isMuted,
+      mutedUntil: mutedUntil,
       notifications: notifications
     }, { status: 200, headers: corsHeaders });
 
   } catch (error) {
     console.error("Notifications fetch error:", error);
-    return NextResponse.json({ ok: false, notifications: [] }, { status: 500, headers: corsHeaders });
+    return NextResponse.json({ ok: false, isMuted: false, notifications: [] }, { status: 500, headers: corsHeaders });
   }
 }

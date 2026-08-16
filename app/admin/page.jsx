@@ -120,8 +120,12 @@ export default function AdminDashboardPage() {
     }
   }, [status, router]);
 
-  // Handle Mute / Ban User Action
+  // Handle Mute / Ban User Action with explicit confirmation
   const handleMuteUser = async (userId, durationDays) => {
+    const durationLabel = durationDays === "permanent" ? "Permanently" : `for ${durationDays} day(s)`;
+    const confirmed = window.confirm(`Are you sure you want to mute feedback submissions for user ${userId} ${durationLabel}?`);
+    if (!confirmed) return;
+
     try {
       const res = await fetch('/api/admin/feedback', {
         method: 'POST',
