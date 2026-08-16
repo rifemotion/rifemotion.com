@@ -481,6 +481,9 @@ export default function AdminDashboardPage() {
                     placeholder="Search User ID, Email, Hardware..."
                     value={feedbackSearchQuery}
                     onChange={(e) => setFeedbackSearchQuery(e.target.value)}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
                   />
                 </div>
               </div>
@@ -651,49 +654,54 @@ export default function AdminDashboardPage() {
                                   Submissions Chain ({profile.items.length})
                                 </div>
 
-                                {profile.items.map((sub, idx) => (
-                                  <div key={sub.id} style={{
-                                    background: "#17181d",
-                                    border: "1px solid var(--border-subtle)",
-                                    borderRadius: "var(--radius-xs)",
-                                    padding: "0.75rem 0.85rem"
-                                  }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem" }}>
-                                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                                        <span style={{ fontWeight: 700, fontSize: "0.8rem", color: "var(--text-muted)" }}>#{profile.items.length - idx}</span>
-                                        <span style={{ fontWeight: 600, fontSize: "0.82rem" }}>{sub.title}</span>
-                                      </div>
-                                      <div style={{ display: "flex", gap: "0.3rem", alignItems: "center" }}>
-                                        {sub.rating && (
-                                          <span className="pillTag active" style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>
-                                            {"★".repeat(sub.rating)} {sub.rating}/5 Stars
-                                          </span>
-                                        )}
-                                        <span className="pillTag">{sub.extensionName}</span>
-                                        <span className={`pillTag ${sub.type === "bug" ? "banned" : "ok"}`}>{sub.typeName}</span>
-                                      </div>
-                                    </div>
+                                  {profile.items.map((sub, idx) => {
+                                    const isSameText = sub.title && sub.message && (sub.title.trim().toLowerCase() === sub.message.trim().toLowerCase() || sub.message.trim().startsWith(sub.title.trim()));
+                                    const categoryClass = sub.type === 'review' ? 'cat-review' : sub.type === 'suggest' ? 'cat-suggest' : 'cat-report';
 
-                                    <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)", lineHeight: 1.45, marginBottom: "0.45rem" }}>
-                                      {sub.message}
-                                    </p>
+                                    return (
+                                      <div key={sub.id} style={{
+                                        background: "#17181d",
+                                        border: "1px solid var(--border-subtle)",
+                                        borderRadius: "var(--radius-xs)",
+                                        padding: "0.75rem 0.85rem"
+                                      }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem" }}>
+                                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                            <span style={{ fontWeight: 700, fontSize: "0.8rem", color: "var(--text-muted)" }}>#{profile.items.length - idx}</span>
+                                            {!isSameText && sub.title && (
+                                              <span style={{ fontWeight: 600, fontSize: "0.82rem" }}>{sub.title}</span>
+                                            )}
+                                          </div>
+                                          <div style={{ display: "flex", gap: "0.3rem", alignItems: "center" }}>
+                                            {sub.type === 'review' && sub.rating && (
+                                              <span className="pillTag stars">
+                                                {"★".repeat(sub.rating)} {sub.rating}/5 Stars
+                                              </span>
+                                            )}
+                                            <span className="pillTag">{sub.extensionName}</span>
+                                            <span className={`pillTag ${categoryClass}`}>{sub.typeName}</span>
+                                          </div>
+                                        </div>
 
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                                      <span>Submitted: {sub.date}</span>
-                                      {sub.telegramMediaUrl ? (
-                                        <Link
-                                          href={sub.telegramMediaUrl}
-                                          target="_blank"
-                                          style={{ color: "var(--text-primary)", textDecoration: "underline" }}
-                                        >
-                                          View Media in Telegram ↗
-                                        </Link>
-                                      ) : (
-                                        <span>No Media</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
+                                        <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)", lineHeight: 1.45, marginBottom: "0.45rem" }}>
+                                          {sub.message}
+                                        </p>
+
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                                          <span>Submitted: {sub.date}</span>
+                                          {sub.telegramMediaUrl && typeof sub.telegramMediaUrl === 'string' && sub.telegramMediaUrl.startsWith('http') && (
+                                            <Link
+                                              href={sub.telegramMediaUrl}
+                                              target="_blank"
+                                              style={{ color: "var(--text-primary)", textDecoration: "underline" }}
+                                            >
+                                              View Media in Telegram ↗
+                                            </Link>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                               </div>
 
                               {/* RIGHT COLUMN: PERSONAL REPLIES & DIRECT RESPONSE FORM */}

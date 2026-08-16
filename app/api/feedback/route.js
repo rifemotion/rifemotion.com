@@ -32,21 +32,24 @@ export async function POST(request) {
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
       type = formData.get('type') || 'review';
-      rating = formData.get('rating') ? parseInt(formData.get('rating')) : null;
+      const rawRating = formData.get('rating');
+      rating = type === 'review' ? (rawRating ? parseInt(rawRating) : 5) : null;
       text = formData.get('text') || '';
       email = formData.get('email') || '';
       urgency = formData.get('urgency') || 'low';
       metaStr = formData.get('meta');
-      telegramMediaUrl = formData.get('telegramMediaUrl') || null;
+      const rawTg = formData.get('telegramMediaUrl');
+      telegramMediaUrl = rawTg && typeof rawTg === 'string' && rawTg.startsWith('http') ? rawTg : null;
     } else {
       const body = await request.json();
       type = body.type || 'review';
-      rating = body.rating || null;
+      rating = type === 'review' ? (body.rating ? parseInt(body.rating) : 5) : null;
       text = body.text || '';
       email = body.email || '';
       urgency = body.urgency || 'low';
       metaStr = body.meta ? (typeof body.meta === 'string' ? body.meta : JSON.stringify(body.meta)) : null;
-      telegramMediaUrl = body.telegramMediaUrl || null;
+      const rawTg = body.telegramMediaUrl;
+      telegramMediaUrl = rawTg && typeof rawTg === 'string' && rawTg.startsWith('http') ? rawTg : null;
     }
 
     let metaObj = {};

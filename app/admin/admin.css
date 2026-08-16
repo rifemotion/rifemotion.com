@@ -313,9 +313,9 @@ body {
   line-height: 1.4;
 }
 
-/* PILL BADGES */
+/* PILL BADGES WITH SUBTLE REFINED ACCENTS */
 .pillTag {
-  padding: 0.15rem 0.45rem;
+  padding: 0.18rem 0.5rem;
   border-radius: var(--radius-xs);
   font-size: 0.68rem;
   font-weight: 500;
@@ -329,22 +329,48 @@ body {
   border-color: var(--border-medium);
 }
 
+.pillTag.ok {
+  color: #4ade80;
+  background-color: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.28);
+}
+
 .pillTag.banned {
-  color: #e0e0e0;
-  background-color: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  color: #f87171;
+  background-color: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.28);
 }
 
 .pillTag.shadow {
-  color: #a0a0a0;
-  background-color: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.1);
+  color: #c084fc;
+  background-color: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.28);
 }
 
-.pillTag.ok {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
+.pillTag.cat-review {
+  color: #fbbf24;
+  background-color: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+.pillTag.cat-suggest {
+  color: #a78bfa;
+  background-color: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.28);
+}
+
+.pillTag.cat-report {
+  color: #fb7185;
+  background-color: rgba(244, 63, 94, 0.12);
+  border-color: rgba(244, 63, 94, 0.28);
+}
+
+.pillTag.stars {
+  color: #fbbf24;
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.25);
+  font-family: var(--font-mono);
+  font-weight: 700;
 }
 
 /* 3-DOTS ACTION MENU */
