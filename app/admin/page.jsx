@@ -2,176 +2,259 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import "./admin.css";
+
+// Custom Dropdown Select Component with custom vector arrow
+function CustomSelect({ options, value, onChange, placeholder = "Select option..." }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const selectedOption = options.find((opt) => opt.value === value);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="customSelectWrapper" ref={dropdownRef}>
+      <button
+        type="button"
+        className={`customSelectBtn ${isOpen ? "customSelectBtnFocused" : ""}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>{selectedOption ? selectedOption.label : placeholder}</span>
+        <img
+          src="/icons_admin/chevron-down.svg"
+          alt="Arrow"
+          className={`customSelectArrow ${isOpen ? "customSelectArrowOpen" : ""}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="customDropdownMenu">
+          {options.map((option) => (
+            <div
+              key={option.value}
+              className={`customOptionItem ${option.value === value ? "customOptionSelected" : ""}`}
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+            >
+              <span>{option.label}</span>
+              {option.value === value && (
+                <img src="/icons_admin/check.svg" alt="Selected" className="iconImg" style={{ width: "12px", height: "12px" }} />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Active top navigation tab: 'dashboard', 'site', 'broadcast', 'subscriptions'
-  const [activeTab, setActiveTab] = useState("broadcast");
+  // Active navigation tab: 'dashboard' | 'feedback' | 'dispatch'
+  const [activeTab, setActiveTab] = useState("feedback");
 
-  // Broadcast module view: null (showing initial 4 cards) or 'email' | 'lapath' | 'kliner' | 'telegram' (collapsed into single row)
-  const [broadcastTarget, setBroadcastTarget] = useState("lapath");
+  // Database State from Server API
+  const [feedbackItems, setFeedbackItems] = useState([]);
+  const [mutes, setMutes] = useState({});
+  const [replies, setReplies] = useState([]);
+  const [loadingDb, setLoadingDb] = useState(true);
 
-  // Form states for Dispatching Extension Notifications
+  // Filters
+  const [feedbackFilter, setFeedbackFilter] = useState("all");
+  const [feedbackSearchQuery, setFeedbackSearchQuery] = useState("");
+  const [expandedUserId, setExpandedUserId] = useState(null);
+  const [banDurationMap, setBanDurationMap] = useState({});
+
+  // Dispatch Form states
+  const [dispatchChannel, setDispatchChannel] = useState("lapath");
   const [dispatchForm, setDispatchForm] = useState({
     title: "",
-    category: "announcements", // 'system', 'announcements', 'personal'
-    targetType: "all", // 'all' or 'user'
+    category: "announcements",
+    targetType: "all",
     userId: "",
     inReplyTo: "",
     message: "",
   });
-
-  const [expandedCardId, setExpandedCardId] = useState(1);
   const [dispatchSuccess, setDispatchSuccess] = useState(false);
 
-  // History Database for LaPath & KLiner
-  const [lapathHistory, setLapathHistory] = useState([
-    {
-      id: 1,
-      title: "Summer Motion Giveaway!",
-      category: "Announcements",
-      date: "16.08.26 15:45",
-      target: "All Users",
-      inReplyTo: null,
-      message: "We are giving away 10 lifetime licenses for our upcoming premium suite. Join the community Discord to participate before August 25.",
-    },
-    {
-      id: 2,
-      title: "Custom Presets Feature Coming Soon",
-      category: "System Notice",
-      date: "14.08.26 11:20",
-      target: "All Users",
-      inReplyTo: null,
-      message: "Our next update will allow saving, exporting, and sharing custom motion curve presets directly in After Effects timeline.",
-    },
-    {
-      id: 3,
-      title: "Your Feature Request Was Approved!",
-      category: "Personal Reply",
-      date: "12.08.26 18:05",
-      target: "User #USR-84920",
-      inReplyTo: "Ticket #402 (Bezier Tangent Snapping)",
-      message: "Hey Alex! Thanks for reporting the tangent snapping issue on macOS. We verified the bug and released a hotfix in version 2.4.1.",
-    },
-  ]);
+  // Fetch Database function (DOES NOT auto-expand any card on interval polling!)
+  const fetchDb = async () => {
+    try {
+      const res = await fetch('/api/admin/feedback');
+      const data = await res.json();
+      if (data.ok) {
+        setFeedbackItems(data.feedback || []);
+        setMutes(data.mutes || {});
+        setReplies(data.replies || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch database:", err);
+    } finally {
+      setLoadingDb(false);
+    }
+  };
 
-  const [klinerHistory, setKlinerHistory] = useState([
-    {
-      id: 101,
-      title: "KLiner v2.1 Major Performance Upgrade",
-      category: "Announcements",
-      date: "15.08.26 14:10",
-      target: "All Users",
-      inReplyTo: null,
-      message: "Rendering keyframe velocity graphs is now 4x faster on complex multi-layer compositions. Update via the extension panel.",
-    },
-    {
-      id: 102,
-      title: "License Sync Confirmation",
-      category: "System Notice",
-      date: "11.08.26 09:30",
-      target: "User #USR-31904",
-      inReplyTo: null,
-      message: "Your Studio license has been synchronized and extended for 12 months. All premium modules are now unlocked.",
-    },
-  ]);
-
-  // Site Management Form states
-  const [socials, setSocials] = useState({
-    instagram: "https://instagram.com",
-    tiktok: "https://tiktok.com",
-    twitter: "https://x.com",
-    youtube: "https://youtube.com",
-    telegram: "https://t.me",
-    email: "rifemotion.info@gmail.com",
-  });
-
-  const [metaInfo, setMetaInfo] = useState({
-    title: "rifemotion — Motion Graphics Studio",
-    description: "rifemotion is a creative motion graphics and visual production studio.",
-  });
-
+  // Poll database every 4 seconds for live submissions
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (status === "authenticated") {
+      fetchDb();
+      const interval = setInterval(fetchDb, 4000);
+      return () => clearInterval(interval);
+    } else if (status === "unauthenticated") {
       router.push("/admin/login");
     }
   }, [status, router]);
 
-  // Handle category change logic
-  const handleCategoryChange = (newCategory) => {
-    let newTargetType = dispatchForm.targetType;
-    if (newCategory === "announcements") {
-      newTargetType = "all";
-    } else if (newCategory === "personal") {
-      newTargetType = "user";
+  // Handle Mute / Ban User Action
+  const handleMuteUser = async (userId, durationDays) => {
+    try {
+      const res = await fetch('/api/admin/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'mute_user',
+          userId: userId,
+          durationDays: durationDays
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setMutes(data.mutes || {});
+      }
+    } catch (err) {
+      console.error("Error muting user:", err);
     }
+  };
+
+  // Handle Unmute User Action
+  const handleUnmuteUser = async (userId) => {
+    try {
+      const res = await fetch('/api/admin/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'unmute_user',
+          userId: userId
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setMutes(data.mutes || {});
+      }
+    } catch (err) {
+      console.error("Error unmuting user:", err);
+    }
+  };
+
+  // Handle Reply to User Action
+  const handleReplyToUser = (userTarget, ticketRef = null) => {
+    setActiveTab("dispatch");
+    setDispatchChannel(userTarget.extension === "kliner" ? "kliner" : "lapath");
     setDispatchForm({
       ...dispatchForm,
-      category: newCategory,
-      targetType: newTargetType,
+      category: "personal",
+      targetType: "user",
+      userId: userTarget.userId,
+      inReplyTo: ticketRef ? `Ticket #${ticketRef.id} (${ticketRef.title})` : `Direct Reply to ${userTarget.userId}`,
     });
   };
 
-  // Handle Dispatch submit
-  const handleSendNotification = (e) => {
+  // Group Feedback items by User ID (1 User = 1 Unified Profile Card)
+  const usersGrouped = {};
+  feedbackItems.forEach((item) => {
+    if (!usersGrouped[item.userId]) {
+      usersGrouped[item.userId] = {
+        userId: item.userId,
+        email: item.email,
+        extensionName: item.extensionName,
+        hardware: item.hardware,
+        stats: item.stats,
+        os: item.os,
+        appVersion: item.appVersion,
+        daysInstalled: item.daysInstalled,
+        items: []
+      };
+    }
+    usersGrouped[item.userId].items.push(item);
+  });
+
+  const userProfilesList = Object.values(usersGrouped);
+
+  // Filter User Profiles based on search & category filter
+  const filteredUserProfiles = userProfilesList.filter((profile) => {
+    const matchesSearch =
+      profile.userId.toLowerCase().includes(feedbackSearchQuery.toLowerCase()) ||
+      profile.email.toLowerCase().includes(feedbackSearchQuery.toLowerCase()) ||
+      profile.hardware.toLowerCase().includes(feedbackSearchQuery.toLowerCase()) ||
+      profile.items.some(i => i.title.toLowerCase().includes(feedbackSearchQuery.toLowerCase()) || i.message.toLowerCase().includes(feedbackSearchQuery.toLowerCase()));
+
+    if (feedbackFilter === "all") return matchesSearch;
+    if (feedbackFilter === "lapath") return matchesSearch && profile.items.some(i => i.extension === "lapath");
+    if (feedbackFilter === "kliner") return matchesSearch && profile.items.some(i => i.extension === "kliner");
+    if (feedbackFilter === "bug") return matchesSearch && profile.items.some(i => i.type === "bug");
+    if (feedbackFilter === "feature") return matchesSearch && profile.items.some(i => i.type === "suggest");
+
+    return matchesSearch;
+  });
+
+  // Handle Dispatch Notification form submit
+  const handleSendNotification = async (e) => {
     e.preventDefault();
     if (!dispatchForm.title.trim() || !dispatchForm.message.trim()) {
       alert("Please enter a title and message.");
       return;
     }
-    if (dispatchForm.targetType === "user" && !dispatchForm.userId.trim()) {
-      alert("Please provide a User ID.");
-      return;
+
+    try {
+      const res = await fetch('/api/admin/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reply_user',
+          userId: dispatchForm.userId || 'all',
+          ticketId: null,
+          message: `${dispatchForm.title}: ${dispatchForm.message}`
+        })
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        setDispatchSuccess(true);
+        setTimeout(() => setDispatchSuccess(false), 3500);
+        fetchDb();
+        setDispatchForm({
+          title: "",
+          category: dispatchForm.category,
+          targetType: dispatchForm.targetType,
+          userId: "",
+          inReplyTo: "",
+          message: "",
+        });
+      }
+    } catch (err) {
+      console.error("Dispatch error:", err);
     }
-
-    const now = new Date();
-    const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear().toString().slice(2)} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-
-    const categoryMap = {
-      system: "System Notice",
-      announcements: "Announcements",
-      personal: "Personal Reply",
-    };
-
-    const newEntry = {
-      id: Date.now(),
-      title: dispatchForm.title.trim(),
-      category: categoryMap[dispatchForm.category],
-      date: dateStr,
-      target: dispatchForm.targetType === "all" ? "All Users" : `User #${dispatchForm.userId.trim()}`,
-      inReplyTo: dispatchForm.category === "personal" && dispatchForm.inReplyTo.trim() ? dispatchForm.inReplyTo.trim() : null,
-      message: dispatchForm.message.trim(),
-    };
-
-    if (broadcastTarget === "lapath") {
-      setLapathHistory([newEntry, ...lapathHistory]);
-    } else if (broadcastTarget === "kliner") {
-      setKlinerHistory([newEntry, ...klinerHistory]);
-    }
-
-    setExpandedCardId(newEntry.id);
-    setDispatchSuccess(true);
-    setTimeout(() => setDispatchSuccess(false), 3500);
-
-    setDispatchForm({
-      title: "",
-      category: dispatchForm.category,
-      targetType: dispatchForm.targetType,
-      userId: "",
-      inReplyTo: "",
-      message: "",
-    });
   };
 
-  if (status === "loading") {
+  if (status === "loading" || loadingDb) {
     return (
-      <div className="adminContainer" style={{ justifyContent: "center", alignItems: "center" }}>
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Loading portal...</p>
+      <div className="appShell" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+        <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem" }}>Loading portal...</p>
       </div>
     );
   }
@@ -181,411 +264,533 @@ export default function AdminDashboardPage() {
   }
 
   const user = session.user;
-  const currentHistory = broadcastTarget === "lapath" ? lapathHistory : klinerHistory;
 
   return (
-    <div className="adminContainer">
-      {/* Top Header */}
-      <header className="adminHeader">
-        <div className="headerInner">
-          <div className="brandGroup">
-            <Link href="/admin" className="brandLogo">
-              <span>rifemotion</span>
-              <span className="brandPill">Studio</span>
-            </Link>
-          </div>
+    <div className="appShell">
 
-          <div className="headerActions">
-            <Link href="/" target="_blank" className="liveBtn">
-              Live Website ↗
-            </Link>
-            <div className="userMenu">
-              {user.image && (
-                <img src={user.image} alt={user.name || "Admin"} className="userAvatar" />
+      {/* ========================================================================= */}
+      {/* 1. SIDEBAR */}
+      {/* ========================================================================= */}
+      <aside className="sideNav">
+        <div>
+          {/* Profile Card */}
+          <div className="profileCard">
+            <div className="profileMeta">
+              {user.image ? (
+                <img src={user.image} alt={user.name || "Admin"} className="avatarBadge" />
+              ) : (
+                <div className="avatarBadge">R</div>
               )}
-              <span className="userEmail">{user.email}</span>
-              <button
-                type="button"
-                className="signOutBtn"
-                onClick={() => signOut({ callbackUrl: "/admin/login" })}
-              >
-                Sign out
-              </button>
+              <div>
+                <div className="profileName">{user.name || "rifemotion admin"}</div>
+                <div className="profileSub">{user.email}</div>
+              </div>
             </div>
           </div>
+
+          {/* Search Box */}
+          <div className="searchBox">
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%" }}>
+              <img src="/icons_admin/search.svg" alt="Search" className="iconImg" style={{ width: "13px", height: "13px" }} />
+              <input type="text" className="searchInput" placeholder="Search..." />
+            </div>
+            <span className="searchKbd">⌘F</span>
+          </div>
+
+          {/* DASHBOARD */}
+          <div className="navGroupLabel">Essentials</div>
+          <div className="navList">
+            <button
+              type="button"
+              className={`navButton ${activeTab === "dashboard" ? "navButtonActive" : ""}`}
+              onClick={() => setActiveTab("dashboard")}
+            >
+              <img src="/icons_admin/dashboard.svg" alt="Dashboard" className="iconImg" />
+              <span>Dashboard</span>
+            </button>
+          </div>
+
+          {/* USER MANAGEMENT PANEL */}
+          <div className="navGroupLabel">User Management</div>
+          <div className="navList">
+            <button
+              type="button"
+              className={`navButton ${activeTab === "feedback" ? "navButtonActive" : ""}`}
+              onClick={() => setActiveTab("feedback")}
+            >
+              <img src="/icons_admin/message.svg" alt="Feedback & Reports" className="iconImg" />
+              <span>Feedback & User Profiles</span>
+            </button>
+            <button
+              type="button"
+              className={`navButton ${activeTab === "dispatch" ? "navButtonActive" : ""}`}
+              onClick={() => setActiveTab("dispatch")}
+            >
+              <img src="/icons_admin/broadcast.svg" alt="Send Notification" className="iconImg" />
+              <span>Send Notification</span>
+            </button>
+          </div>
+
+          <div className="navGroupLabel">Shortcuts</div>
+          <div className="navList">
+            <Link href="/" target="_blank" className="navButton">
+              <img src="/icons_admin/link.svg" alt="Website" className="iconImg" />
+              <span>Live Website ↗</span>
+            </Link>
+            <button
+              type="button"
+              className="navButton"
+              onClick={() => signOut({ callbackUrl: "/admin/login" })}
+            >
+              <img src="/icons_admin/logout.svg" alt="Sign Out" className="iconImg" />
+              <span>Sign out</span>
+            </button>
+          </div>
         </div>
-      </header>
 
-      {/* Segmented Sub Navigation */}
-      <nav className="subNavBar">
-        <div className="subNavInner">
-          <button
-            type="button"
-            className={`navTab ${activeTab === "dashboard" ? "navTabActive" : ""}`}
-            onClick={() => setActiveTab("dashboard")}
-          >
-            Dashboard
-          </button>
-          <button
-            type="button"
-            className={`navTab ${activeTab === "site" ? "navTabActive" : ""}`}
-            onClick={() => setActiveTab("site")}
-          >
-            Site Management
-          </button>
-          <button
-            type="button"
-            className={`navTab ${activeTab === "broadcast" ? "navTabActive" : ""}`}
-            onClick={() => setActiveTab("broadcast")}
-          >
-            Broadcast Center
-          </button>
-          <button
-            type="button"
-            className={`navTab ${activeTab === "subscriptions" ? "navTabActive" : ""}`}
-            onClick={() => setActiveTab("subscriptions")}
-          >
-            Subscription Management
-          </button>
+        {/* Sidebar Footer */}
+        <div className="sidebarBottom">
+          <div className="brandLabel">
+            <span className="brandIndicator"></span>
+            <span>rifemotion</span>
+          </div>
+          <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+            v3.3.0
+          </span>
         </div>
-      </nav>
+      </aside>
 
-      {/* Main Workspace */}
-      <main className="mainWorkspace">
-
+      {/* ========================================================================= */}
+      {/* 2. MAIN CANVAS */}
+      {/* ========================================================================= */}
+      <main className="mainCanvas">
+        
         {/* ========================================================================= */}
-        {/* BLOCK: BROADCAST CENTER */}
+        {/* VIEW: FEEDBACK & UNIFIED USER PROFILES */}
         {/* ========================================================================= */}
-        {activeTab === "broadcast" && (
+        {activeTab === "feedback" && (
           <div>
-            <div style={{ marginBottom: "1.25rem" }}>
-              <h1 className="pageTitle">Broadcast & Notification Center</h1>
-              <p className="pageSubtitle">
-                Dispatch announcements, system notices, and replies directly to in-app extension centers:
-              </p>
+            <div className="viewHeader">
+              <div>
+                <h1 className="viewTitle">User Profiles & Feedback Database</h1>
+                <p className="viewSubtitle">Unified user cards with hardware telemetry, extension stats, submission timeline, and feedback ban controls</p>
+              </div>
             </div>
 
-            {/* INITIAL 4 CARDS (Shown when broadcastTarget is null) */}
-            {broadcastTarget === null ? (
-              <div className="initialCardsGrid">
-                <div className="gridCard" onClick={() => setBroadcastTarget("email")}>
-                  <div>
-                    <div className="gridCardTitle">Email Broadcast</div>
-                    <p className="gridCardDesc">Audience newsletters & mass customer email campaigns.</p>
-                  </div>
-                  <div className="gridCardMeta">
-                    <span className="tagBadge">Standby</span>
-                    <span style={{ color: "var(--text-secondary)", fontSize: "0.75rem", fontWeight: 600 }}>Select →</span>
-                  </div>
-                </div>
-
-                <div className="gridCard" onClick={() => setBroadcastTarget("lapath")}>
-                  <div>
-                    <div className="gridCardTitle">LaPath Extension</div>
-                    <p className="gridCardDesc">Direct in-app notification center for After Effects extension.</p>
-                  </div>
-                  <div className="gridCardMeta">
-                    <span className="tagBadge" style={{ background: "var(--accent-black)", color: "#ffffff" }}>Active Hub</span>
-                    <span style={{ color: "var(--text-main)", fontSize: "0.75rem", fontWeight: 600 }}>Open Hub →</span>
-                  </div>
-                </div>
-
-                <div className="gridCard" onClick={() => setBroadcastTarget("kliner")}>
-                  <div>
-                    <div className="gridCardTitle">KLiner Extension</div>
-                    <p className="gridCardDesc">Direct in-app notification center for After Effects extension.</p>
-                  </div>
-                  <div className="gridCardMeta">
-                    <span className="tagBadge" style={{ background: "var(--accent-black)", color: "#ffffff" }}>Active Hub</span>
-                    <span style={{ color: "var(--text-main)", fontSize: "0.75rem", fontWeight: 600 }}>Open Hub →</span>
-                  </div>
-                </div>
-
-                <div className="gridCard" onClick={() => setBroadcastTarget("telegram")}>
-                  <div>
-                    <div className="gridCardTitle">Telegram & Webhooks</div>
-                    <p className="gridCardDesc">Automated studio feed releases and bot channel dispatch.</p>
-                  </div>
-                  <div className="gridCardMeta">
-                    <span className="tagBadge">Standby</span>
-                    <span style={{ color: "var(--text-secondary)", fontSize: "0.75rem", fontWeight: 600 }}>Select →</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* COLLAPSED SINGLE-LINE SELECTOR ROW (When a channel is selected) */
-              <div>
-                <div className="collapsedSelectorBar">
-                  <div className="collapsedTabsList">
-                    <button
-                      type="button"
-                      className={`collapsedTabBtn ${broadcastTarget === "email" ? "collapsedTabBtnActive" : ""}`}
-                      onClick={() => setBroadcastTarget("email")}
-                    >
-                      Email Broadcast
-                    </button>
-                    <button
-                      type="button"
-                      className={`collapsedTabBtn ${broadcastTarget === "lapath" ? "collapsedTabBtnActive" : ""}`}
-                      onClick={() => setBroadcastTarget("lapath")}
-                    >
-                      LaPath Extension
-                    </button>
-                    <button
-                      type="button"
-                      className={`collapsedTabBtn ${broadcastTarget === "kliner" ? "collapsedTabBtnActive" : ""}`}
-                      onClick={() => setBroadcastTarget("kliner")}
-                    >
-                      KLiner Extension
-                    </button>
-                    <button
-                      type="button"
-                      className={`collapsedTabBtn ${broadcastTarget === "telegram" ? "collapsedTabBtnActive" : ""}`}
-                      onClick={() => setBroadcastTarget("telegram")}
-                    >
-                      Telegram & Webhooks
-                    </button>
-                  </div>
-
+            <div className="cleanPanel">
+              <div className="panelHead">
+                {/* Filter Pills */}
+                <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
                   <button
                     type="button"
-                    className="expandAllBtn"
-                    onClick={() => setBroadcastTarget(null)}
+                    className={`selectorPillBtn ${feedbackFilter === "all" ? "selectorPillBtnActive" : ""}`}
+                    onClick={() => setFeedbackFilter("all")}
                   >
-                    View All Cards
+                    All Users ({userProfilesList.length})
+                  </button>
+                  <button
+                    type="button"
+                    className={`selectorPillBtn ${feedbackFilter === "lapath" ? "selectorPillBtnActive" : ""}`}
+                    onClick={() => setFeedbackFilter("lapath")}
+                  >
+                    LaPath
+                  </button>
+                  <button
+                    type="button"
+                    className={`selectorPillBtn ${feedbackFilter === "kliner" ? "selectorPillBtnActive" : ""}`}
+                    onClick={() => setFeedbackFilter("kliner")}
+                  >
+                    KLiner
+                  </button>
+                  <button
+                    type="button"
+                    className={`selectorPillBtn ${feedbackFilter === "bug" ? "selectorPillBtnActive" : ""}`}
+                    onClick={() => setFeedbackFilter("bug")}
+                  >
+                    Bug Reports
+                  </button>
+                  <button
+                    type="button"
+                    className={`selectorPillBtn ${feedbackFilter === "feature" ? "selectorPillBtnActive" : ""}`}
+                    onClick={() => setFeedbackFilter("feature")}
+                  >
+                    Suggestions
                   </button>
                 </div>
 
-                {/* EMAIL STUB */}
-                {broadcastTarget === "email" && (
-                  <div className="formPanel">
-                    <div className="panelHeading">
-                      <span className="panelHeadingTitle">Email Broadcast</span>
-                      <span className="tagBadge">Module In Development</span>
-                    </div>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: 1.6 }}>
-                      Email newsletter dispatch engine is currently on standby. Use the extension channels above for live notification broadcasting.
+                {/* Search Bar */}
+                <div style={{ width: "260px" }}>
+                  <input
+                    type="text"
+                    className="pillInput"
+                    placeholder="Search User ID, Email, Hardware..."
+                    value={feedbackSearchQuery}
+                    onChange={(e) => setFeedbackSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* UNIFIED USER PROFILE CARDS FEED */}
+              <div className="historyFeed" style={{ maxHeight: "760px" }}>
+                {filteredUserProfiles.length === 0 ? (
+                  <div style={{ padding: "3rem 1rem", textAlign: "center" }}>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem", marginBottom: "0.25rem" }}>
+                      No user profiles or feedback recorded yet.
+                    </p>
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.74rem" }}>
+                      Submissions from LaPath & KLiner will automatically appear here in real-time.
                     </p>
                   </div>
-                )}
+                ) : (
+                  filteredUserProfiles.map((profile) => {
+                    const isExpanded = expandedUserId === profile.userId;
+                    const isMuted = mutes[profile.userId] && new Date(mutes[profile.userId].bannedUntil).getTime() > Date.now();
+                    const selectedDuration = banDurationMap[profile.userId] || "1";
 
-                {/* TELEGRAM STUB */}
-                {broadcastTarget === "telegram" && (
-                  <div className="formPanel">
-                    <div className="panelHeading">
-                      <span className="panelHeadingTitle">Telegram & Webhooks</span>
-                      <span className="tagBadge">Module In Development</span>
-                    </div>
-                    <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: 1.6 }}>
-                      Connect studio Telegram bot tokens and webhook endpoints to stream automated updates.
-                    </p>
-                  </div>
-                )}
-
-                {/* 2-COLUMN DISPATCH & HISTORY (LaPath or KLiner) */}
-                {(broadcastTarget === "lapath" || broadcastTarget === "kliner") && (
-                  <div>
-                    {dispatchSuccess && (
-                      <div style={{
-                        background: "var(--accent-green-soft)",
-                        border: "1px solid var(--accent-green)",
-                        color: "var(--accent-green)",
-                        borderRadius: "var(--radius-pill)",
-                        padding: "0.65rem 1.25rem",
-                        fontSize: "0.825rem",
-                        fontWeight: 500,
-                        marginBottom: "1.25rem",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem"
-                      }}>
-                        <span>✓</span>
-                        <span>Notification successfully dispatched to <strong>{broadcastTarget === "lapath" ? "LaPath" : "KLiner"}</strong> and recorded to database.</span>
-                      </div>
-                    )}
-
-                    <div className="broadcastDenseLayout">
-                      {/* LEFT COLUMN: DENSE DISPATCH FORM */}
-                      <div className="formPanel">
-                        <div className="panelHeading">
-                          <span className="panelHeadingTitle">
-                            Dispatch to {broadcastTarget === "lapath" ? "LaPath" : "KLiner"}
-                          </span>
-                          <span className="tagBadge" style={{ background: "var(--accent-black)", color: "#ffffff" }}>
-                            {broadcastTarget.toUpperCase()}
-                          </span>
+                    return (
+                      <div
+                        key={profile.userId}
+                        className={`historyItemCard ${isExpanded ? "historyItemCardSelected" : ""}`}
+                        onClick={() => setExpandedUserId(isExpanded ? null : profile.userId)}
+                      >
+                        <div className="historyItemTop">
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                            <strong style={{ fontSize: "0.9rem", color: "var(--text-primary)" }}>{profile.userId}</strong>
+                            <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>({profile.email})</span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                            <span className={`pillTag ${isMuted ? "banned" : "ok"}`}>
+                              {isMuted ? "Muted / Banned" : "Active"}
+                            </span>
+                            <span className="pillTag active">{profile.items.length} {profile.items.length === 1 ? 'Submission' : 'Submissions'}</span>
+                          </div>
                         </div>
 
-                        <form onSubmit={handleSendNotification}>
-                          <div className="fieldGroup">
-                            <label className="fieldLabel">Notification Title</label>
-                            <input
-                              type="text"
-                              className="compactInput"
-                              placeholder="e.g. Summer Motion Giveaway!"
-                              value={dispatchForm.title}
-                              onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value })}
-                              required
-                            />
-                          </div>
-
-                          <div className="fieldGroup">
-                            <label className="fieldLabel">Category</label>
-                            <select
-                              className="compactSelect"
-                              value={dispatchForm.category}
-                              onChange={(e) => handleCategoryChange(e.target.value)}
-                            >
-                              <option value="announcements">Announcements (All Users)</option>
-                              <option value="system">System Notice (All or Single User)</option>
-                              <option value="personal">Personal Reply (Single User)</option>
-                            </select>
-                          </div>
-
-                          {dispatchForm.category === "system" && (
-                            <div className="fieldGroup">
-                              <label className="fieldLabel">Audience Target</label>
-                              <select
-                                className="compactSelect"
-                                value={dispatchForm.targetType}
-                                onChange={(e) => setDispatchForm({ ...dispatchForm, targetType: e.target.value })}
-                              >
-                                <option value="all">Broadcast to All Users</option>
-                                <option value="user">Specific User ID</option>
-                              </select>
-                            </div>
-                          )}
-
-                          {(dispatchForm.targetType === "user" || dispatchForm.category === "personal") && (
-                            <div className="fieldGroup">
-                              <label className="fieldLabel">User ID</label>
-                              <input
-                                type="text"
-                                className="compactInput"
-                                placeholder="e.g. USR-84920"
-                                value={dispatchForm.userId}
-                                onChange={(e) => setDispatchForm({ ...dispatchForm, userId: e.target.value })}
-                                required
-                              />
-                            </div>
-                          )}
-
-                          {dispatchForm.category === "personal" && (
-                            <div className="fieldGroup">
-                              <label className="fieldLabel">In Response To</label>
-                              <input
-                                type="text"
-                                className="compactInput"
-                                placeholder="e.g. Feature Request #402"
-                                value={dispatchForm.inReplyTo}
-                                onChange={(e) => setDispatchForm({ ...dispatchForm, inReplyTo: e.target.value })}
-                              />
-                            </div>
-                          )}
-
-                          <div className="fieldGroup">
-                            <label className="fieldLabel">Notification Message</label>
-                            <textarea
-                              className="compactTextarea"
-                              placeholder="Type notification text..."
-                              value={dispatchForm.message}
-                              onChange={(e) => setDispatchForm({ ...dispatchForm, message: e.target.value })}
-                              required
-                            />
-                          </div>
-
-                          <div className="sendActionRow">
-                            <button type="submit" className="submitBtn">
-                              Dispatch Notification
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-
-                      {/* RIGHT COLUMN: HISTORY & DATABASE LOG */}
-                      <div className="historyPanel">
-                        <div className="panelHeading">
-                          <span className="panelHeadingTitle">Broadcast History</span>
-                          <span style={{ color: "var(--text-secondary)", fontSize: "0.75rem", fontWeight: 500 }}>
-                            {currentHistory.length} sent
-                          </span>
+                        <div className="historyItemMeta">
+                          <span>OS: <strong>{profile.os}</strong></span>
+                          <span>•</span>
+                          <span>AE: <strong>{profile.appVersion}</strong></span>
+                          <span>•</span>
+                          <span>Installed: <strong>{profile.daysInstalled}</strong></span>
                         </div>
 
-                        <div className="historyList">
-                          {currentHistory.map((item) => {
-                            const isSelected = expandedCardId === item.id;
-                            return (
-                              <div
-                                key={item.id}
-                                className={`noticeCard ${isSelected ? "noticeCardSelected" : ""}`}
-                                onClick={() => setExpandedCardId(isSelected ? null : item.id)}
-                              >
-                                <div className="noticeCardHeader">
-                                  <span className="noticeTitle">{item.title}</span>
-                                  <span className={`tagBadge ${
-                                    item.category === "Announcements"
-                                      ? "announcements"
-                                      : item.category === "System Notice"
-                                      ? "system"
-                                      : "personal"
-                                  }`}>
-                                    {item.category}
-                                  </span>
-                                </div>
+                        {!isExpanded ? (
+                          <p className="historyItemSnippet">
+                            Latest: "{profile.items[0]?.title}" — {profile.items[0]?.message}
+                          </p>
+                        ) : (
+                          <div style={{ marginTop: "0.85rem", paddingTop: "0.85rem", borderTop: "1px solid var(--border-subtle)" }}>
+                            
+                            {/* Hardware & Telemetry Accordion */}
+                            <div style={{
+                              background: "var(--bg-app)",
+                              border: "1px solid var(--border-subtle)",
+                              borderRadius: "var(--radius-sm)",
+                              padding: "0.85rem",
+                              marginBottom: "1rem"
+                            }}>
+                              <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.4rem" }}>
+                                Hardware & System Telemetry
+                              </div>
+                              <div style={{ fontSize: "0.78rem", color: "var(--text-primary)", fontFamily: "var(--font-mono)", marginBottom: "0.45rem" }}>
+                                {profile.hardware}
+                              </div>
+                              <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>
+                                Extension Stats: <code>{profile.stats}</code>
+                              </div>
+                            </div>
 
-                                <div className="noticeMetaLine">
-                                  <span>{item.date}</span>
-                                  <span>•</span>
-                                  <span>{item.target}</span>
-                                </div>
-
-                                {!isSelected ? (
-                                  <p className="noticeSnippet">{item.message}</p>
-                                ) : (
-                                  <div>
-                                    <p className="noticeFullBody">{item.message}</p>
-                                    <div className="noticeDetailFooter">
-                                      <span>Target: <strong>{item.target}</strong></span>
-                                      {item.inReplyTo && (
-                                        <span>In reply to: <em>{item.inReplyTo}</em></span>
-                                      )}
+                            {/* Submission Timeline */}
+                            <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.5rem" }}>
+                              Submission Timeline ({profile.items.length})
+                            </div>
+                            
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1rem" }}>
+                              {profile.items.map((sub) => (
+                                <div key={sub.id} style={{
+                                  background: "#17181d",
+                                  border: "1px solid var(--border-subtle)",
+                                  borderRadius: "var(--radius-xs)",
+                                  padding: "0.75rem 0.85rem"
+                                }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                      <span style={{ fontWeight: 700, fontSize: "0.82rem" }}>#{sub.id}</span>
+                                      <span style={{ fontWeight: 600, fontSize: "0.82rem" }}>{sub.title}</span>
                                     </div>
+                                    <div style={{ display: "flex", gap: "0.3rem" }}>
+                                      <span className="pillTag">{sub.extensionName}</span>
+                                      <span className={`pillTag ${sub.type === "bug" ? "banned" : "ok"}`}>{sub.typeName}</span>
+                                    </div>
+                                  </div>
+
+                                  <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)", lineHeight: 1.45, marginBottom: "0.45rem" }}>
+                                    {sub.message}
+                                  </p>
+
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                                    <span>Submitted: {sub.date}</span>
+                                    {sub.telegramMediaUrl ? (
+                                      <Link
+                                        href={sub.telegramMediaUrl}
+                                        target="_blank"
+                                        onClick={(e) => e.stopPropagation()}
+                                        style={{ color: "var(--text-primary)", textDecoration: "underline" }}
+                                      >
+                                        View Media in Telegram ↗
+                                      </Link>
+                                    ) : (
+                                      <span>No Media Attachment</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Controls Footer (Clean Separated Buttons with gap: 1rem) */}
+                            <div style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              paddingTop: "0.75rem",
+                              borderTop: "1px dashed var(--border-subtle)",
+                              gap: "1rem"
+                            }}>
+                              {/* Ban / Mute Controls */}
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }} onClick={(e) => e.stopPropagation()}>
+                                {isMuted ? (
+                                  <button
+                                    type="button"
+                                    className="successPillBtn"
+                                    onClick={() => handleUnmuteUser(profile.userId)}
+                                  >
+                                    Unmute User Access
+                                  </button>
+                                ) : (
+                                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                    <div style={{ width: "110px" }}>
+                                      <CustomSelect
+                                        options={[
+                                          { label: "1 Day", value: "1" },
+                                          { label: "3 Days", value: "3" },
+                                          { label: "7 Days", value: "7" },
+                                          { label: "30 Days", value: "30" },
+                                          { label: "Permanent", value: "permanent" },
+                                        ]}
+                                        value={selectedDuration}
+                                        onChange={(val) => setBanDurationMap({ ...banDurationMap, [profile.userId]: val })}
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="dangerPillBtn"
+                                      onClick={() => handleMuteUser(profile.userId, selectedDuration)}
+                                    >
+                                      Mute Feedback
+                                    </button>
                                   </div>
                                 )}
                               </div>
-                            );
-                          })}
-                        </div>
+
+                              {/* Reply Button */}
+                              <button
+                                type="button"
+                                className="submitPillBtn"
+                                style={{ padding: "0.35rem 0.95rem", fontSize: "0.75rem", flexShrink: 0 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleReplyToUser(profile, profile.items[0]);
+                                }}
+                              >
+                                Reply to User →
+                              </button>
+                            </div>
+
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })
                 )}
               </div>
-            )}
+            </div>
           </div>
         )}
 
         {/* ========================================================================= */}
-        {/* BLOCK: DASHBOARD */}
+        {/* VIEW: SEND NOTIFICATION */}
+        {/* ========================================================================= */}
+        {activeTab === "dispatch" && (
+          <div>
+            <div className="viewHeader">
+              <div>
+                <h1 className="viewTitle">Send Notification</h1>
+                <p className="viewSubtitle">Dispatch announcements, system notices, and replies via Email or LaPath extension</p>
+              </div>
+            </div>
+
+            {dispatchSuccess && (
+              <div style={{
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid var(--border-medium)",
+                color: "var(--text-primary)",
+                borderRadius: "var(--radius-sm)",
+                padding: "0.6rem 0.95rem",
+                fontSize: "0.78rem",
+                marginBottom: "1rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem"
+              }}>
+                <img src="/icons_admin/check.svg" alt="Check" className="iconImg" style={{ width: "13px", height: "13px" }} />
+                <span>Notification dispatched to <strong>{dispatchChannel === "lapath" ? "LaPath Extension" : "Email Broadcast"}</strong> and recorded to database log.</span>
+              </div>
+            )}
+
+            <div className="denseTwoCol">
+              {/* LEFT COLUMN: DISPATCH FORM WITH CUSTOM DROPDOWNS */}
+              <div className="cleanPanel">
+                <div className="panelHead">
+                  <span className="panelHeadTitle">Dispatch Form</span>
+                  <span className="pillTag active">{dispatchChannel === "lapath" ? "LAPATH EXTENSION" : "EMAIL BROADCAST"}</span>
+                </div>
+
+                <form onSubmit={handleSendNotification}>
+                  {/* Custom Dropdown 1: Select Channel */}
+                  <div className="inputField">
+                    <label className="inputLabel">Select Channel</label>
+                    <CustomSelect
+                      options={[
+                        { label: "LaPath Extension", value: "lapath" },
+                        { label: "Email Broadcast", value: "email" },
+                      ]}
+                      value={dispatchChannel}
+                      onChange={(val) => setDispatchChannel(val)}
+                    />
+                  </div>
+
+                  <div className="inputField">
+                    <label className="inputLabel">Notification Title</label>
+                    <input
+                      type="text"
+                      className="pillInput"
+                      placeholder="e.g. Summer Motion Giveaway!"
+                      value={dispatchForm.title}
+                      onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  {/* Custom Dropdown 2: Category */}
+                  <div className="inputField">
+                    <label className="inputLabel">Category</label>
+                    <CustomSelect
+                      options={[
+                        { label: "Announcements (All Users)", value: "announcements" },
+                        { label: "System Notice (All or Single User)", value: "system" },
+                        { label: "Personal Reply (Single User)", value: "personal" },
+                      ]}
+                      value={dispatchForm.category}
+                      onChange={(val) => setDispatchForm({ ...dispatchForm, category: val })}
+                    />
+                  </div>
+
+                  {dispatchForm.category === "personal" && (
+                    <div className="inputField">
+                      <label className="inputLabel">User ID</label>
+                      <input
+                        type="text"
+                        className="pillInput"
+                        placeholder="e.g. usr_99a81b2c4"
+                        value={dispatchForm.userId}
+                        onChange={(e) => setDispatchForm({ ...dispatchForm, userId: e.target.value })}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {dispatchForm.category === "personal" && (
+                    <div className="inputField">
+                      <label className="inputLabel">In Response To</label>
+                      <input
+                        type="text"
+                        className="pillInput"
+                        placeholder="e.g. Feature Request #402"
+                        value={dispatchForm.inReplyTo}
+                        onChange={(e) => setDispatchForm({ ...dispatchForm, inReplyTo: e.target.value })}
+                      />
+                    </div>
+                  )}
+
+                  <div className="inputField">
+                    <label className="inputLabel">Notification Message</label>
+                    <textarea
+                      className="pillTextarea"
+                      placeholder="Type notification text..."
+                      value={dispatchForm.message}
+                      onChange={(e) => setDispatchForm({ ...dispatchForm, message: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
+                    <button type="submit" className="submitPillBtn">
+                      Dispatch Notification
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* RIGHT COLUMN: REPLIES HISTORY LOG */}
+              <div className="cleanPanel">
+                <div className="panelHead">
+                  <span className="panelHeadTitle">Dispatch History</span>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.72rem" }}>
+                    {replies.length} logged
+                  </span>
+                </div>
+
+                <div className="historyFeed">
+                  {replies.map((item) => (
+                    <div key={item.id} className="historyItemCard">
+                      <div className="historyItemTop">
+                        <span className="historyItemTitle">Reply to #{item.userId}</span>
+                        <span className="pillTag active">{item.date}</span>
+                      </div>
+                      <p className="historyItemBody">{item.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* VIEW: DASHBOARD */}
         {/* ========================================================================= */}
         {activeTab === "dashboard" && (
           <div>
-            <h1 className="pageTitle">Dashboard & Studio Overview</h1>
-            <p className="pageSubtitle">Live visitor telemetry and infrastructure health status:</p>
+            <div className="viewHeader">
+              <div>
+                <h1 className="viewTitle">Dashboard</h1>
+                <p className="viewSubtitle">Studio operations, infrastructure health, and telemetry</p>
+              </div>
+            </div>
 
             <div className="metricsGrid">
               <div className="metricCard">
                 <div className="metricCardLabel">Live Visitors</div>
                 <div className="metricCardValue">
                   <span>24</span>
-                  <span className="metricCardNote">● Active</span>
+                  <span className="metricCardNote">Active</span>
                 </div>
               </div>
               <div className="metricCard">
-                <div className="metricCardLabel">30d Views</div>
+                <div className="metricCardLabel">Registered Users</div>
                 <div className="metricCardValue">
-                  <span>14,820</span>
-                  <span className="metricCardNote">+18.4%</span>
+                  <span>{userProfilesList.length}</span>
+                  <span className="metricCardNote">In Database</span>
                 </div>
               </div>
               <div className="metricCard">
@@ -603,231 +808,11 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             </div>
-
-            <div className="formPanel">
-              <div className="panelHeading">
-                <span className="panelHeadingTitle">System Telemetry</span>
-                <span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>
-                  Local Dev Active
-                </span>
-              </div>
-
-              <table className="cleanTable">
-                <thead>
-                  <tr>
-                    <th>Service</th>
-                    <th>Runtime</th>
-                    <th>Status</th>
-                    <th>Endpoint</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Next.js App Engine</td>
-                    <td>Node.js (App Router)</td>
-                    <td><span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>Running</span></td>
-                    <td><code>http://localhost:3000</code></td>
-                  </tr>
-                  <tr>
-                    <td>Google OAuth 2.0</td>
-                    <td>NextAuth.js (JWT)</td>
-                    <td><span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>Authorized</span></td>
-                    <td><code>{user.email}</code></td>
-                  </tr>
-                  <tr>
-                    <td>Production Edge CDN</td>
-                    <td>Vercel Global Edge</td>
-                    <td><span className="tagBadge">Linked</span></td>
-                    <td><code>https://rifemotion.com</code></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* BLOCK: SITE MANAGEMENT */}
-        {/* ========================================================================= */}
-        {activeTab === "site" && (
-          <div>
-            <h1 className="pageTitle">Site Management</h1>
-            <p className="pageSubtitle">Manage background showreels, social media channels, and SEO tags:</p>
-
-            <div className="formPanel" style={{ marginBottom: "1.5rem" }}>
-              <div className="panelHeading">
-                <span className="panelHeadingTitle">Hero Video Assets</span>
-                <button type="button" className="expandAllBtn">Replace Video</button>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
-                <div className="fieldGroup">
-                  <label className="fieldLabel">Primary Video</label>
-                  <input type="text" className="compactInput" readOnly value="/video.mp4 (7.0 MB)" />
-                </div>
-                <div className="fieldGroup">
-                  <label className="fieldLabel">Fallback Video</label>
-                  <input type="text" className="compactInput" readOnly value="/video.webm (6.6 MB)" />
-                </div>
-                <div className="fieldGroup">
-                  <label className="fieldLabel">Mask Animation</label>
-                  <input type="text" className="compactInput" readOnly value="Soft Feathered Radial (4.5s)" />
-                </div>
-              </div>
-            </div>
-
-            <div className="formPanel">
-              <div className="panelHeading">
-                <span className="panelHeadingTitle">Social Media & Bio Links</span>
-                <button type="button" className="submitBtn" onClick={() => alert("Links updated!")}>
-                  Save Links
-                </button>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
-                <div className="fieldGroup">
-                  <label className="fieldLabel">Instagram</label>
-                  <input
-                    type="text"
-                    className="compactInput"
-                    value={socials.instagram}
-                    onChange={(e) => setSocials({ ...socials, instagram: e.target.value })}
-                  />
-                </div>
-                <div className="fieldGroup">
-                  <label className="fieldLabel">TikTok</label>
-                  <input
-                    type="text"
-                    className="compactInput"
-                    value={socials.tiktok}
-                    onChange={(e) => setSocials({ ...socials, tiktok: e.target.value })}
-                  />
-                </div>
-                <div className="fieldGroup">
-                  <label className="fieldLabel">X (Twitter)</label>
-                  <input
-                    type="text"
-                    className="compactInput"
-                    value={socials.twitter}
-                    onChange={(e) => setSocials({ ...socials, twitter: e.target.value })}
-                  />
-                </div>
-                <div className="fieldGroup">
-                  <label className="fieldLabel">YouTube</label>
-                  <input
-                    type="text"
-                    className="compactInput"
-                    value={socials.youtube}
-                    onChange={(e) => setSocials({ ...socials, youtube: e.target.value })}
-                  />
-                </div>
-                <div className="fieldGroup">
-                  <label className="fieldLabel">Telegram</label>
-                  <input
-                    type="text"
-                    className="compactInput"
-                    value={socials.telegram}
-                    onChange={(e) => setSocials({ ...socials, telegram: e.target.value })}
-                  />
-                </div>
-                <div className="fieldGroup">
-                  <label className="fieldLabel">Contact Email</label>
-                  <input
-                    type="email"
-                    className="compactInput"
-                    value={socials.email}
-                    onChange={(e) => setSocials({ ...socials, email: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* BLOCK: SUBSCRIPTION MANAGEMENT */}
-        {/* ========================================================================= */}
-        {activeTab === "subscriptions" && (
-          <div>
-            <h1 className="pageTitle">Subscription Management</h1>
-            <p className="pageSubtitle">Manage member plans, active subscribers, and monthly recurring revenue:</p>
-
-            <div className="metricsGrid">
-              <div className="metricCard">
-                <div className="metricCardLabel">Monthly Revenue</div>
-                <div className="metricCardValue">
-                  <span>$8,450</span>
-                  <span className="metricCardNote">+12.6% MRR</span>
-                </div>
-              </div>
-              <div className="metricCard">
-                <div className="metricCardLabel">Active Subscribers</div>
-                <div className="metricCardValue">
-                  <span>142</span>
-                  <span className="metricCardNote">98% Retention</span>
-                </div>
-              </div>
-              <div className="metricCard">
-                <div className="metricCardLabel">ARPU</div>
-                <div className="metricCardValue">
-                  <span>$59.50</span>
-                  <span className="metricCardNote">Per User</span>
-                </div>
-              </div>
-              <div className="metricCard">
-                <div className="metricCardLabel">Active Tiers</div>
-                <div className="metricCardValue">
-                  <span>3</span>
-                  <span className="metricCardNote">Configured</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="formPanel">
-              <div className="panelHeading">
-                <span className="panelHeadingTitle">Membership Tiers</span>
-                <button type="button" className="expandAllBtn">+ Add Tier</button>
-              </div>
-
-              <table className="cleanTable">
-                <thead>
-                  <tr>
-                    <th>Tier Name</th>
-                    <th>Interval</th>
-                    <th>Price</th>
-                    <th>Subscribers</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>Creator Pass</strong></td>
-                    <td>Monthly</td>
-                    <td>$29 / mo</td>
-                    <td>84 members</td>
-                    <td><span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>Active</span></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Studio Retainer</strong></td>
-                    <td>Monthly</td>
-                    <td>$149 / mo</td>
-                    <td>42 members</td>
-                    <td><span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>Active</span></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Enterprise Dedicated</strong></td>
-                    <td>Annual</td>
-                    <td>$1,200 / yr</td>
-                    <td>16 members</td>
-                    <td><span className="tagBadge" style={{ background: "var(--accent-green-soft)", color: "var(--accent-green)" }}>Active</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
           </div>
         )}
 
       </main>
+
     </div>
   );
 }
