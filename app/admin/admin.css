@@ -452,7 +452,52 @@ body {
   border-color: var(--border-focus);
 }
 
+/* DESKTOP VS MOBILE FILTER CONTROLS */
+.desktopFilterTabs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.mobileFilterSection {
+  display: none;
+  width: 100%;
+}
+
+.mobileFilterToggleBtn {
+  width: 100%;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  padding: 0.45rem 0.65rem;
+  color: var(--text-pure);
+  font-size: 0.76rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.mobileFilterGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  padding: 0.45rem;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+}
+
 @media (max-width: 768px) {
+  .desktopFilterTabs {
+    display: none;
+  }
+  .mobileFilterSection {
+    display: block;
+  }
   .mainCanvas {
     padding: 0.75rem 0.65rem;
   }

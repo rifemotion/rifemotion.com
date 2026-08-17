@@ -81,6 +81,7 @@ export default function AdminDashboardPage() {
   const [feedbackFilter, setFeedbackFilter] = useState("all");
   const [feedbackSearchQuery, setFeedbackSearchQuery] = useState("");
   const [expandedSubMap, setExpandedSubMap] = useState({});
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   // Toggle specific drawer section for a user
   const toggleDrawer = (userId, tabName, profileItems) => {
@@ -432,6 +433,18 @@ export default function AdminDashboardPage() {
     return matchesSearch;
   });
 
+  const filterOptions = [
+    { id: "all", label: `All Users (${userProfilesList.length})`, icon: "👥" },
+    { id: "lapath", label: "LaPath", icon: "⚡" },
+    { id: "kliner", label: "KLiner", icon: "📐" },
+    { id: "bug", label: "Bug Reports", icon: "🐞" },
+    { id: "feature", label: "Suggestions", icon: "💡" },
+    { id: "review", label: "Reviews", icon: "⭐" },
+  ];
+
+  const currentFilterLabel = filterOptions.find(f => f.id === feedbackFilter)?.label || "All Users";
+  const currentFilterIcon = filterOptions.find(f => f.id === feedbackFilter)?.icon || "👥";
+
   if (status === "loading" || loadingDb) {
     return (
       <div className="appShell" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
@@ -547,23 +560,52 @@ export default function AdminDashboardPage() {
             {/* DENSE TOP TOOLBAR */}
             <div className="denseToolbar">
               <div className="toolbarLeft">
-                {[
-                  { id: "all", label: `All Users (${userProfilesList.length})` },
-                  { id: "lapath", label: "LaPath" },
-                  { id: "kliner", label: "KLiner" },
-                  { id: "bug", label: "Bug Reports" },
-                  { id: "feature", label: "Suggestions" },
-                  { id: "review", label: "Reviews" },
-                ].map((tab) => (
+                {/* Desktop Tabs */}
+                <div className="desktopFilterTabs">
+                  {filterOptions.map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={`denseTabBtn ${feedbackFilter === tab.id ? "denseTabBtnActive" : ""}`}
+                      onClick={() => setFeedbackFilter(tab.id)}
+                    >
+                      <span>{tab.icon}</span>
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Mobile Collapsible Filter Button & Dropdown */}
+                <div className="mobileFilterSection">
                   <button
-                    key={tab.id}
                     type="button"
-                    className={`denseTabBtn ${feedbackFilter === tab.id ? "denseTabBtnActive" : ""}`}
-                    onClick={() => setFeedbackFilter(tab.id)}
+                    className="mobileFilterToggleBtn"
+                    onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
                   >
-                    {tab.label}
+                    <span>{currentFilterIcon} Filter: {currentFilterLabel}</span>
+                    <span>{mobileFilterOpen ? '▴' : '▾'}</span>
                   </button>
-                ))}
+
+                  {mobileFilterOpen && (
+                    <div className="mobileFilterGrid">
+                      {filterOptions.map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          className={`denseTabBtn ${feedbackFilter === tab.id ? "denseTabBtnActive" : ""}`}
+                          style={{ textAlign: "left", justifyContent: "flex-start" }}
+                          onClick={() => {
+                            setFeedbackFilter(tab.id);
+                            setMobileFilterOpen(false);
+                          }}
+                        >
+                          <span>{tab.icon}</span>
+                          <span>{tab.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="toolbarRight">
