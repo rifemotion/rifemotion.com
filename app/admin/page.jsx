@@ -74,12 +74,27 @@ export default function AdminDashboardPage() {
   const [readFeedbackIds, setReadFeedbackIds] = useState([]);
   const [copiedUserId, setCopiedUserId] = useState(null);
 
+  // Modular Drawer Tab State: { [userId]: 'feedback' | 'replies' | 'specs' | null }
+  const [activeDrawerTab, setActiveDrawerTab] = useState({});
+
   // Filters & State
   const [feedbackFilter, setFeedbackFilter] = useState("all");
   const [feedbackSearchQuery, setFeedbackSearchQuery] = useState("");
-  const [expandedUserId, setExpandedUserId] = useState(null);
-  const [expandedSpecsMap, setExpandedSpecsMap] = useState({});
   const [expandedSubMap, setExpandedSubMap] = useState({});
+
+  // Toggle specific drawer section for a user
+  const toggleDrawer = (userId, tabName, profileItems) => {
+    setActiveDrawerTab((prev) => ({
+      ...prev,
+      [userId]: prev[userId] === tabName ? null : tabName
+    }));
+
+    if (tabName === 'feedback' && profileItems) {
+      const userItemIds = profileItems.map(i => i.id);
+      const merged = Array.from(new Set([...readFeedbackIds, ...userItemIds]));
+      saveReadIds(merged);
+    }
+  };
 
   // Copy User ID handler
   const handleCopyUserId = (e, userId) => {
@@ -578,10 +593,11 @@ export default function AdminDashboardPage() {
             <div className="denseTablePanel">
               {/* TABLE HEADER */}
               <div className="denseTableHeader">
-                <div>User ID / Email</div>
-                <div>App & Environment</div>
-                <div>Status</div>
-                <div>Submissions</div>
+                <div>User ID & Email</div>
+                <div>Extension & License</div>
+                <div>Feedbacks</div>
+                <div>Direct Replies</div>
+                <div>Hardware & Stats</div>
                 <div></div>
               </div>
 
@@ -593,8 +609,7 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                   filteredUserProfiles.map((profile) => {
-                    const isExpanded = expandedUserId === profile.userId;
-                    const isSpecsExpanded = expandedSpecsMap[profile.userId] || false;
+                    const currentTab = activeDrawerTab[profile.userId] || null;
                     const userMute = mutes[profile.userId];
                     const isMuted = userMute && !userMute.shadowBanned && new Date(userMute.bannedUntil).getTime() > Date.now();
                     const isShadowBanned = userMute && userMute.shadowBanned;
@@ -605,14 +620,12 @@ export default function AdminDashboardPage() {
                     return (
                       <div
                         key={profile.userId}
-                        className={`denseRowWrapper ${isExpanded ? 'isRowExpanded' : ''}`}
+                        className={`denseRowWrapper ${currentTab ? 'isRowExpanded' : ''}`}
                       >
-                        {/* MAIN ROW LINE */}
-                        <div
-                          className="denseRowMain"
-                          onClick={() => handleUserRowClick(profile)}
-                        >
-                          {/* USER CELL */}
+                        {/* MAIN 1-LINE MODULAR ROW */}
+                        <div className="denseRowMain">
+                          
+                          {/* 1. USER & EMAIL */}
                           <div className="cellUser">
                             <span className={`statusIndicatorDot ${isShadowBanned ? 'shadow' : isMuted ? 'muted' : 'active'}`} />
                             <div className="userIdWrapper">
@@ -632,47 +645,66 @@ export default function AdminDashboardPage() {
                                 )}
                               </button>
                             </div>
-                            {profile.emails && profile.emails.length > 0 && (
+                            {profile.emails && profile.emails.length > 0 ? (
                               <div style={{ display: "inline-flex", gap: "0.25rem", flexWrap: "wrap", alignItems: "center" }}>
                                 {profile.emails.map((em) => (
                                   <span key={em} className="userEmailText">({em})</span>
                                 ))}
                               </div>
-                            )}
-                            {hasUnread && (
-                              <span className="badgePill new">NEW</span>
-                            )}
-                          </div>
-
-                          {/* SPECS CELL */}
-                          <div className="cellSpecs">
-                            <span>{profile.extensionName}</span>
-                            <span style={{ color: "var(--text-muted)", margin: "0 0.35rem" }}>•</span>
-                            <span>{profile.os || 'Win'} / AE {profile.appVersion || '26.x'}</span>
-                          </div>
-
-                          {/* STATUS CELL */}
-                          <div className="cellStatus">
-                            {isShadowBanned ? (
-                              <span className="badgePill shadow">Shadow Banned</span>
-                            ) : isMuted ? (
-                              <span className="badgePill muted">Muted</span>
                             ) : (
-                              <span className="badgePill active">Active</span>
+                              <span className="userEmailText" style={{ color: "var(--text-dark)" }}>-</span>
                             )}
                           </div>
 
-                          {/* COUNT CELL */}
-                          <div className="cellCount">
-                            <span className="badgePill">
-                              {profile.items.length} {profile.items.length === 1 ? 'submission' : 'submissions'}
-                            </span>
-                            {latestItem && latestItem.type === 'review' && latestItem.rating && (
-                              <span className="badgePill stars">★ {latestItem.rating}/5</span>
-                            )}
+                          {/* 2. EXTENSION & LICENSE */}
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", overflow: "hidden" }}>
+                            <span className="badgePill">{profile.extensionName}</span>
+                            <span className="badgePill active" style={{ fontSize: "0.64rem" }}>✓ Licensed</span>
                           </div>
 
-                          {/* ACTIONS CELL */}
+                          {/* 3. FEEDBACKS BUTTON */}
+                          <div>
+                            <button
+                              type="button"
+                              className={`interactivePillBtn ${currentTab === 'feedback' ? 'active' : ''}`}
+                              onClick={() => toggleDrawer(profile.userId, 'feedback', profile.items)}
+                              title="Toggle Submissions Drawer"
+                            >
+                              <span>💬 {profile.items.length} {profile.items.length === 1 ? 'Message' : 'Messages'}</span>
+                              {latestItem && latestItem.type === 'review' && latestItem.rating && (
+                                <span className="badgePill stars" style={{ padding: "0.05rem 0.25rem", fontSize: "0.62rem" }}>★ {latestItem.rating}/5</span>
+                              )}
+                              {hasUnread && (
+                                <span className="badgePill new" style={{ padding: "0.05rem 0.25rem", fontSize: "0.6rem" }}>NEW</span>
+                              )}
+                            </button>
+                          </div>
+
+                          {/* 4. DIRECT REPLIES BUTTON */}
+                          <div>
+                            <button
+                              type="button"
+                              className={`interactivePillBtn ${currentTab === 'replies' ? 'active' : ''}`}
+                              onClick={() => toggleDrawer(profile.userId, 'replies')}
+                              title="Toggle Direct Responses Drawer"
+                            >
+                              <span>✉ {userReplies.length} Replies</span>
+                            </button>
+                          </div>
+
+                          {/* 5. HARDWARE & STATS BUTTON */}
+                          <div>
+                            <button
+                              type="button"
+                              className={`interactivePillBtn ${currentTab === 'specs' ? 'active' : ''}`}
+                              onClick={() => toggleDrawer(profile.userId, 'specs')}
+                              title="Toggle Hardware & Stats Drawer"
+                            >
+                              <span>🖥 Specs ({profile.os || 'Win'})</span>
+                            </button>
+                          </div>
+
+                          {/* 6. ACTIONS MENU */}
                           <div className="cellActions" onClick={(e) => e.stopPropagation()}>
                             <button
                               type="button"
@@ -724,15 +756,15 @@ export default function AdminDashboardPage() {
                           </div>
                         </div>
 
-                        {/* EXPANDABLE DRAWER */}
-                        <div className={`accordionContent ${isExpanded ? 'isExpanded' : ''}`}>
+                        {/* EXPANDABLE MODULAR DRAWER PANEL */}
+                        <div className={`accordionContent ${currentTab ? 'isExpanded' : ''}`}>
                           <div className="accordionInner">
                             <div className="drawerContainer" onClick={(e) => e.stopPropagation()}>
-                              <div className="drawerSplitGrid">
-                                
-                                {/* LEFT COLUMN: SUBMISSION CHAIN */}
-                                <div className="drawerColumn">
-                                  <div className="drawerColHead">
+                              
+                              {/* TAB 1: FEEDBACK CHAIN */}
+                              {currentTab === 'feedback' && (
+                                <div>
+                                  <div className="drawerColHead" style={{ marginBottom: "0.5rem" }}>
                                     <span>Submissions Chain ({profile.items.length})</span>
                                     <span style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>Right click to delete</span>
                                   </div>
@@ -809,54 +841,15 @@ export default function AdminDashboardPage() {
                                     })}
                                   </div>
                                 </div>
+                              )}
 
-                                {/* RIGHT COLUMN: HARDWARE SPEC & REPLIES */}
-                                <div className="drawerColumn">
-                                  
-                                  {/* HARDWARE SPEC ACCORDION */}
-                                  <div
-                                    className="hardwareBox"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setExpandedSpecsMap({ ...expandedSpecsMap, [profile.userId]: !isSpecsExpanded });
-                                    }}
-                                  >
-                                    <div className="hardwareBoxHeader">
-                                      <span className="hardwareBoxTitle">
-                                        <span>PC Telemetry & Specs</span>
-                                        <span style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>{isSpecsExpanded ? '▴' : '▾'}</span>
-                                      </span>
-                                      <span className="hardwareBoxSub">
-                                        {profile.os} • AE {profile.appVersion}
-                                      </span>
-                                    </div>
-
-                                    <div className={`accordionContent ${isSpecsExpanded ? 'isExpanded' : ''}`}>
-                                      <div className="accordionInner">
-                                        <div className="hardwareDetailRows">
-                                          <div className="hardwareRow">
-                                            <span className="hwLabel">GPU / CPU</span>
-                                            <span className="hwVal">{profile.hardware}</span>
-                                          </div>
-                                          <div className="hardwareRow">
-                                            <span className="hwLabel">Telemetry</span>
-                                            <span className="hwVal">{profile.stats}</span>
-                                          </div>
-                                          <div className="hardwareRow">
-                                            <span className="hwLabel">Installed</span>
-                                            <span className="hwVal">{profile.daysInstalled}</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
+                              {/* TAB 2: DIRECT RESPONSES */}
+                              {currentTab === 'replies' && (
+                                <div>
+                                  <div className="drawerColHead" style={{ marginBottom: "0.5rem" }}>
+                                    <span>Direct Responses Sent to this User ({userReplies.length})</span>
                                   </div>
 
-                                  {/* DIRECT RESPONSES HEADER */}
-                                  <div className="drawerColHead" style={{ marginTop: "0.3rem" }}>
-                                    <span>Direct Responses ({userReplies.length})</span>
-                                  </div>
-
-                                  {/* RESPONSES FEED */}
                                   <div className="responsesFeed">
                                     {userReplies.length === 0 ? (
                                       <div style={{
@@ -876,31 +869,27 @@ export default function AdminDashboardPage() {
                                           <div className="responseItemHead">
                                             <span className="responseSender">
                                               <span className="statusIndicatorDot active" style={{ width: "5px", height: "5px" }} />
-                                              <span>{r.title || (r.userId === 'all' ? "Announcement" : "Direct Message")}</span>
+                                              <span>{r.title || "Personal Reply"}</span>
                                             </span>
                                             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                                               <span className="responseDate">{r.date}</span>
                                               <button
                                                 type="button"
                                                 className="delReplyBtn"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  handleDeleteReply(r.id);
-                                                }}
+                                                onClick={() => handleDeleteReply(r.id)}
                                                 title="Delete notification"
                                               >
                                                 ✕
                                               </button>
                                             </div>
                                           </div>
-                                          <p className="responseText">{r.message}</p>
+                                          <p className="responseText" style={{ marginTop: "0.25rem" }}>{r.message}</p>
                                         </div>
                                       ))
                                     )}
                                   </div>
 
-                                  {/* REPLY ACTION BUTTON */}
-                                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.3rem" }}>
+                                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
                                     <button
                                       type="button"
                                       className="replyUserBtn"
@@ -916,10 +905,36 @@ export default function AdminDashboardPage() {
                                       <span>+ Reply to User</span>
                                     </button>
                                   </div>
-
                                 </div>
+                              )}
 
-                              </div>
+                              {/* TAB 3: HARDWARE & SPECS */}
+                              {currentTab === 'specs' && (
+                                <div style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", padding: "0.75rem" }}>
+                                  <div className="drawerColHead" style={{ marginBottom: "0.5rem" }}>
+                                    <span>PC Telemetry & Environment Specs</span>
+                                  </div>
+                                  <div className="hardwareDetailRows">
+                                    <div className="hardwareRow">
+                                      <span className="hwLabel">OS & After Effects</span>
+                                      <span className="hwVal">{profile.os} • After Effects {profile.appVersion}</span>
+                                    </div>
+                                    <div className="hardwareRow">
+                                      <span className="hwLabel">GPU / CPU Specs</span>
+                                      <span className="hwVal">{profile.hardware}</span>
+                                    </div>
+                                    <div className="hardwareRow">
+                                      <span className="hwLabel">Session Telemetry</span>
+                                      <span className="hwVal">{profile.stats}</span>
+                                    </div>
+                                    <div className="hardwareRow">
+                                      <span className="hwLabel">Installation Time</span>
+                                      <span className="hwVal">{profile.daysInstalled} ({profile.installDate})</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
                             </div>
                           </div>
                         </div>

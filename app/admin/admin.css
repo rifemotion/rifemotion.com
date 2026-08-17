@@ -380,7 +380,7 @@ body {
 /* TABLE HEADER ROW */
 .denseTableHeader {
   display: grid;
-  grid-template-columns: 2.2fr 1.6fr 1.1fr 1fr 40px;
+  grid-template-columns: 2.2fr 1.3fr 1.1fr 1fr 1fr 36px;
   gap: 0.5rem;
   padding: 0.5rem 0.85rem;
   background-color: var(--bg-inset);
@@ -418,11 +418,38 @@ body {
 
 .denseRowMain {
   display: grid;
-  grid-template-columns: 2.2fr 1.6fr 1.1fr 1fr 40px;
+  grid-template-columns: 2.2fr 1.3fr 1.1fr 1fr 1fr 36px;
   gap: 0.5rem;
-  padding: 0.6rem 0.85rem;
+  padding: 0.55rem 0.85rem;
   align-items: center;
+}
+
+.interactivePillBtn {
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  padding: 0.22rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.interactivePillBtn:hover {
+  background-color: var(--bg-row-hover);
+  color: var(--text-pure);
+  border-color: var(--border-medium);
+}
+
+.interactivePillBtn.active {
+  background-color: var(--bg-row-selected);
+  color: var(--text-pure);
+  border-color: var(--border-focus);
 }
 
 @media (max-width: 768px) {
