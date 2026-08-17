@@ -392,7 +392,7 @@ export default function AdminDashboardPage() {
         extensionName: item.extensionName,
         hardware: item.hardware,
         stats: item.stats,
-        os: item.os,
+        os: (item.os || "Windows 11").replace(/Windows\s*10\/11/gi, "Windows 11"),
         appVersion: item.appVersion,
         installDate: item.installDate,
         daysInstalled: item.daysInstalled,
