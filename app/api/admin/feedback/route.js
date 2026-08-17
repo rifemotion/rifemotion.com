@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { readDb, writeDb } from '@/lib/db';
+import { getDb, writeDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -20,7 +20,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
   }
 
-  const db = readDb();
+  const db = await getDb();
   return NextResponse.json({
     ok: true,
     feedback: db.feedback || [],
@@ -39,7 +39,7 @@ export async function POST(request) {
     const body = await request.json();
     const { action, userId, ticketId, durationDays, message, customNotificationMessage } = body;
 
-    const db = readDb();
+    const db = await getDb();
     const now = new Date();
     const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 

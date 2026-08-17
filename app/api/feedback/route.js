@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readDb, writeDb } from '@/lib/db';
+import { getDb, writeDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -63,7 +63,7 @@ export async function POST(request) {
 
     const userId = metaObj.userId || `usr_${Math.random().toString(36).substring(2, 10)}`;
 
-    const db = readDb();
+    const db = await getDb();
 
     // Check Mute & Shadow Ban Status
     if (db.mutes && db.mutes[userId]) {

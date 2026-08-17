@@ -180,12 +180,15 @@ body {
 .iconImg {
   width: 15px;
   height: 15px;
-  filter: brightness(0.85);
+  filter: brightness(0) invert(1);
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
 }
 
 .navButtonActive .iconImg,
 .navButton:hover .iconImg {
-  filter: brightness(1);
+  filter: brightness(0) invert(1);
+  opacity: 1;
 }
 
 .sidebarBottom {

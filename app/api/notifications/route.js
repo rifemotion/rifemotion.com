@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server';
-import { readDb } from '@/lib/db';
+import { getDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 export async function OPTIONS() {
-  return new Response(null, {
+  return new NextResponse(null, {
     status: 204,
     headers: corsHeaders,
   });
@@ -23,13 +23,14 @@ export async function GET(request) {
     const userId = searchParams.get('userId') || '';
     const channel = searchParams.get('channel') || 'lapath';
 
-    const db = readDb();
+    const db = await getDb();
     const allReplies = db.replies || [];
     const mutes = db.mutes || {};
 
     let isMuted = false;
     let mutedUntil = null;
     let muteReason = null;
+    let muteRecord = null;
 
     if (userId && mutes[userId]) {
       const muteRecord = mutes[userId];

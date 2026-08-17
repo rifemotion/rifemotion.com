@@ -601,7 +601,7 @@ export default function AdminDashboardPage() {
                                         setActiveMenuUserId(null);
                                       }}
                                     >
-                                      ✓ Unmute User
+                                      Unmute User
                                     </div>
                                   ) : (
                                     <>
@@ -612,7 +612,7 @@ export default function AdminDashboardPage() {
                                           setActiveMenuUserId(null);
                                         }}
                                       >
-                                        🚫 Mute User...
+                                        Mute User...
                                       </div>
                                       <div
                                         className="dotsDropdownItem"
@@ -621,7 +621,7 @@ export default function AdminDashboardPage() {
                                           setActiveMenuUserId(null);
                                         }}
                                       >
-                                        👻 Shadow Ban User
+                                        Shadow Ban User
                                       </div>
                                     </>
                                   )}
