@@ -535,8 +535,8 @@ export default function AdminDashboardPage() {
               className={`navButton ${activeTab === "feedback" ? "navButtonActive" : ""}`}
               onClick={() => setActiveTab("feedback")}
             >
-              <img src="/icons_admin/message.svg" alt="Feedback" className="iconImg" />
-              <span>Feedback & Telemetry</span>
+              <img src="/icons_admin/message.svg" alt="Users" className="iconImg" />
+              <span>User Database</span>
             </button>
             <button
               type="button"
@@ -588,14 +588,14 @@ export default function AdminDashboardPage() {
       <main className="mainCanvas">
         
         {/* ========================================================================= */}
-        {/* VIEW: FEEDBACK & USER PROFILES */}
+        {/* VIEW: USER DATABASE */}
         {/* ========================================================================= */}
         {activeTab === "feedback" && (
           <div>
             <div className="viewHeader">
               <div>
-                <h1 className="viewTitle">Feedback & Telemetry Fleet</h1>
-                <p className="viewSubtitle">Real-time user submissions, hardware telemetry, attached media, and restriction control</p>
+                <h1 className="viewTitle">User Database</h1>
+                <p className="viewSubtitle">Registered users, email subscriptions, extension license status, feedback, and telemetry</p>
               </div>
             </div>
 
@@ -664,7 +664,7 @@ export default function AdminDashboardPage() {
             <div className="denseTablePanel">
               {/* TABLE HEADER */}
               <div className="denseTableHeader">
-                <div>User ID & Email</div>
+                <div>Email, Subscription & ID</div>
                 <div>Extension & License</div>
                 <div>Feedbacks</div>
                 <div>Direct Replies</div>
@@ -687,6 +687,7 @@ export default function AdminDashboardPage() {
                     const userReplies = replies.filter((r) => r.userId === profile.userId);
                     const latestItem = profile.items[0];
                     const hasUnread = profile.items.some(i => i.type !== 'review' && !readFeedbackIds.includes(i.id));
+                    const hasEmail = profile.emails && profile.emails.length > 0;
 
                     return (
                       <div
@@ -696,9 +697,62 @@ export default function AdminDashboardPage() {
                         {/* MAIN 1-LINE MODULAR ROW */}
                         <div className="denseRowMain">
                           
-                          {/* 1. USER & EMAIL */}
+                          {/* 1. EMAIL, SUBSCRIPTION & USER ID */}
                           <div className="cellUser">
                             <span className={`statusIndicatorDot ${isShadowBanned ? 'shadow' : isMuted ? 'muted' : 'active'}`} />
+                            
+                            {/* EMAIL FIRST */}
+                            {hasEmail ? (
+                              <div style={{ display: "inline-flex", gap: "0.25rem", flexWrap: "wrap", alignItems: "center" }}>
+                                {profile.emails.map((em) => (
+                                  <span key={em} className="userEmailText">{em}</span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="userEmailText" style={{ color: "var(--text-dark)" }}>-</span>
+                            )}
+
+                            {/* NEWSLETTER CHECKMARK POPOVER */}
+                            {hasEmail && (
+                              <div className="popoverAnchor">
+                                <button
+                                  type="button"
+                                  className="subCheckmarkBadge"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleDrawer(profile.userId, 'newsletter');
+                                  }}
+                                  title="Newsletter subscription: Click to view details"
+                                >
+                                  <span>✓</span>
+                                  <span>Subscribed</span>
+                                </button>
+
+                                {currentTab === 'newsletter' && (
+                                  <div className="floatingPopover" style={{ minWidth: "260px", padding: "0.6rem" }} onClick={(e) => e.stopPropagation()}>
+                                    <div className="drawerColHead" style={{ marginBottom: "0.45rem" }}>
+                                      <span>Newsletter Subscriptions</span>
+                                    </div>
+                                    <div style={{ fontSize: "0.71rem", color: "var(--text-pure)", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                        <span style={{ color: "#10b981", fontWeight: 700 }}>✓</span>
+                                        <span>Major Product Releases & News</span>
+                                      </div>
+                                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                        <span style={{ color: "#10b981", fontWeight: 700 }}>✓</span>
+                                        <span>Extension Updates & Changelogs</span>
+                                      </div>
+                                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                        <span style={{ color: "#10b981", fontWeight: 700 }}>✓</span>
+                                        <span>Critical Security & Patch Alerts</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* USER ID */}
                             <div className="userIdWrapper">
                               <span className="userIdFadeText" title={profile.userId}>
                                 {profile.userId}
@@ -716,15 +770,6 @@ export default function AdminDashboardPage() {
                                 )}
                               </button>
                             </div>
-                            {profile.emails && profile.emails.length > 0 ? (
-                              <div style={{ display: "inline-flex", gap: "0.25rem", flexWrap: "wrap", alignItems: "center" }}>
-                                {profile.emails.map((em) => (
-                                  <span key={em} className="userEmailText">({em})</span>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="userEmailText" style={{ color: "var(--text-dark)" }}>-</span>
-                            )}
                           </div>
 
                           {/* 2. EXTENSION & LICENSE */}

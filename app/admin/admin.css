@@ -693,6 +693,34 @@ body {
   -webkit-mask-image: linear-gradient(to right, #000 38px, transparent 58px);
 }
 
+.subCheckmarkBadge {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  font-size: 0.62rem;
+  font-weight: 700;
+  border-radius: var(--r-sm);
+  padding: 0.1rem 0.35rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  line-height: 1;
+  transition: all 0.12s ease;
+}
+
+.subCheckmarkBadge:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+}
+
+.subCheckmarkBadge.none {
+  background: transparent;
+  border: 1px solid var(--border-dim);
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
 .copyIconBtn {
   background: transparent;
   border: none;
