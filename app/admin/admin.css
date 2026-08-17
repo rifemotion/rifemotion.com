@@ -370,12 +370,36 @@ body {
   border-color: rgba(244, 63, 94, 0.28);
 }
 
+.pillTag.media {
+  color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.28);
+  font-weight: 600;
+}
+
 .pillTag.stars {
   color: #fbbf24;
   background-color: rgba(245, 158, 11, 0.1);
   border-color: rgba(245, 158, 11, 0.25);
   font-family: var(--font-mono);
   font-weight: 700;
+}
+
+/* SMOOTH ACCORDION TRANSITIONS */
+.accordionContent {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease;
+  opacity: 0;
+}
+
+.accordionContent.isExpanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.accordionInner {
+  overflow: hidden;
 }
 
 /* 3-DOTS ACTION MENU */

@@ -668,9 +668,9 @@ export default function AdminDashboardPage() {
                           </div>
                         </div>
 
-                        {/* EXPANDED CONTENT VIEW */}
-                        {isExpanded && (
-                          <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border-subtle)" }}>
+                        {/* EXPANDED CONTENT VIEW WITH SMOOTH CSS TRANSITION */}
+                        <div className={`accordionContent ${isExpanded ? 'isExpanded' : ''}`}>
+                          <div className="accordionInner" style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border-subtle)" }}>
                             
                             {/* 2-COLUMN SPLIT LAYOUT */}
                             <div className="twoColSplit" onClick={(e) => e.stopPropagation()}>
@@ -685,7 +685,8 @@ export default function AdminDashboardPage() {
                                   {profile.items.map((sub, idx) => {
                                     const isSubExpanded = expandedSubMap[sub.id] || false;
                                     const categoryClass = sub.type === 'review' ? 'cat-review' : sub.type === 'suggest' ? 'cat-suggest' : 'cat-report';
-                                    const previewText = sub.message || sub.title || 'Submission';
+                                    const cleanTitle = sub.type === 'review' ? 'Review' : sub.type === 'suggest' ? 'Feature Suggestion' : 'Bug Report';
+                                    const hasMediaAttached = Boolean(sub.hasMedia || sub.telegramMediaUrl);
 
                                     return (
                                       <div
@@ -708,15 +709,18 @@ export default function AdminDashboardPage() {
                                           transition: "all 0.15s ease"
                                         }}
                                       >
-                                        {/* LINE 1 (COMPACT ROW) */}
+                                        {/* LINE 1 (CLEAN STANDARDIZED ROW WITHOUT MESSAGE BODY) */}
                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                           <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0, paddingRight: "0.5rem" }}>
                                             <span style={{ fontWeight: 700, fontSize: "0.76rem", color: "var(--text-muted)" }}>#{profile.items.length - idx}</span>
-                                            <span style={{ fontWeight: 500, fontSize: "0.78rem", color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                              {previewText}
+                                            <span style={{ fontWeight: 600, fontSize: "0.78rem", color: "var(--text-primary)" }}>
+                                              {cleanTitle}
                                             </span>
                                           </div>
                                           <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", flexShrink: 0 }}>
+                                            {hasMediaAttached && (
+                                              <span className="pillTag media">📎 Media</span>
+                                            )}
                                             {sub.type === 'review' && sub.rating && (
                                               <span className="pillTag stars">
                                                 {"★".repeat(sub.rating)} {sub.rating}/5
@@ -728,24 +732,28 @@ export default function AdminDashboardPage() {
                                           </div>
                                         </div>
 
-                                        {/* LINE 2 (EXPANDED MESSAGE & TELEGRAM MEDIA) */}
-                                        {isSubExpanded && (
-                                          <div style={{ marginTop: "0.45rem", paddingTop: "0.45rem", borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: "0.75rem" }}>
-                                            <p style={{ color: "var(--text-secondary)", lineHeight: 1.45, marginBottom: sub.telegramMediaUrl ? "0.35rem" : "0" }}>
-                                              {sub.message || "(No message body)"}
+                                        {/* LINE 2 (SMOOTH ACCORDION MESSAGE & TELEGRAM MEDIA) */}
+                                        <div className={`accordionContent ${isSubExpanded ? 'isExpanded' : ''}`}>
+                                          <div className="accordionInner" style={{ marginTop: "0.45rem", paddingTop: "0.45rem", borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: "0.75rem" }}>
+                                            <p style={{ color: "var(--text-secondary)", lineHeight: 1.45, marginBottom: hasMediaAttached ? "0.35rem" : "0" }}>
+                                              {sub.message || "(No message body written)"}
                                             </p>
-                                            {sub.telegramMediaUrl && typeof sub.telegramMediaUrl === 'string' && sub.telegramMediaUrl.startsWith('http') && (
+                                            {sub.telegramMediaUrl ? (
                                               <Link
                                                 href={sub.telegramMediaUrl}
                                                 target="_blank"
-                                                style={{ color: "var(--text-primary)", textDecoration: "underline", fontSize: "0.72rem" }}
+                                                style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "#38bdf8", textDecoration: "underline", fontSize: "0.72rem" }}
                                                 onClick={(e) => e.stopPropagation()}
                                               >
-                                                View Media in Telegram ↗
+                                                View Attached Media in Telegram ↗
                                               </Link>
-                                            )}
+                                            ) : sub.hasMedia ? (
+                                              <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                                                <span>📎 Attached Media (saved in Telegram Bot channel)</span>
+                                              </div>
+                                            ) : null}
                                           </div>
-                                        )}
+                                        </div>
                                       </div>
                                     );
                                   })}
@@ -779,8 +787,8 @@ export default function AdminDashboardPage() {
                                       OS: {profile.os} • AE {profile.appVersion}
                                     </span>
                                   </div>
-                                  {isSpecsExpanded && (
-                                    <div style={{ marginTop: "0.45rem", paddingTop: "0.45rem", borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: "0.72rem" }}>
+                                  <div className={`accordionContent ${isSpecsExpanded ? 'isExpanded' : ''}`}>
+                                    <div className="accordionInner" style={{ marginTop: "0.45rem", paddingTop: "0.45rem", borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: "0.72rem" }}>
                                       <div style={{ color: "var(--text-primary)", fontFamily: "var(--font-mono)", marginBottom: "0.25rem" }}>
                                         {profile.hardware}
                                       </div>
@@ -788,7 +796,7 @@ export default function AdminDashboardPage() {
                                         Telemetry: <code>{profile.stats}</code> • Installed: {profile.daysInstalled}
                                       </div>
                                     </div>
-                                  )}
+                                  </div>
                                 </div>
 
                                 {/* BOTTOM BLOCK: DIRECT MESSAGES */}
@@ -871,7 +879,7 @@ export default function AdminDashboardPage() {
                             </div>
 
                           </div>
-                        )}
+                        </div>
                       </div>
                     );
                   })

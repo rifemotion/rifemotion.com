@@ -29,6 +29,9 @@ export async function POST(request) {
 
     const contentType = request.headers.get('content-type') || '';
 
+    let hasMedia = false;
+    let mediaCount = 0;
+
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
       type = formData.get('type') || 'review';
@@ -40,6 +43,15 @@ export async function POST(request) {
       metaStr = formData.get('meta');
       const rawTg = formData.get('telegramMediaUrl');
       telegramMediaUrl = rawTg && typeof rawTg === 'string' && rawTg.startsWith('http') ? rawTg : null;
+
+      // Count attached files in multipart form
+      for (const key of formData.keys()) {
+        if (key.startsWith('file_') || key === 'file') {
+          hasMedia = true;
+          mediaCount++;
+        }
+      }
+      if (formData.get('hasMedia') === 'true') hasMedia = true;
     } else {
       const body = await request.json();
       type = body.type || 'review';
@@ -50,7 +62,11 @@ export async function POST(request) {
       metaStr = body.meta ? (typeof body.meta === 'string' ? body.meta : JSON.stringify(body.meta)) : null;
       const rawTg = body.telegramMediaUrl;
       telegramMediaUrl = rawTg && typeof rawTg === 'string' && rawTg.startsWith('http') ? rawTg : null;
+      if (body.hasMedia) hasMedia = true;
+      if (body.mediaCount) mediaCount = parseInt(body.mediaCount) || 1;
     }
+
+    if (telegramMediaUrl) hasMedia = true;
 
     let metaObj = {};
     if (metaStr) {
@@ -93,15 +109,14 @@ export async function POST(request) {
     }
 
     const now = new Date();
-    const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-
-    const lastSeq = db.feedback && db.feedback.length > 0 ? db.feedback.length + 1 : 1;
-
     const typeNames = {
       review: "General Review",
       suggest: "Feature Suggestion",
       report: "Bug Report"
     };
+
+    const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+    const lastSeq = db.feedback && db.feedback.length > 0 ? (db.feedback[0].seqId || db.feedback.length) + 1 : 1;
 
     const newFeedback = {
       id: Date.now(),
@@ -112,7 +127,7 @@ export async function POST(request) {
       extensionName: metaObj.extName === 'kliner' ? 'KLiner' : 'LaPath',
       type: type,
       typeName: typeNames[type] || "General Feedback",
-      title: text.length > 50 ? text.substring(0, 50) + '...' : (text || "Submission"),
+      title: typeNames[type] || "Feedback",
       message: text,
       urgency: urgency,
       rating: rating,
@@ -127,6 +142,8 @@ export async function POST(request) {
       extVersion: metaObj.extVersion || "1.2.0",
       installDate: metaObj.installDate || dateStr,
       daysInstalled: metaObj.daysInstalled || "First day",
+      hasMedia: hasMedia,
+      mediaCount: mediaCount,
       telegramMediaUrl: telegramMediaUrl
     };
 
