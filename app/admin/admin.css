@@ -71,6 +71,12 @@ body {
   background-color: var(--bg-app);
 }
 
+@media (max-width: 768px) {
+  .appShell {
+    flex-direction: column;
+  }
+}
+
 /* COMPACT TECH SIDEBAR */
 .sideNav {
   width: 220px;
@@ -81,6 +87,27 @@ body {
   justify-content: space-between;
   padding: 0.85rem 0.65rem;
   flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .sideNav {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 0.65rem 0.85rem;
+  }
+  .navList {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .navButton {
+    width: auto;
+    flex: 1 1 auto;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.5rem;
+  }
 }
 
 .profileCard {
@@ -396,6 +423,34 @@ body {
   padding: 0.6rem 0.85rem;
   align-items: center;
   cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .mainCanvas {
+    padding: 0.75rem 0.65rem;
+  }
+  .denseTableHeader {
+    display: none;
+  }
+  .denseToolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .toolbarRight {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .denseSearchInput {
+    width: 100%;
+  }
+  .denseRowMain {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+    padding: 0.75rem 0.65rem;
+  }
 }
 
 /* CELLS */

@@ -345,13 +345,20 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Group items by User ID (guaranteeing email persistence)
+  // Group items by User ID (guaranteeing email persistence across entire history)
+  const knownUserEmails = {};
+  feedbackItems.forEach((item) => {
+    if (item.email && item.email.includes('@') && item.email !== 'none') {
+      knownUserEmails[item.userId] = item.email.trim();
+    }
+  });
+
   const usersGrouped = {};
   feedbackItems.forEach((item) => {
     if (!usersGrouped[item.userId]) {
       usersGrouped[item.userId] = {
         userId: item.userId,
-        email: item.email && item.email.includes('@') && item.email !== 'none' ? item.email : 'none',
+        email: knownUserEmails[item.userId] || 'none',
         extensionName: item.extensionName,
         hardware: item.hardware,
         stats: item.stats,
@@ -361,9 +368,6 @@ export default function AdminDashboardPage() {
         daysInstalled: item.daysInstalled,
         items: []
       };
-    }
-    if (usersGrouped[item.userId].email === 'none' && item.email && item.email.includes('@') && item.email !== 'none') {
-      usersGrouped[item.userId].email = item.email;
     }
     usersGrouped[item.userId].items.push(item);
   });
@@ -605,9 +609,7 @@ export default function AdminDashboardPage() {
                               title="Click to copy User ID"
                               onClick={(e) => handleCopyUserId(e, profile.userId)}
                               style={{
-                                cursor: "copy",
-                                textDecoration: "underline dotted",
-                                textUnderlineOffset: "3px",
+                                cursor: "pointer",
                                 display: "inline-flex",
                                 alignItems: "center",
                                 gap: "0.35rem"
@@ -976,6 +978,20 @@ export default function AdminDashboardPage() {
                       />
                     </div>
                   )}
+
+                  <div className="formGroup">
+                    <label className="formLabel">Notification Category</label>
+                    <CustomSelect
+                      options={[
+                        { label: "Announcements & Updates", value: "announcements" },
+                        { label: "Personal / Support Reply", value: "personal" },
+                        { label: "Warning & System Notice", value: "warning" },
+                        { label: "Promotions & News", value: "promo" },
+                      ]}
+                      value={dispatchForm.category}
+                      onChange={(val) => setDispatchForm({ ...dispatchForm, category: val })}
+                    />
+                  </div>
 
                   <div className="formGroup">
                     <label className="formLabel">Notification Title</label>
