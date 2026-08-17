@@ -896,9 +896,107 @@ body {
 
 .dispatchSplitLayout {
   display: grid;
-  grid-template-columns: 1fr 1.15fr;
+  grid-template-columns: 460px 1fr;
   gap: 1.25rem;
   align-items: start;
+}
+
+.dispatchCardCompact {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: 1rem 1.15rem;
+  width: 100%;
+}
+
+.dispatchTopControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.productSegment {
+  display: inline-flex;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  padding: 2px;
+  gap: 2px;
+}
+
+.productSegmentBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.productSegmentBtn.active {
+  background-color: var(--bg-row-selected);
+  color: var(--text-pure);
+}
+
+.channelCheckboxes {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.channelCheckLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.channelCheckLabel input {
+  accent-color: #10b981;
+  cursor: pointer;
+}
+
+.dispatchGridTwoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.presetPillRow {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+
+.presetPillBtn {
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.presetPillBtn:hover {
+  background-color: var(--bg-row-hover);
+  color: var(--text-pure);
+  border-color: var(--border-medium);
 }
 
 @media (max-width: 1080px) {

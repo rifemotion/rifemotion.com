@@ -122,6 +122,9 @@ export default function AdminDashboardPage() {
 
   // Dispatch Form states
   const [dispatchForm, setDispatchForm] = useState({
+    product: "all",
+    channelInApp: true,
+    channelEmail: false,
     title: "",
     category: "announcements",
     targetType: "all",
@@ -349,10 +352,12 @@ export default function AdminDashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'reply_user',
-          userId: dispatchForm.userId || 'all',
+          userId: dispatchForm.targetType === 'all' ? 'all' : (dispatchForm.userId || 'all'),
           title: dispatchForm.title.trim(),
           category: dispatchForm.category || 'announcements',
-          message: dispatchForm.message.trim()
+          message: dispatchForm.message.trim(),
+          product: dispatchForm.product || 'all',
+          channels: { inApp: dispatchForm.channelInApp, email: dispatchForm.channelEmail }
         })
       });
 
@@ -362,6 +367,9 @@ export default function AdminDashboardPage() {
         setTimeout(() => setDispatchSuccess(false), 3500);
         fetchDb();
         setDispatchForm({
+          product: "all",
+          channelInApp: true,
+          channelEmail: false,
           title: "",
           category: "announcements",
           targetType: "all",
@@ -1098,47 +1106,100 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="dispatchSplitLayout">
-              {/* LEFT: DISPATCH FORM */}
-              <div style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-md)", padding: "1.25rem" }}>
-                <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-pure)", marginBottom: "1rem" }}>
-                  New Broadcast / Direct Message
+              {/* LEFT: COMPACT DISPATCH FORM */}
+              <div className="dispatchCardCompact">
+                <div className="dispatchTopControls">
+                  {/* PRODUCT SWITCHER */}
+                  <div className="productSegment">
+                    {[
+                      { id: "all", label: "All" },
+                      { id: "lapath", label: "LaPath" },
+                      { id: "kliner", label: "KLiner" },
+                    ].map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className={`productSegmentBtn ${dispatchForm.product === p.id ? "active" : ""}`}
+                        onClick={() => setDispatchForm({ ...dispatchForm, product: p.id })}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* DELIVERY CHANNELS */}
+                  <div className="channelCheckboxes">
+                    <label className="channelCheckLabel">
+                      <input
+                        type="checkbox"
+                        checked={dispatchForm.channelInApp}
+                        onChange={(e) => setDispatchForm({ ...dispatchForm, channelInApp: e.target.checked })}
+                      />
+                      <span>Extension</span>
+                    </label>
+
+                    <label className="channelCheckLabel">
+                      <input
+                        type="checkbox"
+                        checked={dispatchForm.channelEmail}
+                        onChange={(e) => setDispatchForm({ ...dispatchForm, channelEmail: e.target.checked })}
+                      />
+                      <span>Email</span>
+                    </label>
+                  </div>
                 </div>
 
                 {dispatchSuccess && (
                   <div style={{
-                    padding: "0.65rem 0.85rem",
+                    padding: "0.5rem 0.75rem",
                     backgroundColor: "var(--acc-green-bg)",
                     border: "1px solid var(--acc-green-border)",
                     borderRadius: "var(--r-sm)",
                     color: "var(--acc-green)",
-                    fontSize: "0.76rem",
+                    fontSize: "0.74rem",
                     fontWeight: 600,
-                    marginBottom: "1rem"
+                    marginBottom: "0.75rem"
                   }}>
-                    ✓ Notification successfully dispatched to user extension.
+                    ✓ Dispatched successfully
                   </div>
                 )}
 
                 <form onSubmit={handleSendNotification}>
-                  <div className="formGroup">
-                    <label className="formLabel">Target Recipient</label>
-                    <CustomSelect
-                      options={[
-                        { label: "All Users (Global Broadcast)", value: "all" },
-                        { label: "Specific User ID", value: "single" }
-                      ]}
-                      value={dispatchForm.targetType}
-                      onChange={(val) => setDispatchForm({ ...dispatchForm, targetType: val })}
-                    />
+                  {/* 2-COLUMN SELECT CONTROLS */}
+                  <div className="dispatchGridTwoCol">
+                    <div className="formGroup" style={{ margin: 0 }}>
+                      <label className="formLabel">Target</label>
+                      <CustomSelect
+                        options={[
+                          { label: "All", value: "all" },
+                          { label: "User", value: "single" }
+                        ]}
+                        value={dispatchForm.targetType}
+                        onChange={(val) => setDispatchForm({ ...dispatchForm, targetType: val })}
+                      />
+                    </div>
+
+                    <div className="formGroup" style={{ margin: 0 }}>
+                      <label className="formLabel">Category</label>
+                      <CustomSelect
+                        options={[
+                          { label: "Announcement", value: "announcements" },
+                          { label: "Notice", value: "warning" },
+                          { label: "Reply", value: "personal" },
+                        ]}
+                        value={dispatchForm.category}
+                        onChange={(val) => setDispatchForm({ ...dispatchForm, category: val })}
+                      />
+                    </div>
                   </div>
 
                   {dispatchForm.targetType === "single" && (
-                    <div className="formGroup">
+                    <div className="formGroup" style={{ marginTop: "0.6rem" }}>
                       <label className="formLabel">User ID</label>
                       <input
                         type="text"
                         className="techInput"
-                        placeholder="e.g. da3be79b-d6a7-4ba0-9c0a-..."
+                        placeholder="da3be79b-d6a7-..."
                         value={dispatchForm.userId}
                         onChange={(e) => setDispatchForm({ ...dispatchForm, userId: e.target.value })}
                         required
@@ -1146,50 +1207,55 @@ export default function AdminDashboardPage() {
                     </div>
                   )}
 
-                  <div className="formGroup">
-                    <label className="formLabel">Notification Category</label>
-                    <CustomSelect
-                      options={[
-                        { label: "Announcement", value: "announcements" },
-                        { label: "System Notice", value: "warning" },
-                        { label: "Personal Reply", value: "personal" },
-                      ]}
-                      value={dispatchForm.category}
-                      onChange={(val) => setDispatchForm({ ...dispatchForm, category: val })}
-                    />
-                  </div>
+                  <div className="formGroup" style={{ marginTop: "0.6rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
+                      <label className="formLabel" style={{ margin: 0 }}>Title</label>
+                    </div>
 
-                  <div className="formGroup">
-                    <label className="formLabel">Notification Title</label>
+                    {/* QUICK TITLE PRESETS */}
+                    <div className="presetPillRow">
+                      {["Bug Fixed", "Idea Approved", "Update Released", "Support Reply", "Notice"].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          className="presetPillBtn"
+                          onClick={() => setDispatchForm((prev) => ({ ...prev, title: preset }))}
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+
                     <input
                       type="text"
                       className="techInput"
-                      placeholder="e.g. Feature Update or Support Reply"
+                      placeholder="Title or preset..."
                       value={dispatchForm.title}
                       onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value })}
                       required
                     />
                   </div>
 
-                  <div className="formGroup">
-                    <label className="formLabel">Message Body</label>
+                  <div className="formGroup" style={{ marginTop: "0.6rem" }}>
+                    <label className="formLabel">Message</label>
                     <textarea
                       className="techTextarea"
-                      placeholder="Enter message for user..."
+                      placeholder="Enter message..."
+                      rows={3}
                       value={dispatchForm.message}
                       onChange={(e) => setDispatchForm({ ...dispatchForm, message: e.target.value })}
                       required
                     />
                   </div>
 
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.85rem" }}>
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.75rem" }}>
                     <button
                       type="submit"
                       className="submitBtn"
                       disabled={isSending}
-                      style={{ opacity: isSending ? 0.65 : 1, cursor: isSending ? "not-allowed" : "pointer" }}
+                      style={{ opacity: isSending ? 0.65 : 1, cursor: isSending ? "not-allowed" : "pointer", padding: "0.45rem 1rem", fontSize: "0.75rem" }}
                     >
-                      {isSending ? "Sending..." : "Dispatch Notification →"}
+                      {isSending ? "Sending..." : "Send →"}
                     </button>
                   </div>
                 </form>
