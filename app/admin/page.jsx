@@ -768,6 +768,7 @@ export default function AdminDashboardPage() {
                     const latestItem = profile.items[0];
                     const hasUnread = profile.items.some(i => i.type !== 'review' && !readFeedbackIds.includes(i.id));
                     const hasEmail = profile.emails && profile.emails.length > 0;
+                    const isUserSubscribed = profile.items.some(i => i.newsletterSubscribed === true || i.type === 'newsletter');
 
                     return (
                       <div
@@ -792,8 +793,8 @@ export default function AdminDashboardPage() {
                               <span className="userEmailText" style={{ color: "var(--text-dark)" }}>-</span>
                             )}
 
-                            {/* NEWSLETTER CHECKMARK POPOVER */}
-                            {hasEmail && (
+                            {/* NEWSLETTER CHECKMARK POPOVER: ONLY IF ACTUALLY SUBSCRIBED */}
+                            {hasEmail && isUserSubscribed && (
                               <div className="popoverAnchor">
                                 <button
                                   type="button"
@@ -929,17 +930,6 @@ export default function AdminDashboardPage() {
                                             )}
                                             <span className="badgePill">{sub.extensionName}</span>
                                             <span className="subDateText">{sub.date}</span>
-                                            <button
-                                              type="button"
-                                              className="delSubBtn"
-                                              title="Delete submission"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteSubmission(sub.id);
-                                              }}
-                                            >
-                                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                            </button>
                                           </div>
                                         </div>
 

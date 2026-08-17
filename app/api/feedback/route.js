@@ -126,6 +126,65 @@ export async function POST(request) {
       }
     }
 
+    const actionResp = metaObj.actionResponse;
+    const isNewsletterAction = type === 'newsletter' || actionResp?.action === 'subscribe' || actionResp?.action === 'unsubscribe';
+
+    if (isNewsletterAction) {
+      const isSubscribing = actionResp?.action === 'subscribe' || (type === 'newsletter' && actionResp?.action !== 'unsubscribe');
+      let foundUser = false;
+
+      (db.feedback || []).forEach(item => {
+        if (String(item.userId) === String(userId)) {
+          foundUser = true;
+          item.newsletterSubscribed = isSubscribing;
+          if (resolvedEmail !== 'none') {
+            item.email = resolvedEmail;
+          }
+        }
+      });
+
+      // If user has no existing submissions, create a lightweight newsletter profile entry
+      if (!foundUser) {
+        const subscriberEntry = {
+          id: Date.now(),
+          seqId: lastSeq,
+          userId: userId,
+          email: resolvedEmail,
+          extension: metaObj.extName || 'lapath',
+          extensionName: metaObj.extName === 'kliner' ? 'KLiner' : 'LaPath',
+          type: 'newsletter',
+          typeName: 'Newsletter Subscriber',
+          title: isSubscribing ? 'Newsletter Subscriber' : 'Unsubscribed',
+          message: isSubscribing ? `Subscribed to email updates (${resolvedEmail})` : 'Unsubscribed from updates',
+          urgency: 'low',
+          rating: null,
+          newsletterSubscribed: isSubscribing,
+          status: 'Open',
+          date: dateStr,
+          hardware: metaObj.hardware || "Unknown Hardware",
+          stats: metaObj.stats || "Launches: 1",
+          appName: metaObj.appName || "Adobe After Effects",
+          appVersion: metaObj.appVersion || "Unknown",
+          appLocale: metaObj.appLocale || "en_US",
+          os: metaObj.os || "Windows",
+          extVersion: metaObj.extVersion || "1.2.0",
+          installDate: metaObj.installDate || dateStr,
+          daysInstalled: metaObj.daysInstalled || "First day",
+          hasMedia: false,
+          mediaCount: 0,
+          telegramMediaUrl: null
+        };
+        db.feedback = [subscriberEntry, ...(db.feedback || [])];
+      }
+
+      await writeDb(db);
+
+      return NextResponse.json({
+        ok: true,
+        message: isSubscribing ? "Subscribed to newsletter." : "Unsubscribed from newsletter."
+      }, { status: 200, headers: corsHeaders });
+    }
+
     const newFeedback = {
       id: Date.now(),
       seqId: lastSeq,
@@ -139,6 +198,7 @@ export async function POST(request) {
       message: text,
       urgency: urgency,
       rating: rating,
+      newsletterSubscribed: false,
       status: "Open",
       date: dateStr,
       hardware: metaObj.hardware || "Unknown Hardware",
