@@ -33,7 +33,7 @@ export async function GET(request) {
     let muteRecord = null;
 
     if (userId && mutes[userId]) {
-      const muteRecord = mutes[userId];
+      muteRecord = mutes[userId];
       if (muteRecord.bannedUntil) {
         const banExpiry = new Date(muteRecord.bannedUntil).getTime();
         if (banExpiry > Date.now()) {
@@ -46,14 +46,11 @@ export async function GET(request) {
 
     const notifications = [];
 
-    // 1. If muted, add single unified Mute Notification to user feed
+    // 1. If muted, add single clean System Notice to user feed
     if (isMuted) {
-      let bodyText = `Your feedback submission access has been temporarily restricted until ${mutedUntil}.`;
+      let bodyText = `Your feedback submission access has been restricted until ${mutedUntil}.`;
       if (muteReason) {
         bodyText += ` Reason: ${muteReason}.`;
-      }
-      if (muteRecord && muteRecord.customMessage && muteRecord.customMessage.trim()) {
-        bodyText += ` Note: ${muteRecord.customMessage.trim()}`;
       }
 
       notifications.push({
@@ -66,13 +63,13 @@ export async function GET(request) {
       });
     }
 
-    // 2. Convert replies sent to this user or all users into notifications
+    // 2. Convert replies into notifications (using custom title as header, and message as body)
     allReplies.forEach((r) => {
       if (r.userId === 'all' || r.userId === userId) {
         notifications.push({
           id: r.id,
-          title: "Response from rifemotion Team",
-          subtitle: r.userId === 'all' ? "Announcement" : "Personal Reply",
+          title: r.title || (r.userId === 'all' ? "Announcement" : "Direct Message"),
+          subtitle: r.category === 'announcements' ? "Announcement" : (r.userId === 'all' ? "Broadcast" : "Direct Message"),
           body: r.message,
           date: r.date,
           unread: true

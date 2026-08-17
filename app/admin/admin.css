@@ -1,23 +1,23 @@
 :root {
-  --bg-app: #0e0f12;
-  --bg-sidebar: #121317;
-  --bg-panel: #15161b;
-  --bg-row: #181920;
-  --bg-row-hover: #1e1f27;
-  --bg-row-selected: #21232d;
-  --bg-inset: #111216;
-  --bg-modal: #181920;
+  --bg-app: #0a0a0c;
+  --bg-sidebar: #0f0f11;
+  --bg-panel: #131315;
+  --bg-row: #161619;
+  --bg-row-hover: #1b1b1f;
+  --bg-row-selected: #212126;
+  --bg-inset: #0e0e10;
+  --bg-modal: #161618;
   
   --border-dim: rgba(255, 255, 255, 0.05);
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-medium: rgba(255, 255, 255, 0.15);
+  --border-medium: rgba(255, 255, 255, 0.14);
   --border-focus: rgba(255, 255, 255, 0.35);
 
   --text-pure: #ffffff;
-  --text-main: #e2e5ec;
-  --text-secondary: #9499a8;
-  --text-muted: #5e6373;
-  --text-dark: #404452;
+  --text-main: #e2e4ea;
+  --text-secondary: #9496a1;
+  --text-muted: #5e606b;
+  --text-dark: #404149;
 
   --acc-blue: #38bdf8;
   --acc-blue-bg: rgba(56, 189, 248, 0.1);

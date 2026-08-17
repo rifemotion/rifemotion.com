@@ -118,11 +118,19 @@ export async function POST(request) {
     const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
     const lastSeq = db.feedback && db.feedback.length > 0 ? (db.feedback[0].seqId || db.feedback.length) + 1 : 1;
 
+    let resolvedEmail = email && email.includes('@') ? email.trim() : 'none';
+    if (resolvedEmail === 'none' && db.feedback) {
+      const existingUserItem = db.feedback.find(item => item.userId === userId && item.email && item.email.includes('@') && item.email !== 'none');
+      if (existingUserItem) {
+        resolvedEmail = existingUserItem.email;
+      }
+    }
+
     const newFeedback = {
       id: Date.now(),
       seqId: lastSeq,
       userId: userId,
-      email: email && email.includes('@') ? email : 'none',
+      email: resolvedEmail,
       extension: metaObj.extName || 'lapath',
       extensionName: metaObj.extName === 'kliner' ? 'KLiner' : 'LaPath',
       type: type,

@@ -116,6 +116,8 @@ export async function POST(request) {
         id: Date.now(),
         ticketId: ticketId || null,
         userId: userId,
+        title: body.title ? body.title.trim() : (userId === 'all' ? "Announcement" : "Direct Message"),
+        category: body.category || (userId === 'all' ? "announcements" : "personal"),
         message: message.trim(),
         date: dateStr
       };

@@ -264,7 +264,9 @@ export default function AdminDashboardPage() {
         body: JSON.stringify({
           action: 'reply_user',
           userId: dispatchForm.userId || 'all',
-          message: `${dispatchForm.title}: ${dispatchForm.message}`
+          title: dispatchForm.title.trim(),
+          category: dispatchForm.category || 'personal',
+          message: dispatchForm.message.trim()
         })
       });
 
@@ -286,13 +288,13 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Group items by User ID
+  // Group items by User ID (guaranteeing email persistence)
   const usersGrouped = {};
   feedbackItems.forEach((item) => {
     if (!usersGrouped[item.userId]) {
       usersGrouped[item.userId] = {
         userId: item.userId,
-        email: item.email && item.email.includes('@') ? item.email : 'none',
+        email: item.email && item.email.includes('@') && item.email !== 'none' ? item.email : 'none',
         extensionName: item.extensionName,
         hardware: item.hardware,
         stats: item.stats,
@@ -302,6 +304,10 @@ export default function AdminDashboardPage() {
         daysInstalled: item.daysInstalled,
         items: []
       };
+    }
+    // If this item has an email and profile currently has 'none', update profile email!
+    if (usersGrouped[item.userId].email === 'none' && item.email && item.email.includes('@') && item.email !== 'none') {
+      usersGrouped[item.userId].email = item.email;
     }
     usersGrouped[item.userId].items.push(item);
   });
@@ -746,7 +752,7 @@ export default function AdminDashboardPage() {
                                           <div className="responseItemHead">
                                             <span className="responseSender">
                                               <span className="statusIndicatorDot active" style={{ width: "5px", height: "5px" }} />
-                                              <span>Support Team</span>
+                                              <span>{r.title || (r.userId === 'all' ? "Announcement" : "Direct Message")}</span>
                                             </span>
                                             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                                               <span className="responseDate">{r.date}</span>
