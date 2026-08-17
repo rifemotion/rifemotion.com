@@ -84,13 +84,17 @@ export default function AdminDashboardPage() {
   const [expandedSpecsMap, setExpandedSpecsMap] = useState({});
 
   // 3-Dots Action Menu State
-  const [activeMenuUserId, setActiveMenuUserId] = useState(null);
-
   // Mute Modal State
   const [muteModalTargetUser, setMuteModalTargetUser] = useState(null);
   const [muteModalDuration, setMuteModalDuration] = useState("7");
   const [muteModalReason, setMuteModalReason] = useState("Spam & Flooding");
-  const [muteModalMessage, setMuteModalMessage] = useState("");
+
+  // Context Menu State for Submissions
+  const [contextMenu, setContextMenu] = useState(null); // { x, y, subId }
+  const [expandedSubMap, setExpandedSubMap] = useState({});
+
+  // 3-Dots Action Menu State
+  const [activeMenuUserId, setActiveMenuUserId] = useState(null);
 
   // Quick Reply Inputs per User
   const [quickReplyMap, setQuickReplyMap] = useState({});
@@ -102,7 +106,6 @@ export default function AdminDashboardPage() {
     category: "announcements",
     targetType: "all",
     userId: "",
-    inReplyTo: "",
     message: "",
   });
   const [dispatchSuccess, setDispatchSuccess] = useState(false);
@@ -134,6 +137,36 @@ export default function AdminDashboardPage() {
       router.push("/admin/login");
     }
   }, [status, router]);
+
+  // Global click listener to close context menu
+  useEffect(() => {
+    const handleGlobalClick = () => setContextMenu(null);
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
+
+  // Handle Delete Submission (from user right-click menu)
+  const handleDeleteSubmission = async (subId) => {
+    const confirmed = window.confirm("Delete this submission permanently from the server?");
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch('/api/admin/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_feedback',
+          id: subId
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setFeedbackItems(data.feedback || []);
+      }
+    } catch (err) {
+      console.error("Error deleting submission:", err);
+    }
+  };
 
   // Handle Delete Reply / Notification
   const handleDeleteReply = async (replyId) => {
@@ -169,8 +202,7 @@ export default function AdminDashboardPage() {
           action: 'mute_user',
           userId: muteModalTargetUser.userId,
           durationDays: muteModalDuration,
-          reason: muteModalReason,
-          customNotificationMessage: muteModalMessage
+          reason: muteModalReason
         })
       });
       const data = await res.json();
@@ -178,7 +210,6 @@ export default function AdminDashboardPage() {
         setMutes(data.mutes || {});
         setReplies(data.replies || []);
         setMuteModalTargetUser(null);
-        setMuteModalMessage("");
         setMuteModalReason("Spam & Flooding");
       }
     } catch (err) {
@@ -639,126 +670,130 @@ export default function AdminDashboardPage() {
 
                         {/* EXPANDED CONTENT VIEW */}
                         {isExpanded && (
-                          <div style={{ marginTop: "0.85rem", paddingTop: "0.85rem", borderTop: "1px solid var(--border-subtle)" }}>
+                          <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border-subtle)" }}>
                             
-                            {/* COLLAPSIBLE SYSTEM TELEMETRY ACCORDION */}
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setExpandedSpecsMap({ ...expandedSpecsMap, [profile.userId]: !isSpecsExpanded });
-                              }}
-                              style={{
-                                background: "var(--bg-app)",
-                                border: "1px solid var(--border-subtle)",
-                                borderRadius: "var(--radius-sm)",
-                                padding: "0.6rem 0.85rem",
-                                cursor: "pointer",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginBottom: "1rem"
-                              }}
-                            >
-                              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)" }}>
-                                PC Telemetry & Hardware Specs {isSpecsExpanded ? '▴' : '▾'}
-                              </span>
-                              <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                                OS: {profile.os} | AE: {profile.appVersion}
-                              </span>
-                            </div>
-
-                            {isSpecsExpanded && (
-                              <div style={{
-                                background: "#111217",
-                                border: "1px solid var(--border-subtle)",
-                                borderRadius: "var(--radius-sm)",
-                                padding: "0.85rem",
-                                marginBottom: "1rem"
-                              }}>
-                                <div style={{ fontSize: "0.75rem", color: "var(--text-primary)", fontFamily: "var(--font-mono)", marginBottom: "0.4rem" }}>
-                                  Hardware: {profile.hardware}
-                                </div>
-                                <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>
-                                  Extension Telemetry: <code>{profile.stats}</code> | Installed: {profile.daysInstalled}
-                                </div>
-                              </div>
-                            )}
-
                             {/* 2-COLUMN SPLIT LAYOUT */}
                             <div className="twoColSplit" onClick={(e) => e.stopPropagation()}>
                               
-                              {/* LEFT COLUMN: USER SUBMISSIONS CHAIN */}
+                              {/* LEFT COLUMN: USER SUBMISSIONS CHAIN (1-LINE ROWS, 2-LINE EXPANDABLE, RIGHT-CLICK DELETE) */}
                               <div className="twoColCol">
                                 <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.4rem" }}>
                                   Submissions Chain ({profile.items.length})
                                 </div>
 
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                                   {profile.items.map((sub, idx) => {
-                                    const isSameText = sub.title && sub.message && (sub.title.trim().toLowerCase() === sub.message.trim().toLowerCase() || sub.message.trim().startsWith(sub.title.trim()));
+                                    const isSubExpanded = expandedSubMap[sub.id] || false;
                                     const categoryClass = sub.type === 'review' ? 'cat-review' : sub.type === 'suggest' ? 'cat-suggest' : 'cat-report';
+                                    const previewText = sub.message || sub.title || 'Submission';
 
                                     return (
-                                      <div key={sub.id} style={{
-                                        background: "#17181d",
-                                        border: "1px solid var(--border-subtle)",
-                                        borderRadius: "var(--radius-xs)",
-                                        padding: "0.75rem 0.85rem"
-                                      }}>
-                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem" }}>
-                                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                                            <span style={{ fontWeight: 700, fontSize: "0.8rem", color: "var(--text-muted)" }}>#{profile.items.length - idx}</span>
-                                            {!isSameText && sub.title && (
-                                              <span style={{ fontWeight: 600, fontSize: "0.82rem" }}>{sub.title}</span>
-                                            )}
+                                      <div
+                                        key={sub.id}
+                                        onContextMenu={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setContextMenu({ x: e.clientX, y: e.clientY, subId: sub.id });
+                                        }}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setExpandedSubMap({ ...expandedSubMap, [sub.id]: !isSubExpanded });
+                                        }}
+                                        style={{
+                                          background: "#17181d",
+                                          border: "1px solid var(--border-subtle)",
+                                          borderRadius: "var(--radius-xs)",
+                                          padding: "0.45rem 0.75rem",
+                                          cursor: "pointer",
+                                          transition: "all 0.15s ease"
+                                        }}
+                                      >
+                                        {/* LINE 1 (COMPACT ROW) */}
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                          <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0, paddingRight: "0.5rem" }}>
+                                            <span style={{ fontWeight: 700, fontSize: "0.76rem", color: "var(--text-muted)" }}>#{profile.items.length - idx}</span>
+                                            <span style={{ fontWeight: 500, fontSize: "0.78rem", color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                              {previewText}
+                                            </span>
                                           </div>
-                                          <div style={{ display: "flex", gap: "0.3rem", alignItems: "center" }}>
+                                          <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", flexShrink: 0 }}>
                                             {sub.type === 'review' && sub.rating && (
                                               <span className="pillTag stars">
-                                                {"★".repeat(sub.rating)} {sub.rating}/5 Stars
+                                                {"★".repeat(sub.rating)} {sub.rating}/5
                                               </span>
                                             )}
                                             <span className="pillTag">{sub.extensionName}</span>
                                             <span className={`pillTag ${categoryClass}`}>{sub.typeName}</span>
+                                            <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginLeft: "0.2rem" }}>{sub.date}</span>
                                           </div>
                                         </div>
 
-                                        <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)", lineHeight: 1.45, marginBottom: "0.45rem" }}>
-                                          {sub.message}
-                                        </p>
-
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                                          <span>Submitted: {sub.date}</span>
-                                          {sub.telegramMediaUrl && typeof sub.telegramMediaUrl === 'string' && sub.telegramMediaUrl.startsWith('http') && (
-                                            <Link
-                                              href={sub.telegramMediaUrl}
-                                              target="_blank"
-                                              style={{ color: "var(--text-primary)", textDecoration: "underline" }}
-                                            >
-                                              View Media in Telegram ↗
-                                            </Link>
-                                          )}
-                                        </div>
+                                        {/* LINE 2 (EXPANDED MESSAGE & TELEGRAM MEDIA) */}
+                                        {isSubExpanded && (
+                                          <div style={{ marginTop: "0.45rem", paddingTop: "0.45rem", borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: "0.75rem" }}>
+                                            <p style={{ color: "var(--text-secondary)", lineHeight: 1.45, marginBottom: sub.telegramMediaUrl ? "0.35rem" : "0" }}>
+                                              {sub.message || "(No message body)"}
+                                            </p>
+                                            {sub.telegramMediaUrl && typeof sub.telegramMediaUrl === 'string' && sub.telegramMediaUrl.startsWith('http') && (
+                                              <Link
+                                                href={sub.telegramMediaUrl}
+                                                target="_blank"
+                                                style={{ color: "var(--text-primary)", textDecoration: "underline", fontSize: "0.72rem" }}
+                                                onClick={(e) => e.stopPropagation()}
+                                              >
+                                                View Media in Telegram ↗
+                                              </Link>
+                                            )}
+                                          </div>
+                                        )}
                                       </div>
                                     );
                                   })}
+                                </div>
                               </div>
 
-                              {/* RIGHT COLUMN: PERSONAL REPLIES & REDIRECT TO REPLY */}
+                              {/* RIGHT COLUMN: TOP = PC HARDWARE SPECS; BOTTOM = DIRECT MESSAGES */}
                               <div className="twoColCol">
+                                
+                                {/* TOP BLOCK: PC HARDWARE & TELEMETRY */}
+                                <div style={{
+                                  background: "#17181d",
+                                  border: "1px solid var(--border-subtle)",
+                                  borderRadius: "var(--radius-xs)",
+                                  padding: "0.65rem 0.8rem",
+                                  marginBottom: "0.75rem"
+                                }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
+                                    <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                                      PC Hardware & Telemetry
+                                    </span>
+                                    <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
+                                      OS: {profile.os} • AE {profile.appVersion}
+                                    </span>
+                                  </div>
+                                  <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", fontFamily: "var(--font-mono)", marginBottom: "0.25rem" }}>
+                                    {profile.hardware}
+                                  </div>
+                                  <div style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
+                                    Telemetry: <code>{profile.stats}</code> • Installed: {profile.daysInstalled}
+                                  </div>
+                                </div>
+
+                                {/* BOTTOM BLOCK: DIRECT MESSAGES */}
                                 <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.4rem" }}>
                                   Direct Messages & Responses ({userReplies.length})
                                 </div>
 
-                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1, minHeight: "100px" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1, minHeight: "80px" }}>
                                   {userReplies.length === 0 ? (
                                     <div style={{
                                       background: "#17181d",
                                       border: "1px solid var(--border-subtle)",
                                       borderRadius: "var(--radius-xs)",
-                                      padding: "1rem",
+                                      padding: "0.85rem",
                                       textAlign: "center",
                                       color: "var(--text-muted)",
-                                      fontSize: "0.75rem"
+                                      fontSize: "0.74rem"
                                     }}>
                                       No direct messages sent to this user yet.
                                     </div>
@@ -768,7 +803,7 @@ export default function AdminDashboardPage() {
                                         background: "rgba(255, 255, 255, 0.03)",
                                         border: "1px solid var(--border-subtle)",
                                         borderRadius: "var(--radius-xs)",
-                                        padding: "0.65rem 0.75rem",
+                                        padding: "0.55rem 0.75rem",
                                         position: "relative"
                                       }}>
                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.2rem", fontSize: "0.72rem" }}>
@@ -802,7 +837,7 @@ export default function AdminDashboardPage() {
                                   )}
                                 </div>
 
-                                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.75rem" }}>
+                                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.6rem" }}>
                                   <button
                                     type="button"
                                     className="submitPillBtn"

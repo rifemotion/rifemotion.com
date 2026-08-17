@@ -62,24 +62,18 @@ export async function POST(request) {
         bannedAt: dateStr,
         durationDays: durationDays,
         reason: body.reason || 'Violation of Guidelines',
-        customMessage: customNotificationMessage || null,
         shadowBanned: false
       };
 
-      // Also record custom mute notification in user replies log if message provided
-      if (customNotificationMessage && customNotificationMessage.trim()) {
-        if (!db.replies) db.replies = [];
-        db.replies.unshift({
-          id: Date.now(),
-          ticketId: null,
-          userId: userId,
-          message: customNotificationMessage.trim(),
-          date: dateStr
-        });
-      }
-
       writeDb(db);
       return NextResponse.json({ ok: true, mutes: db.mutes, replies: db.replies });
+    }
+
+    if (action === 'delete_feedback') {
+      const id = body.id;
+      db.feedback = (db.feedback || []).filter(item => item.id !== id);
+      writeDb(db);
+      return NextResponse.json({ ok: true, feedback: db.feedback });
     }
 
     if (action === 'delete_reply') {
