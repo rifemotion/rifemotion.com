@@ -1305,6 +1305,9 @@ export default function AdminDashboardPage() {
                   <div className="formGroup" style={{ marginTop: "0.6rem" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
                       <label className="formLabel" style={{ margin: 0 }}>Title</label>
+                      <span style={{ fontSize: "0.68rem", color: dispatchForm.title.length >= 30 ? "#ef4444" : "var(--text-muted)" }}>
+                        {dispatchForm.title.length}/30
+                      </span>
                     </div>
 
                     {/* FULL CLEAR TITLE PRESETS */}
@@ -1320,7 +1323,7 @@ export default function AdminDashboardPage() {
                           key={preset}
                           type="button"
                           className="presetPillBtn"
-                          onClick={() => setDispatchForm((prev) => ({ ...prev, title: preset }))}
+                          onClick={() => setDispatchForm((prev) => ({ ...prev, title: preset.substring(0, 30) }))}
                         >
                           {preset}
                         </button>
@@ -1330,9 +1333,10 @@ export default function AdminDashboardPage() {
                     <input
                       type="text"
                       className="techInput"
-                      placeholder="Title or preset..."
+                      placeholder="Title (max 30 chars)..."
+                      maxLength={30}
                       value={dispatchForm.title}
-                      onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value })}
+                      onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value.substring(0, 30) })}
                       required
                     />
                   </div>
