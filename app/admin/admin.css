@@ -466,6 +466,7 @@ body {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  position: relative;
 }
 
 /* PILLS & BADGES (STRICT MAX 4-5px RADIUS OR CAPSULE) */
@@ -481,6 +482,15 @@ body {
   background-color: var(--bg-inset);
   color: var(--text-secondary);
   line-height: 1.2;
+}
+
+.badgePill.new {
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.35);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-size: 0.64rem;
 }
 
 .badgePill.active {
@@ -531,6 +541,40 @@ body {
   border-color: var(--acc-amber-border);
   font-family: var(--font-mono);
   font-weight: 700;
+}
+
+.markAllReadBtn {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  padding: 0.3rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.markAllReadBtn:hover {
+  background-color: var(--bg-row-hover);
+  color: var(--text-pure);
+  border-color: var(--border-medium);
+}
+
+.dispatchSplitLayout {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 1080px) {
+  .dispatchSplitLayout {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* 3-DOTS ACTION TRIGGER */

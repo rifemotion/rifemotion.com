@@ -70,6 +70,9 @@ export default function AdminDashboardPage() {
   const [replies, setReplies] = useState([]);
   const [loadingDb, setLoadingDb] = useState(true);
 
+  // Read / Unread Status State
+  const [readFeedbackIds, setReadFeedbackIds] = useState([]);
+
   // Filters & State
   const [feedbackFilter, setFeedbackFilter] = useState("all");
   const [feedbackSearchQuery, setFeedbackSearchQuery] = useState("");
@@ -95,6 +98,43 @@ export default function AdminDashboardPage() {
     message: "",
   });
   const [dispatchSuccess, setDispatchSuccess] = useState(false);
+
+  // Load read feedback IDs from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('rifemotion_read_feedback_ids');
+      if (saved) {
+        setReadFeedbackIds(JSON.parse(saved));
+      }
+    } catch (e) {}
+  }, []);
+
+  // Save read feedback IDs to localStorage
+  const saveReadIds = (ids) => {
+    setReadFeedbackIds(ids);
+    try {
+      localStorage.setItem('rifemotion_read_feedback_ids', JSON.stringify(ids));
+    } catch (e) {}
+  };
+
+  // Mark all currently loaded feedback as read
+  const handleMarkAllRead = () => {
+    const allIds = feedbackItems.map(i => i.id);
+    const merged = Array.from(new Set([...readFeedbackIds, ...allIds]));
+    saveReadIds(merged);
+  };
+
+  // Mark single user's feedback as read when expanded
+  const handleUserRowClick = (profile) => {
+    const isCurrentlyExpanded = expandedUserId === profile.userId;
+    setExpandedUserId(isCurrentlyExpanded ? null : profile.userId);
+
+    if (!isCurrentlyExpanded) {
+      const userItemIds = profile.items.map(i => i.id);
+      const merged = Array.from(new Set([...readFeedbackIds, ...userItemIds]));
+      saveReadIds(merged);
+    }
+  };
 
   // Fetch Database function
   const fetchDb = async () => {
@@ -124,14 +164,16 @@ export default function AdminDashboardPage() {
     }
   }, [status, router]);
 
-  // Global click listener to close context menu & dropdowns
+  // Global mousedown listener to dismiss context menu & 3-dots dropdown on clicking anywhere outside
   useEffect(() => {
-    const handleGlobalClick = () => {
+    const handleGlobalMouseDown = (e) => {
       setContextMenu(null);
-      setActiveMenuUserId(null);
+      if (!e.target.closest('.dotsActionBtn') && !e.target.closest('.dotsDropdown')) {
+        setActiveMenuUserId(null);
+      }
     };
-    window.addEventListener('click', handleGlobalClick);
-    return () => window.removeEventListener('click', handleGlobalClick);
+    window.addEventListener('mousedown', handleGlobalMouseDown);
+    return () => window.removeEventListener('mousedown', handleGlobalMouseDown);
   }, []);
 
   // Handle Delete Submission (Right-click menu)
@@ -157,9 +199,9 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Handle Delete Reply
+  // Handle Delete Reply / Broadcast Notification
   const handleDeleteReply = async (replyId) => {
-    const confirmed = window.confirm("Delete this notification?");
+    const confirmed = window.confirm("Delete this notification from server?");
     if (!confirmed) return;
 
     try {
@@ -305,7 +347,6 @@ export default function AdminDashboardPage() {
         items: []
       };
     }
-    // If this item has an email and profile currently has 'none', update profile email!
     if (usersGrouped[item.userId].email === 'none' && item.email && item.email.includes('@') && item.email !== 'none') {
       usersGrouped[item.userId].email = item.email;
     }
@@ -313,6 +354,20 @@ export default function AdminDashboardPage() {
   });
 
   const userProfilesList = Object.values(usersGrouped);
+
+  // Sort user profiles: Unread bug reports/features at TOP, reviews/read below
+  userProfilesList.sort((a, b) => {
+    const aHasUnread = a.items.some(i => i.type !== 'review' && !readFeedbackIds.includes(i.id));
+    const bHasUnread = b.items.some(i => i.type !== 'review' && !readFeedbackIds.includes(i.id));
+
+    if (aHasUnread && !bHasUnread) return -1;
+    if (!aHasUnread && bHasUnread) return 1;
+
+    // Secondary sort: newest submission first
+    const aLatestId = a.items[0]?.id || 0;
+    const bLatestId = b.items[0]?.id || 0;
+    return bLatestId - aLatestId;
+  });
 
   // Filter User Profiles
   const filteredUserProfiles = userProfilesList.filter((profile) => {
@@ -424,7 +479,7 @@ export default function AdminDashboardPage() {
             <span>rifemotion</span>
           </div>
           <span style={{ fontSize: "0.64rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-            v4.3.0
+            v4.4.0
           </span>
         </div>
       </aside>
@@ -444,7 +499,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* DENSE TOP TOOLBAR (REFERENCE 1 STYLE) */}
+            {/* DENSE TOP TOOLBAR */}
             <div className="denseToolbar">
               <div className="toolbarLeft">
                 {[
@@ -467,6 +522,14 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="toolbarRight">
+                <button
+                  type="button"
+                  className="markAllReadBtn"
+                  onClick={handleMarkAllRead}
+                  title="Mark all bug reports and suggestions as read"
+                >
+                  ✓ Mark All as Read
+                </button>
                 <input
                   type="text"
                   className="denseSearchInput"
@@ -481,7 +544,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* DATA TABLE (REFERENCE 2 DENSE GRID STYLE) */}
+            {/* DATA TABLE */}
             <div className="denseTablePanel">
               {/* TABLE HEADER */}
               <div className="denseTableHeader">
@@ -507,6 +570,7 @@ export default function AdminDashboardPage() {
                     const isShadowBanned = userMute && userMute.shadowBanned;
                     const userReplies = replies.filter((r) => r.userId === profile.userId || r.userId === 'all');
                     const latestItem = profile.items[0];
+                    const hasUnread = profile.items.some(i => i.type !== 'review' && !readFeedbackIds.includes(i.id));
 
                     return (
                       <div
@@ -516,7 +580,7 @@ export default function AdminDashboardPage() {
                         {/* MAIN ROW LINE */}
                         <div
                           className="denseRowMain"
-                          onClick={() => setExpandedUserId(isExpanded ? null : profile.userId)}
+                          onClick={() => handleUserRowClick(profile)}
                         >
                           {/* USER CELL */}
                           <div className="cellUser">
@@ -524,6 +588,9 @@ export default function AdminDashboardPage() {
                             <span className="userIdText">{profile.userId}</span>
                             {profile.email !== 'none' && (
                               <span className="userEmailText">({profile.email})</span>
+                            )}
+                            {hasUnread && (
+                              <span className="badgePill new">NEW</span>
                             )}
                           </div>
 
@@ -625,6 +692,7 @@ export default function AdminDashboardPage() {
                                       const isSubExpanded = expandedSubMap[sub.id] || false;
                                       const cleanTitle = sub.type === 'review' ? 'Review' : sub.type === 'suggest' ? 'Feature Suggestion' : 'Bug Report';
                                       const hasMediaAttached = Boolean(sub.hasMedia || sub.telegramMediaUrl);
+                                      const isItemUnread = sub.type !== 'review' && !readFeedbackIds.includes(sub.id);
 
                                       return (
                                         <div
@@ -638,12 +706,18 @@ export default function AdminDashboardPage() {
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             setExpandedSubMap({ ...expandedSubMap, [sub.id]: !isSubExpanded });
+                                            if (isItemUnread) {
+                                              saveReadIds([...readFeedbackIds, sub.id]);
+                                            }
                                           }}
                                         >
                                           <div className="subItemTop">
                                             <div className="subItemLeft">
                                               <span className="subNumberTag">#{profile.items.length - idx}</span>
                                               <span className="subTitleText">{cleanTitle}</span>
+                                              {isItemUnread && (
+                                                <span className="badgePill new">NEW</span>
+                                              )}
                                             </div>
 
                                             <div className="subItemRight">
@@ -809,89 +883,143 @@ export default function AdminDashboardPage() {
         )}
 
         {/* ========================================================================= */}
-        {/* VIEW: DISPATCH NOTIFICATION */}
+        {/* VIEW: DISPATCH NOTIFICATION & SENT HISTORY */}
         {/* ========================================================================= */}
         {activeTab === "dispatch" && (
-          <div style={{ maxWidth: "600px" }}>
+          <div>
             <div className="viewHeader">
               <div>
-                <h1 className="viewTitle">Broadcast Notification</h1>
-                <p className="viewSubtitle">Dispatch messages directly into After Effects notification centers</p>
+                <h1 className="viewTitle">Broadcast & Notification Center</h1>
+                <p className="viewSubtitle">Dispatch messages directly to CEP panels and manage broadcast history</p>
               </div>
             </div>
 
-            <div style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-md)", padding: "1.25rem" }}>
-              {dispatchSuccess && (
-                <div style={{
-                  padding: "0.65rem 0.85rem",
-                  backgroundColor: "var(--acc-green-bg)",
-                  border: "1px solid var(--acc-green-border)",
-                  borderRadius: "var(--r-sm)",
-                  color: "var(--acc-green)",
-                  fontSize: "0.76rem",
-                  fontWeight: 600,
-                  marginBottom: "1rem"
-                }}>
-                  ✓ Notification successfully dispatched to user extension.
-                </div>
-              )}
-
-              <form onSubmit={handleSendNotification}>
-                <div className="formGroup">
-                  <label className="formLabel">Target Recipient</label>
-                  <CustomSelect
-                    options={[
-                      { label: "All Users (Global Broadcast)", value: "all" },
-                      { label: "Specific User ID", value: "single" }
-                    ]}
-                    value={dispatchForm.targetType}
-                    onChange={(val) => setDispatchForm({ ...dispatchForm, targetType: val })}
-                  />
+            <div className="dispatchSplitLayout">
+              {/* LEFT: DISPATCH FORM */}
+              <div style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-md)", padding: "1.25rem" }}>
+                <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-pure)", marginBottom: "1rem" }}>
+                  New Broadcast / Direct Message
                 </div>
 
-                {dispatchForm.targetType === "single" && (
-                  <div className="formGroup">
-                    <label className="formLabel">User ID</label>
-                    <input
-                      type="text"
-                      className="techInput"
-                      placeholder="e.g. da3be79b-d6a7-4ba0-9c0a-..."
-                      value={dispatchForm.userId}
-                      onChange={(e) => setDispatchForm({ ...dispatchForm, userId: e.target.value })}
-                      required
-                    />
+                {dispatchSuccess && (
+                  <div style={{
+                    padding: "0.65rem 0.85rem",
+                    backgroundColor: "var(--acc-green-bg)",
+                    border: "1px solid var(--acc-green-border)",
+                    borderRadius: "var(--r-sm)",
+                    color: "var(--acc-green)",
+                    fontSize: "0.76rem",
+                    fontWeight: 600,
+                    marginBottom: "1rem"
+                  }}>
+                    ✓ Notification successfully dispatched to user extension.
                   </div>
                 )}
 
-                <div className="formGroup">
-                  <label className="formLabel">Notification Title</label>
-                  <input
-                    type="text"
-                    className="techInput"
-                    placeholder="e.g. Feature Update or Support Reply"
-                    value={dispatchForm.title}
-                    onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value })}
-                    required
-                  />
+                <form onSubmit={handleSendNotification}>
+                  <div className="formGroup">
+                    <label className="formLabel">Target Recipient</label>
+                    <CustomSelect
+                      options={[
+                        { label: "All Users (Global Broadcast)", value: "all" },
+                        { label: "Specific User ID", value: "single" }
+                      ]}
+                      value={dispatchForm.targetType}
+                      onChange={(val) => setDispatchForm({ ...dispatchForm, targetType: val })}
+                    />
+                  </div>
+
+                  {dispatchForm.targetType === "single" && (
+                    <div className="formGroup">
+                      <label className="formLabel">User ID</label>
+                      <input
+                        type="text"
+                        className="techInput"
+                        placeholder="e.g. da3be79b-d6a7-4ba0-9c0a-..."
+                        value={dispatchForm.userId}
+                        onChange={(e) => setDispatchForm({ ...dispatchForm, userId: e.target.value })}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  <div className="formGroup">
+                    <label className="formLabel">Notification Title</label>
+                    <input
+                      type="text"
+                      className="techInput"
+                      placeholder="e.g. Feature Update or Support Reply"
+                      value={dispatchForm.title}
+                      onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="formGroup">
+                    <label className="formLabel">Message Body</label>
+                    <textarea
+                      className="techTextarea"
+                      placeholder="Enter message for user..."
+                      value={dispatchForm.message}
+                      onChange={(e) => setDispatchForm({ ...dispatchForm, message: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.85rem" }}>
+                    <button type="submit" className="submitBtn">
+                      Dispatch Notification →
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* RIGHT: SENT NOTIFICATIONS & BROADCAST HISTORY */}
+              <div style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-md)", padding: "1.25rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.85rem" }}>
+                  <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-pure)" }}>
+                    Broadcast & Message History ({replies.length})
+                  </div>
+                  <span className="countChip">{replies.length} Sent</span>
                 </div>
 
-                <div className="formGroup">
-                  <label className="formLabel">Message Body</label>
-                  <textarea
-                    className="techTextarea"
-                    placeholder="Enter message for user..."
-                    value={dispatchForm.message}
-                    onChange={(e) => setDispatchForm({ ...dispatchForm, message: e.target.value })}
-                    required
-                  />
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem", maxHeight: "480px", overflowY: "auto" }}>
+                  {replies.length === 0 ? (
+                    <div style={{ padding: "1.5rem", textAlign: "center", color: "var(--text-muted)", fontSize: "0.74rem" }}>
+                      No notifications dispatched yet.
+                    </div>
+                  ) : (
+                    replies.map((r) => (
+                      <div key={r.id} className="responseItem">
+                        <div className="responseItemHead">
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+                            {r.userId === 'all' ? (
+                              <span className="badgePill suggest">All Users (Global)</span>
+                            ) : (
+                              <span className="badgePill active">User: {r.userId.substring(0, 10)}...</span>
+                            )}
+                            <span style={{ fontWeight: 600, color: "var(--text-pure)", fontSize: "0.74rem" }}>
+                              {r.title || "Notification"}
+                            </span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                            <span className="responseDate">{r.date}</span>
+                            <button
+                              type="button"
+                              className="delReplyBtn"
+                              onClick={() => handleDeleteReply(r.id)}
+                              title="Delete notification"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                        <p className="responseText" style={{ marginTop: "0.25rem" }}>{r.message}</p>
+                      </div>
+                    ))
+                  )}
                 </div>
-
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.85rem" }}>
-                  <button type="submit" className="submitBtn">
-                    Dispatch Notification →
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
@@ -943,10 +1071,10 @@ export default function AdminDashboardPage() {
             position: "fixed",
             top: contextMenu.y,
             left: contextMenu.x,
-            background: "#1c1d25",
+            background: "#161619",
             border: "1px solid var(--border-medium)",
             borderRadius: "var(--r-sm)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.7)",
             zIndex: 9999,
             padding: "0.25rem"
           }}
