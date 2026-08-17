@@ -1182,8 +1182,8 @@ export default function AdminDashboardPage() {
                       <label className="formLabel">Target</label>
                       <CustomSelect
                         options={[
-                          { label: "All", value: "all" },
-                          { label: "User", value: "single" }
+                          { label: "All Users", value: "all" },
+                          { label: "Single User", value: "single" }
                         ]}
                         value={dispatchForm.targetType}
                         onChange={(val) => setDispatchForm({ ...dispatchForm, targetType: val })}
@@ -1195,8 +1195,8 @@ export default function AdminDashboardPage() {
                       <CustomSelect
                         options={[
                           { label: "Announcement", value: "announcements" },
-                          { label: "Notice", value: "warning" },
-                          { label: "Reply", value: "personal" },
+                          { label: "System Notice", value: "warning" },
+                          { label: "Personal Reply", value: "personal" },
                         ]}
                         value={dispatchForm.category}
                         onChange={(val) => setDispatchForm({ ...dispatchForm, category: val })}
@@ -1223,9 +1223,15 @@ export default function AdminDashboardPage() {
                       <label className="formLabel" style={{ margin: 0 }}>Title</label>
                     </div>
 
-                    {/* QUICK TITLE PRESETS */}
+                    {/* FULL CLEAR TITLE PRESETS */}
                     <div className="presetPillRow">
-                      {["Bug Fixed", "Idea Approved", "Update Released", "Support Reply", "Notice"].map((preset) => (
+                      {[
+                        "Your suggestion was approved",
+                        "Bug report fixed in new update",
+                        "New extension update available",
+                        "Response to your feedback",
+                        "Important system maintenance"
+                      ].map((preset) => (
                         <button
                           key={preset}
                           type="button"
