@@ -198,11 +198,13 @@ export default function AdminDashboardPage() {
   // Global mousedown listener to dismiss context menu & 3-dots dropdown on clicking anywhere outside
   useEffect(() => {
     const handleGlobalMouseDown = (e) => {
-      setContextMenu(null);
+      if (!e.target.closest('.customContextMenu')) {
+        setContextMenu(null);
+      }
       if (!e.target.closest('.dotsActionBtn') && !e.target.closest('.dotsDropdown')) {
         setActiveMenuUserId(null);
       }
-      if (!e.target.closest('.popoverAnchor')) {
+      if (!e.target.closest('.popoverAnchor') && !e.target.closest('.customContextMenu')) {
         setActiveDrawerTab({});
       }
     };
@@ -210,10 +212,14 @@ export default function AdminDashboardPage() {
     return () => window.removeEventListener('mousedown', handleGlobalMouseDown);
   }, []);
 
-  // Handle Delete Submission (Right-click menu)
+  // Handle Delete Submission (Right-click menu or direct trash icon)
   const handleDeleteSubmission = async (subId) => {
-    const confirmed = window.confirm("Delete this submission permanently from server?");
+    setContextMenu(null);
+    const confirmed = window.confirm("Delete this submission permanently from database?");
     if (!confirmed) return;
+
+    // Optimistically update React state immediately
+    setFeedbackItems((prev) => prev.filter((item) => item.id !== subId));
 
     try {
       const res = await fetch('/api/admin/feedback', {
@@ -225,8 +231,8 @@ export default function AdminDashboardPage() {
         })
       });
       const data = await res.json();
-      if (data.ok) {
-        setFeedbackItems(data.feedback || []);
+      if (data.ok && data.feedback) {
+        setFeedbackItems(data.feedback);
       }
     } catch (err) {
       console.error("Error deleting submission:", err);
@@ -798,6 +804,17 @@ export default function AdminDashboardPage() {
                                             )}
                                             <span className="badgePill">{sub.extensionName}</span>
                                             <span className="subDateText">{sub.date}</span>
+                                            <button
+                                              type="button"
+                                              className="delSubBtn"
+                                              title="Delete submission"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteSubmission(sub.id);
+                                              }}
+                                            >
+                                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                            </button>
                                           </div>
                                         </div>
 

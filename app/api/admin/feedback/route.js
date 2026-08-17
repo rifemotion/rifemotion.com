@@ -71,6 +71,10 @@ export async function POST(request) {
 
     if (action === 'delete_feedback') {
       const id = body.id;
+      if (!db.deletedFeedbackIds) db.deletedFeedbackIds = [];
+      if (!db.deletedFeedbackIds.includes(id)) {
+        db.deletedFeedbackIds.push(id);
+      }
       db.feedback = (db.feedback || []).filter(item => item.id !== id);
       await writeDb(db);
       return NextResponse.json({ ok: true, feedback: db.feedback });
