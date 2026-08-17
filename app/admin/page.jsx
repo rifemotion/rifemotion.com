@@ -306,6 +306,8 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const [isSending, setIsSending] = useState(false);
+
   // Handle Dispatch Notification
   const handleSendNotification = async (e) => {
     e.preventDefault();
@@ -313,7 +315,9 @@ export default function AdminDashboardPage() {
       alert("Please enter a title and message.");
       return;
     }
+    if (isSending) return;
 
+    setIsSending(true);
     try {
       const res = await fetch('/api/admin/feedback', {
         method: 'POST',
@@ -322,7 +326,7 @@ export default function AdminDashboardPage() {
           action: 'reply_user',
           userId: dispatchForm.userId || 'all',
           title: dispatchForm.title.trim(),
-          category: dispatchForm.category || 'personal',
+          category: dispatchForm.category || 'announcements',
           message: dispatchForm.message.trim()
         })
       });
@@ -334,14 +338,16 @@ export default function AdminDashboardPage() {
         fetchDb();
         setDispatchForm({
           title: "",
-          category: dispatchForm.category,
-          targetType: dispatchForm.targetType,
+          category: "announcements",
+          targetType: "all",
           userId: "",
           message: "",
         });
       }
     } catch (err) {
       console.error("Dispatch error:", err);
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -609,24 +615,23 @@ export default function AdminDashboardPage() {
                           {/* USER CELL */}
                           <div className="cellUser">
                             <span className={`statusIndicatorDot ${isShadowBanned ? 'shadow' : isMuted ? 'muted' : 'active'}`} />
-                            <span
-                              className="userIdText"
-                              title="Click to copy User ID"
-                              onClick={(e) => handleCopyUserId(e, profile.userId)}
-                              style={{
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "0.35rem"
-                              }}
-                            >
-                              <span>{profile.userId}</span>
-                              {copiedUserId === profile.userId ? (
-                                <span style={{ fontSize: "0.62rem", color: "var(--acc-green)", fontWeight: 700 }}>✓ Copied!</span>
-                              ) : (
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                              )}
-                            </span>
+                            <div className="userIdWrapper">
+                              <span className="userIdFadeText" title={profile.userId}>
+                                {profile.userId}
+                              </span>
+                              <button
+                                type="button"
+                                className="copyIconBtn"
+                                title="Copy User ID"
+                                onClick={(e) => handleCopyUserId(e, profile.userId)}
+                              >
+                                {copiedUserId === profile.userId ? (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                ) : (
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                )}
+                              </button>
+                            </div>
                             {profile.emails && profile.emails.length > 0 && (
                               <div style={{ display: "inline-flex", gap: "0.25rem", flexWrap: "wrap", alignItems: "center" }}>
                                 {profile.emails.map((em) => (
@@ -1025,8 +1030,13 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.85rem" }}>
-                    <button type="submit" className="submitBtn">
-                      Dispatch Notification →
+                    <button
+                      type="submit"
+                      className="submitBtn"
+                      disabled={isSending}
+                      style={{ opacity: isSending ? 0.65 : 1, cursor: isSending ? "not-allowed" : "pointer" }}
+                    >
+                      {isSending ? "Sending..." : "Dispatch Notification →"}
                     </button>
                   </div>
                 </form>

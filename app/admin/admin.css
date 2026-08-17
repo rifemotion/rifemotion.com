@@ -463,6 +463,43 @@ body {
   white-space: nowrap;
 }
 
+.userIdWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.userIdFadeText {
+  font-family: var(--font-mono);
+  font-size: 0.77rem;
+  font-weight: 600;
+  color: var(--text-pure);
+  letter-spacing: -0.01em;
+  display: inline-block;
+  max-width: 60px;
+  overflow: hidden;
+  white-space: nowrap;
+  mask-image: linear-gradient(to right, #000 38px, transparent 58px);
+  -webkit-mask-image: linear-gradient(to right, #000 38px, transparent 58px);
+}
+
+.copyIconBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: color 0.12s ease;
+}
+
+.copyIconBtn:hover {
+  color: var(--text-pure);
+}
+
 .statusIndicatorDot {
   width: 7px;
   height: 7px;
