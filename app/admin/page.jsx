@@ -247,6 +247,9 @@ export default function AdminDashboardPage() {
     const confirmed = window.confirm("Delete this notification from server?");
     if (!confirmed) return;
 
+    // Optimistically update React state immediately
+    setReplies((prev) => prev.filter((r) => String(r.id) !== String(replyId)));
+
     try {
       const res = await fetch('/api/admin/feedback', {
         method: 'POST',
@@ -265,16 +268,65 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Handle Delete Entire User from Database
+  const handleDeleteEntireUser = async (targetUid) => {
+    if (!targetUid) return;
+    const confirmed = window.confirm("Permanently delete this user and all their records from the database?");
+    if (!confirmed) return;
+
+    // Optimistically remove user immediately from state
+    setFeedbackItems((prev) => prev.filter((item) => String(item.userId) !== String(targetUid)));
+    setReplies((prev) => prev.filter((r) => String(r.userId) !== String(targetUid)));
+    setMutes((prev) => {
+      const copy = { ...prev };
+      delete copy[targetUid];
+      return copy;
+    });
+
+    try {
+      const res = await fetch('/api/admin/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_user_data',
+          userId: targetUid
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        if (data.feedback) setFeedbackItems(data.feedback);
+        if (data.replies) setReplies(data.replies);
+        if (data.mutes) setMutes(data.mutes);
+      }
+    } catch (err) {
+      console.error("Error deleting user data:", err);
+    }
+  };
+
   // Handle Mute Modal submit
   const handleConfirmMuteModal = async () => {
     if (!muteModalTargetUser) return;
+    const targetUid = muteModalTargetUser.userId;
+    const optimisticUntil = new Date(Date.now() + muteModalDuration * 24 * 60 * 60 * 1000).toLocaleDateString('ru-RU');
+
+    // Optimistically apply mute immediately
+    setMutes((prev) => ({
+      ...prev,
+      [targetUid]: {
+        mutedUntil: optimisticUntil,
+        reason: muteModalReason,
+        shadowBanned: false
+      }
+    }));
+    setMuteModalTargetUser(null);
+
     try {
       const res = await fetch('/api/admin/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'mute_user',
-          userId: muteModalTargetUser.userId,
+          userId: targetUid,
           durationDays: muteModalDuration,
           reason: muteModalReason
         })
@@ -283,7 +335,6 @@ export default function AdminDashboardPage() {
       if (data.ok) {
         setMutes(data.mutes || {});
         setReplies(data.replies || []);
-        setMuteModalTargetUser(null);
         setMuteModalReason("Spam & Flooding");
       }
     } catch (err) {
@@ -295,6 +346,16 @@ export default function AdminDashboardPage() {
   const handleShadowBanUser = async (userId) => {
     const confirmed = window.confirm(`Shadow ban user ${userId}? Their submissions will be silently accepted.`);
     if (!confirmed) return;
+
+    // Optimistically apply shadowban
+    setMutes((prev) => ({
+      ...prev,
+      [userId]: {
+        mutedUntil: "Permanent (Silent)",
+        reason: "Shadow Banned",
+        shadowBanned: true
+      }
+    }));
 
     try {
       const res = await fetch('/api/admin/feedback', {
@@ -316,6 +377,13 @@ export default function AdminDashboardPage() {
 
   // Handle Unmute
   const handleUnmuteUser = async (userId) => {
+    // Optimistically unmute
+    setMutes((prev) => {
+      const copy = { ...prev };
+      delete copy[userId];
+      return copy;
+    });
+
     try {
       const res = await fetch('/api/admin/feedback', {
         method: 'POST',
@@ -1095,6 +1163,18 @@ export default function AdminDashboardPage() {
                                     </div>
                                   </>
                                 )}
+
+                                <div
+                                  className="dotsDropdownItem"
+                                  style={{ color: "#ef4444", borderTop: "1px solid var(--border-subtle)", marginTop: "2px", paddingTop: "5px" }}
+                                  onClick={() => {
+                                    handleDeleteEntireUser(profile.userId);
+                                    setActiveMenuUserId(null);
+                                  }}
+                                >
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                  <span>Delete User from DB</span>
+                                </div>
                               </div>
                             )}
                           </div>

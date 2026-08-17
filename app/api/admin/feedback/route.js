@@ -103,10 +103,26 @@ export async function POST(request) {
       return NextResponse.json({ ok: true, mutes: db.mutes });
     }
 
-    if (action === 'unmute_user') {
-      if (!userId) return NextResponse.json({ error: "User ID required" }, { status: 400 });
+    if (action === 'delete_user_data') {
+      const targetUid = String(body.userId);
+      const userItems = (db.feedback || []).filter(item => String(item.userId) === targetUid);
+      if (!db.deletedFeedbackIds) db.deletedFeedbackIds = [];
+      userItems.forEach(item => {
+        if (!db.deletedFeedbackIds.map(String).includes(String(item.id))) {
+          db.deletedFeedbackIds.push(item.id);
+        }
+      });
+      db.feedback = (db.feedback || []).filter(item => String(item.userId) !== targetUid);
+      db.replies = (db.replies || []).filter(r => String(r.userId) !== targetUid);
+      if (db.mutes && db.mutes[targetUid]) {
+        delete db.mutes[targetUid];
+      }
+      await writeDb(db);
+      return NextResponse.json({ ok: true, feedback: db.feedback, replies: db.replies, mutes: db.mutes });
+    }
 
-      if (db.mutes && db.mutes[userId]) {
+    if (action === 'unmute_user') {
+      if (userId && db.mutes && db.mutes[userId]) {
         delete db.mutes[userId];
         await writeDb(db);
       }
