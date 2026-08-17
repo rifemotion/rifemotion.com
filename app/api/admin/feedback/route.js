@@ -61,6 +61,7 @@ export async function POST(request) {
         bannedUntil: bannedUntil,
         bannedAt: dateStr,
         durationDays: durationDays,
+        reason: body.reason || 'Violation of Guidelines',
         customMessage: customNotificationMessage || null,
         shadowBanned: false
       };
@@ -79,6 +80,13 @@ export async function POST(request) {
 
       writeDb(db);
       return NextResponse.json({ ok: true, mutes: db.mutes, replies: db.replies });
+    }
+
+    if (action === 'delete_reply') {
+      const replyId = body.replyId;
+      db.replies = (db.replies || []).filter(r => r.id !== replyId);
+      writeDb(db);
+      return NextResponse.json({ ok: true, replies: db.replies });
     }
 
     if (action === 'shadow_ban_user') {
@@ -109,17 +117,16 @@ export async function POST(request) {
     if (action === 'reply_user') {
       if (!userId || !message) return NextResponse.json({ error: "User ID & message required" }, { status: 400 });
 
+      if (!db.replies) db.replies = [];
       const newReply = {
         id: Date.now(),
         ticketId: ticketId || null,
         userId: userId,
-        message: message,
+        message: message.trim(),
         date: dateStr
       };
 
-      if (!db.replies) db.replies = [];
       db.replies.unshift(newReply);
-
       writeDb(db);
       return NextResponse.json({ ok: true, replies: db.replies, feedback: db.feedback });
     }

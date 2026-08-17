@@ -88,7 +88,8 @@ export default function AdminDashboardPage() {
 
   // Mute Modal State
   const [muteModalTargetUser, setMuteModalTargetUser] = useState(null);
-  const [muteModalDuration, setMuteModalDuration] = useState("1");
+  const [muteModalDuration, setMuteModalDuration] = useState("7");
+  const [muteModalReason, setMuteModalReason] = useState("Spam & Flooding");
   const [muteModalMessage, setMuteModalMessage] = useState("");
 
   // Quick Reply Inputs per User
@@ -134,6 +135,29 @@ export default function AdminDashboardPage() {
     }
   }, [status, router]);
 
+  // Handle Delete Reply / Notification
+  const handleDeleteReply = async (replyId) => {
+    const confirmed = window.confirm("Are you sure you want to delete this notification?");
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch('/api/admin/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_reply',
+          replyId: replyId
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setReplies(data.replies || []);
+      }
+    } catch (err) {
+      console.error("Error deleting reply:", err);
+    }
+  };
+
   // Handle Mute Modal submit
   const handleConfirmMuteModal = async () => {
     if (!muteModalTargetUser) return;
@@ -145,6 +169,7 @@ export default function AdminDashboardPage() {
           action: 'mute_user',
           userId: muteModalTargetUser.userId,
           durationDays: muteModalDuration,
+          reason: muteModalReason,
           customNotificationMessage: muteModalMessage
         })
       });
@@ -154,6 +179,7 @@ export default function AdminDashboardPage() {
         setReplies(data.replies || []);
         setMuteModalTargetUser(null);
         setMuteModalMessage("");
+        setMuteModalReason("Spam & Flooding");
       }
     } catch (err) {
       console.error("Error muting user:", err);
@@ -736,11 +762,33 @@ export default function AdminDashboardPage() {
                                         background: "rgba(255, 255, 255, 0.03)",
                                         border: "1px solid var(--border-subtle)",
                                         borderRadius: "var(--radius-xs)",
-                                        padding: "0.65rem 0.75rem"
+                                        padding: "0.65rem 0.75rem",
+                                        position: "relative"
                                       }}>
-                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.2rem", fontSize: "0.72rem" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.2rem", fontSize: "0.72rem" }}>
                                           <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>Response from Team</span>
-                                          <span style={{ color: "var(--text-muted)" }}>{r.date}</span>
+                                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                            <span style={{ color: "var(--text-muted)" }}>{r.date}</span>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteReply(r.id);
+                                              }}
+                                              style={{
+                                                background: "none",
+                                                border: "none",
+                                                color: "var(--text-muted)",
+                                                cursor: "pointer",
+                                                fontSize: "0.8rem",
+                                                lineHeight: 1,
+                                                padding: "0 2px"
+                                              }}
+                                              title="Delete notification"
+                                            >
+                                              ✕
+                                            </button>
+                                          </div>
                                         </div>
                                         <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>{r.message}</p>
                                       </div>
@@ -991,13 +1039,31 @@ export default function AdminDashboardPage() {
               />
             </div>
 
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block", marginBottom: "0.3rem" }}>
+                Restriction Reason
+              </label>
+              <CustomSelect
+                options={[
+                  { label: "Spam & Flooding", value: "Spam & Flooding" },
+                  { label: "Abusive Language / Toxic Behavior", value: "Abusive Language / Toxic Behavior" },
+                  { label: "False Bug Reports", value: "False Bug Reports" },
+                  { label: "Misuse of Support Channel", value: "Misuse of Support Channel" },
+                  { label: "Terms of Service Violation", value: "Terms of Service Violation" },
+                  { label: "Custom Reason", value: "Custom Reason" },
+                ]}
+                value={muteModalReason}
+                onChange={(val) => setMuteModalReason(val)}
+              />
+            </div>
+
             <div style={{ marginBottom: "1.2rem" }}>
               <label style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block", marginBottom: "0.3rem" }}>
-                Notification Message to User (Optional)
+                Additional Details / Note (Optional)
               </label>
               <textarea
                 className="pillTextarea"
-                placeholder="Explain the restriction reason to the user..."
+                placeholder="Optional extra details for the system notice..."
                 value={muteModalMessage}
                 onChange={(e) => setMuteModalMessage(e.target.value)}
               />

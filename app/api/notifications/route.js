@@ -45,13 +45,21 @@ export async function GET(request) {
 
     const notifications = [];
 
-    // 1. If muted, add automatic Mute Notification to user feed
+    // 1. If muted, add single unified Mute Notification to user feed
     if (isMuted) {
+      let bodyText = `Your feedback submission access has been temporarily restricted until ${mutedUntil}.`;
+      if (muteReason) {
+        bodyText += ` Reason: ${muteReason}.`;
+      }
+      if (muteRecord && muteRecord.customMessage && muteRecord.customMessage.trim()) {
+        bodyText += ` Note: ${muteRecord.customMessage.trim()}`;
+      }
+
       notifications.push({
         id: 99999,
         title: "Feedback Access Restricted",
         subtitle: "System Notice",
-        body: `Your feedback submission access has been temporarily restricted until ${mutedUntil}.`,
+        body: bodyText,
         date: "Today",
         unread: true
       });
