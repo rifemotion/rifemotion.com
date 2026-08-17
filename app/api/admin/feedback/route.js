@@ -124,6 +124,7 @@ export async function POST(request) {
         title: body.title ? body.title.trim() : (userId === 'all' ? "Announcement" : "Direct Message"),
         category: body.category || (userId === 'all' ? "announcements" : "personal"),
         message: message.trim(),
+        buttons: Array.isArray(body.buttons) ? body.buttons : (body.buttonText ? [{ text: body.buttonText, url: body.buttonUrl }] : []),
         date: dateStr
       };
 

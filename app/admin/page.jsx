@@ -357,7 +357,9 @@ export default function AdminDashboardPage() {
           category: dispatchForm.category || 'announcements',
           message: dispatchForm.message.trim(),
           product: dispatchForm.product || 'all',
-          channels: { inApp: dispatchForm.channelInApp, email: dispatchForm.channelEmail }
+          channels: { inApp: dispatchForm.channelInApp, email: dispatchForm.channelEmail },
+          buttonText: dispatchForm.buttonText ? dispatchForm.buttonText.trim() : "",
+          buttonUrl: dispatchForm.buttonUrl ? dispatchForm.buttonUrl.trim() : ""
         })
       });
 
@@ -375,6 +377,8 @@ export default function AdminDashboardPage() {
           targetType: "all",
           userId: "",
           message: "",
+          buttonText: "",
+          buttonUrl: "",
         });
       }
     } catch (err) {
@@ -1263,6 +1267,31 @@ export default function AdminDashboardPage() {
                       onChange={(e) => setDispatchForm({ ...dispatchForm, message: e.target.value })}
                       required
                     />
+                  </div>
+
+                  {/* OPTIONAL ACTION BUTTON */}
+                  <div className="dispatchGridTwoCol" style={{ marginTop: "0.6rem" }}>
+                    <div className="formGroup" style={{ margin: 0 }}>
+                      <label className="formLabel">Button Label (Optional)</label>
+                      <input
+                        type="text"
+                        className="techInput"
+                        placeholder="e.g. Open Website"
+                        value={dispatchForm.buttonText || ""}
+                        onChange={(e) => setDispatchForm({ ...dispatchForm, buttonText: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="formGroup" style={{ margin: 0 }}>
+                      <label className="formLabel">Button Link / Action</label>
+                      <input
+                        type="text"
+                        className="techInput"
+                        placeholder="https://... or action:subscribe"
+                        value={dispatchForm.buttonUrl || ""}
+                        onChange={(e) => setDispatchForm({ ...dispatchForm, buttonUrl: e.target.value })}
+                      />
+                    </div>
                   </div>
 
                   <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.75rem" }}>

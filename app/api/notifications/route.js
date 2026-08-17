@@ -71,6 +71,8 @@ export async function GET(request) {
           title: r.title || (r.category === 'announcements' ? "Announcement" : r.category === 'warning' ? "System Notice" : "Personal Reply"),
           subtitle: r.category === 'announcements' ? "Announcement" : r.category === 'warning' ? "System Notice" : "Personal Reply",
           body: r.message,
+          message: r.message,
+          buttons: r.buttons || [],
           date: r.date,
           unread: true
         });
