@@ -685,7 +685,7 @@ export default function AdminDashboardPage() {
                     return (
                       <div
                         key={profile.userId}
-                        className="denseRowWrapper"
+                        className={`denseRowWrapper ${currentTab || activeMenuUserId === profile.userId ? 'hasActivePopover' : ''}`}
                       >
                         {/* MAIN 1-LINE MODULAR ROW */}
                         <div className="denseRowMain">
