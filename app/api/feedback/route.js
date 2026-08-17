@@ -131,7 +131,7 @@ export async function POST(request) {
     };
 
     db.feedback = [newFeedback, ...(db.feedback || [])];
-    writeDb(db);
+    await writeDb(db);
 
     return NextResponse.json({
       ok: true,

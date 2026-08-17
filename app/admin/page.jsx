@@ -755,28 +755,40 @@ export default function AdminDashboardPage() {
                               {/* RIGHT COLUMN: TOP = PC HARDWARE SPECS; BOTTOM = DIRECT MESSAGES */}
                               <div className="twoColCol">
                                 
-                                {/* TOP BLOCK: PC HARDWARE & TELEMETRY */}
-                                <div style={{
-                                  background: "#17181d",
-                                  border: "1px solid var(--border-subtle)",
-                                  borderRadius: "var(--radius-xs)",
-                                  padding: "0.65rem 0.8rem",
-                                  marginBottom: "0.75rem"
-                                }}>
-                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
-                                    <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text-primary)" }}>
-                                      PC Hardware & Telemetry
+                                {/* TOP BLOCK: PC HARDWARE & TELEMETRY (SLIM 1-LINE ACCORDION) */}
+                                <div
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedSpecsMap({ ...expandedSpecsMap, [profile.userId]: !isSpecsExpanded });
+                                  }}
+                                  style={{
+                                    background: "#17181d",
+                                    border: "1px solid var(--border-subtle)",
+                                    borderRadius: "var(--radius-xs)",
+                                    padding: "0.45rem 0.75rem",
+                                    marginBottom: "0.6rem",
+                                    cursor: "pointer",
+                                    transition: "all 0.15s ease"
+                                  }}
+                                >
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text-secondary)" }}>
+                                      PC Hardware & Telemetry {isSpecsExpanded ? '▴' : '▾'}
                                     </span>
                                     <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
                                       OS: {profile.os} • AE {profile.appVersion}
                                     </span>
                                   </div>
-                                  <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", fontFamily: "var(--font-mono)", marginBottom: "0.25rem" }}>
-                                    {profile.hardware}
-                                  </div>
-                                  <div style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
-                                    Telemetry: <code>{profile.stats}</code> • Installed: {profile.daysInstalled}
-                                  </div>
+                                  {isSpecsExpanded && (
+                                    <div style={{ marginTop: "0.45rem", paddingTop: "0.45rem", borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: "0.72rem" }}>
+                                      <div style={{ color: "var(--text-primary)", fontFamily: "var(--font-mono)", marginBottom: "0.25rem" }}>
+                                        {profile.hardware}
+                                      </div>
+                                      <div style={{ color: "var(--text-muted)" }}>
+                                        Telemetry: <code>{profile.stats}</code> • Installed: {profile.daysInstalled}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
 
                                 {/* BOTTOM BLOCK: DIRECT MESSAGES */}

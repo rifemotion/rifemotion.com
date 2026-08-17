@@ -65,21 +65,21 @@ export async function POST(request) {
         shadowBanned: false
       };
 
-      writeDb(db);
+      await writeDb(db);
       return NextResponse.json({ ok: true, mutes: db.mutes, replies: db.replies });
     }
 
     if (action === 'delete_feedback') {
       const id = body.id;
       db.feedback = (db.feedback || []).filter(item => item.id !== id);
-      writeDb(db);
+      await writeDb(db);
       return NextResponse.json({ ok: true, feedback: db.feedback });
     }
 
     if (action === 'delete_reply') {
       const replyId = body.replyId;
       db.replies = (db.replies || []).filter(r => r.id !== replyId);
-      writeDb(db);
+      await writeDb(db);
       return NextResponse.json({ ok: true, replies: db.replies });
     }
 
@@ -94,7 +94,7 @@ export async function POST(request) {
         shadowBanned: true
       };
 
-      writeDb(db);
+      await writeDb(db);
       return NextResponse.json({ ok: true, mutes: db.mutes });
     }
 
@@ -103,7 +103,7 @@ export async function POST(request) {
 
       if (db.mutes && db.mutes[userId]) {
         delete db.mutes[userId];
-        writeDb(db);
+        await writeDb(db);
       }
       return NextResponse.json({ ok: true, mutes: db.mutes });
     }
@@ -121,7 +121,7 @@ export async function POST(request) {
       };
 
       db.replies.unshift(newReply);
-      writeDb(db);
+      await writeDb(db);
       return NextResponse.json({ ok: true, replies: db.replies, feedback: db.feedback });
     }
 
