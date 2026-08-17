@@ -202,6 +202,9 @@ export default function AdminDashboardPage() {
       if (!e.target.closest('.dotsActionBtn') && !e.target.closest('.dotsDropdown')) {
         setActiveMenuUserId(null);
       }
+      if (!e.target.closest('.popoverAnchor')) {
+        setActiveDrawerTab({});
+      }
     };
     window.addEventListener('mousedown', handleGlobalMouseDown);
     return () => window.removeEventListener('mousedown', handleGlobalMouseDown);
@@ -434,16 +437,49 @@ export default function AdminDashboardPage() {
   });
 
   const filterOptions = [
-    { id: "all", label: `All Users (${userProfilesList.length})`, icon: "👥" },
-    { id: "lapath", label: "LaPath", icon: "⚡" },
-    { id: "kliner", label: "KLiner", icon: "📐" },
-    { id: "bug", label: "Bug Reports", icon: "🐞" },
-    { id: "feature", label: "Suggestions", icon: "💡" },
-    { id: "review", label: "Reviews", icon: "⭐" },
+    {
+      id: "all",
+      label: `All (${userProfilesList.length})`,
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      )
+    },
+    {
+      id: "lapath",
+      label: "LaPath",
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+      )
+    },
+    {
+      id: "kliner",
+      label: "KLiner",
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"></path></svg>
+      )
+    },
+    {
+      id: "bug",
+      label: "Bugs",
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="8" height="14" x="8" y="6" rx="4"></rect><path d="m19 7-3 2"></path><path d="m5 7 3 2"></path><path d="m19 19-3-2"></path><path d="m5 19 3-2"></path><path d="M20 13h-4"></path><path d="M4 13h4"></path></svg>
+      )
+    },
+    {
+      id: "feature",
+      label: "Suggestions",
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="9" x2="15" y1="18" y2="18"></line><line x1="10" x2="14" y1="22" y2="22"></line><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path></svg>
+      )
+    },
+    {
+      id: "review",
+      label: "Reviews",
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+      )
+    }
   ];
-
-  const currentFilterLabel = filterOptions.find(f => f.id === feedbackFilter)?.label || "All Users";
-  const currentFilterIcon = filterOptions.find(f => f.id === feedbackFilter)?.icon || "👥";
 
   if (status === "loading" || loadingDb) {
     return (
@@ -459,7 +495,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="appShell">
 
-      {/* 1. COMPACT SIDEBAR */}
+      {/* 1. COMPACT SIDENav */}
       <aside className="sideNav">
         <div>
           {/* Profile Card */}
@@ -537,7 +573,7 @@ export default function AdminDashboardPage() {
             <span>rifemotion</span>
           </div>
           <span style={{ fontSize: "0.64rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-            v4.4.0
+            v4.5.0
           </span>
         </div>
       </aside>
@@ -569,42 +605,29 @@ export default function AdminDashboardPage() {
                       className={`denseTabBtn ${feedbackFilter === tab.id ? "denseTabBtnActive" : ""}`}
                       onClick={() => setFeedbackFilter(tab.id)}
                     >
-                      <span>{tab.icon}</span>
+                      {tab.icon}
                       <span>{tab.label}</span>
                     </button>
                   ))}
                 </div>
 
-                {/* Mobile Collapsible Filter Button & Dropdown */}
-                <div className="mobileFilterSection">
-                  <button
-                    type="button"
-                    className="mobileFilterToggleBtn"
-                    onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
-                  >
-                    <span>{currentFilterIcon} Filter: {currentFilterLabel}</span>
-                    <span>{mobileFilterOpen ? '▴' : '▾'}</span>
-                  </button>
-
-                  {mobileFilterOpen && (
-                    <div className="mobileFilterGrid">
-                      {filterOptions.map((tab) => (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          className={`denseTabBtn ${feedbackFilter === tab.id ? "denseTabBtnActive" : ""}`}
-                          style={{ textAlign: "left", justifyContent: "flex-start" }}
-                          onClick={() => {
-                            setFeedbackFilter(tab.id);
-                            setMobileFilterOpen(false);
-                          }}
-                        >
-                          <span>{tab.icon}</span>
-                          <span>{tab.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                {/* Mobile Icon Row (Active expands with label) */}
+                <div className="mobileFilterRow">
+                  {filterOptions.map((tab) => {
+                    const isActive = feedbackFilter === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        className={`mobileFilterIconBtn ${isActive ? "active" : ""}`}
+                        onClick={() => setFeedbackFilter(tab.id)}
+                        title={tab.label}
+                      >
+                        {tab.icon}
+                        {isActive && <span>{tab.label}</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -662,7 +685,7 @@ export default function AdminDashboardPage() {
                     return (
                       <div
                         key={profile.userId}
-                        className={`denseRowWrapper ${currentTab ? 'isRowExpanded' : ''}`}
+                        className="denseRowWrapper"
                       >
                         {/* MAIN 1-LINE MODULAR ROW */}
                         <div className="denseRowMain">
@@ -704,15 +727,19 @@ export default function AdminDashboardPage() {
                             <span className="badgePill active" style={{ fontSize: "0.64rem" }}>✓ Licensed</span>
                           </div>
 
-                          {/* 3. FEEDBACKS BUTTON */}
-                          <div>
+                          {/* 3. FEEDBACKS BUTTON WITH FLOATING POPOVER */}
+                          <div className="popoverAnchor">
                             <button
                               type="button"
                               className={`interactivePillBtn ${currentTab === 'feedback' ? 'active' : ''}`}
-                              onClick={() => toggleDrawer(profile.userId, 'feedback', profile.items)}
-                              title="Toggle Submissions Drawer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDrawer(profile.userId, 'feedback', profile.items);
+                              }}
+                              title="Toggle Submissions Popover"
                             >
-                              <span>💬 {profile.items.length} {profile.items.length === 1 ? 'Message' : 'Messages'}</span>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                              <span>{profile.items.length} {profile.items.length === 1 ? 'Message' : 'Messages'}</span>
                               {latestItem && latestItem.type === 'review' && latestItem.rating && (
                                 <span className="badgePill stars" style={{ padding: "0.05rem 0.25rem", fontSize: "0.62rem" }}>★ {latestItem.rating}/5</span>
                               )}
@@ -720,30 +747,212 @@ export default function AdminDashboardPage() {
                                 <span className="badgePill new" style={{ padding: "0.05rem 0.25rem", fontSize: "0.6rem" }}>NEW</span>
                               )}
                             </button>
+
+                            {/* FLOATING POPOVER: FEEDBACK CHAIN */}
+                            {currentTab === 'feedback' && (
+                              <div className="floatingPopover" onClick={(e) => e.stopPropagation()}>
+                                <div className="drawerColHead" style={{ marginBottom: "0.55rem" }}>
+                                  <span>Submissions Chain ({profile.items.length})</span>
+                                  <span style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>Right click to delete</span>
+                                </div>
+
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                                  {profile.items.map((sub, idx) => {
+                                    const isSubExpanded = expandedSubMap[sub.id] || false;
+                                    const cleanTitle = sub.type === 'review' ? 'Review' : sub.type === 'suggest' ? 'Feature Suggestion' : 'Bug Report';
+                                    const hasMediaAttached = Boolean(sub.hasMedia || sub.telegramMediaUrl);
+                                    const isItemUnread = sub.type !== 'review' && !readFeedbackIds.includes(sub.id);
+
+                                    return (
+                                      <div
+                                        key={sub.id}
+                                        className="subItemCard"
+                                        onContextMenu={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setContextMenu({ x: e.clientX, y: e.clientY, subId: sub.id });
+                                        }}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setExpandedSubMap({ ...expandedSubMap, [sub.id]: !isSubExpanded });
+                                          if (isItemUnread) {
+                                            saveReadIds([...readFeedbackIds, sub.id]);
+                                          }
+                                        }}
+                                      >
+                                        <div className="subItemTop">
+                                          <div className="subItemLeft">
+                                            <span className="subNumberTag">#{profile.items.length - idx}</span>
+                                            <span className="subTitleText">{cleanTitle}</span>
+                                            {isItemUnread && (
+                                              <span className="badgePill new">NEW</span>
+                                            )}
+                                          </div>
+
+                                          <div className="subItemRight">
+                                            {hasMediaAttached && (
+                                              <span className="badgePill media">📎 Media</span>
+                                            )}
+                                            {sub.type === 'review' && sub.rating && (
+                                              <span className="badgePill stars">★ {sub.rating}/5</span>
+                                            )}
+                                            <span className="badgePill">{sub.extensionName}</span>
+                                            <span className="subDateText">{sub.date}</span>
+                                          </div>
+                                        </div>
+
+                                        {/* LINE 2 INSET BODY */}
+                                        <div className={`accordionContent ${isSubExpanded ? 'isExpanded' : ''}`}>
+                                          <div className="accordionInner">
+                                            <div className="subItemBody">
+                                              <p>{sub.message || "(No message body provided)"}</p>
+                                              {sub.telegramMediaUrl ? (
+                                                <Link
+                                                  href={sub.telegramMediaUrl}
+                                                  target="_blank"
+                                                  className="tgMediaBtn"
+                                                  onClick={(e) => e.stopPropagation()}
+                                                >
+                                                  <span>View Attached Media in Telegram</span> ↗
+                                                </Link>
+                                              ) : sub.hasMedia ? (
+                                                <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: "0.3rem" }}>
+                                                  📎 Media attached (saved in Telegram Bot)
+                                                </div>
+                                              ) : null}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                           </div>
 
-                          {/* 4. DIRECT REPLIES BUTTON */}
-                          <div>
+                          {/* 4. DIRECT REPLIES BUTTON WITH FLOATING POPOVER */}
+                          <div className="popoverAnchor">
                             <button
                               type="button"
                               className={`interactivePillBtn ${currentTab === 'replies' ? 'active' : ''}`}
-                              onClick={() => toggleDrawer(profile.userId, 'replies')}
-                              title="Toggle Direct Responses Drawer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDrawer(profile.userId, 'replies');
+                              }}
+                              title="Toggle Direct Replies Popover"
                             >
-                              <span>✉ {userReplies.length} Replies</span>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                              <span>{userReplies.length} Replies</span>
                             </button>
+
+                            {/* FLOATING POPOVER: DIRECT RESPONSES */}
+                            {currentTab === 'replies' && (
+                              <div className="floatingPopover" onClick={(e) => e.stopPropagation()}>
+                                <div className="drawerColHead" style={{ marginBottom: "0.55rem" }}>
+                                  <span>Direct Responses Sent to this User ({userReplies.length})</span>
+                                </div>
+
+                                <div className="responsesFeed">
+                                  {userReplies.length === 0 ? (
+                                    <div style={{
+                                      backgroundColor: "var(--bg-inset)",
+                                      border: "1px solid var(--border-subtle)",
+                                      borderRadius: "var(--r-sm)",
+                                      padding: "0.75rem",
+                                      textAlign: "center",
+                                      color: "var(--text-muted)",
+                                      fontSize: "0.72rem"
+                                    }}>
+                                      No direct responses sent to this user yet.
+                                    </div>
+                                  ) : (
+                                    userReplies.map((r) => (
+                                      <div key={r.id} className="responseItem">
+                                        <div className="responseItemHead">
+                                          <span className="responseSender">
+                                            <span className="statusIndicatorDot active" style={{ width: "5px", height: "5px" }} />
+                                            <span>{r.title || "Personal Reply"}</span>
+                                          </span>
+                                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                            <span className="responseDate">{r.date}</span>
+                                            <button
+                                              type="button"
+                                              className="delReplyBtn"
+                                              onClick={() => handleDeleteReply(r.id)}
+                                              title="Delete notification"
+                                            >
+                                              ✕
+                                            </button>
+                                          </div>
+                                        </div>
+                                        <p className="responseText" style={{ marginTop: "0.25rem" }}>{r.message}</p>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+
+                                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.6rem" }}>
+                                  <button
+                                    type="button"
+                                    className="replyUserBtn"
+                                    onClick={() => {
+                                      setActiveTab("dispatch");
+                                      setDispatchForm({
+                                        ...dispatchForm,
+                                        category: "personal",
+                                        userId: profile.userId
+                                      });
+                                    }}
+                                  >
+                                    <span>+ Reply to User</span>
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
 
-                          {/* 5. HARDWARE & STATS BUTTON */}
-                          <div>
+                          {/* 5. HARDWARE & STATS BUTTON WITH FLOATING POPOVER */}
+                          <div className="popoverAnchor">
                             <button
                               type="button"
                               className={`interactivePillBtn ${currentTab === 'specs' ? 'active' : ''}`}
-                              onClick={() => toggleDrawer(profile.userId, 'specs')}
-                              title="Toggle Hardware & Stats Drawer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDrawer(profile.userId, 'specs');
+                              }}
+                              title="Toggle Hardware Specs Popover"
                             >
-                              <span>🖥 Specs ({profile.os || 'Win'})</span>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>
+                              <span>Specs ({profile.os || 'Win'})</span>
                             </button>
+
+                            {/* FLOATING POPOVER: HARDWARE SPECS */}
+                            {currentTab === 'specs' && (
+                              <div className="floatingPopover alignRight" onClick={(e) => e.stopPropagation()}>
+                                <div className="drawerColHead" style={{ marginBottom: "0.55rem" }}>
+                                  <span>PC Telemetry & Environment Specs</span>
+                                </div>
+                                <div className="hardwareDetailRows">
+                                  <div className="hardwareRow">
+                                    <span className="hwLabel">OS & After Effects</span>
+                                    <span className="hwVal">{profile.os} • After Effects {profile.appVersion}</span>
+                                  </div>
+                                  <div className="hardwareRow">
+                                    <span className="hwLabel">GPU / CPU Specs</span>
+                                    <span className="hwVal">{profile.hardware}</span>
+                                  </div>
+                                  <div className="hardwareRow">
+                                    <span className="hwLabel">Session Telemetry</span>
+                                    <span className="hwVal">{profile.stats}</span>
+                                  </div>
+                                  <div className="hardwareRow">
+                                    <span className="hwLabel">Installation Time</span>
+                                    <span className="hwVal">{profile.daysInstalled} ({profile.installDate})</span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {/* 6. ACTIONS MENU */}
@@ -795,189 +1004,6 @@ export default function AdminDashboardPage() {
                                 )}
                               </div>
                             )}
-                          </div>
-                        </div>
-
-                        {/* EXPANDABLE MODULAR DRAWER PANEL */}
-                        <div className={`accordionContent ${currentTab ? 'isExpanded' : ''}`}>
-                          <div className="accordionInner">
-                            <div className="drawerContainer" onClick={(e) => e.stopPropagation()}>
-                              
-                              {/* TAB 1: FEEDBACK CHAIN */}
-                              {currentTab === 'feedback' && (
-                                <div>
-                                  <div className="drawerColHead" style={{ marginBottom: "0.5rem" }}>
-                                    <span>Submissions Chain ({profile.items.length})</span>
-                                    <span style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>Right click to delete</span>
-                                  </div>
-
-                                  <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                                    {profile.items.map((sub, idx) => {
-                                      const isSubExpanded = expandedSubMap[sub.id] || false;
-                                      const cleanTitle = sub.type === 'review' ? 'Review' : sub.type === 'suggest' ? 'Feature Suggestion' : 'Bug Report';
-                                      const hasMediaAttached = Boolean(sub.hasMedia || sub.telegramMediaUrl);
-                                      const isItemUnread = sub.type !== 'review' && !readFeedbackIds.includes(sub.id);
-
-                                      return (
-                                        <div
-                                          key={sub.id}
-                                          className="subItemCard"
-                                          onContextMenu={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            setContextMenu({ x: e.clientX, y: e.clientY, subId: sub.id });
-                                          }}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setExpandedSubMap({ ...expandedSubMap, [sub.id]: !isSubExpanded });
-                                            if (isItemUnread) {
-                                              saveReadIds([...readFeedbackIds, sub.id]);
-                                            }
-                                          }}
-                                        >
-                                          <div className="subItemTop">
-                                            <div className="subItemLeft">
-                                              <span className="subNumberTag">#{profile.items.length - idx}</span>
-                                              <span className="subTitleText">{cleanTitle}</span>
-                                              {isItemUnread && (
-                                                <span className="badgePill new">NEW</span>
-                                              )}
-                                            </div>
-
-                                            <div className="subItemRight">
-                                              {hasMediaAttached && (
-                                                <span className="badgePill media">📎 Media</span>
-                                              )}
-                                              {sub.type === 'review' && sub.rating && (
-                                                <span className="badgePill stars">★ {sub.rating}/5</span>
-                                              )}
-                                              <span className="badgePill">{sub.extensionName}</span>
-                                              <span className="subDateText">{sub.date}</span>
-                                            </div>
-                                          </div>
-
-                                          {/* LINE 2 INSET BODY */}
-                                          <div className={`accordionContent ${isSubExpanded ? 'isExpanded' : ''}`}>
-                                            <div className="accordionInner">
-                                              <div className="subItemBody">
-                                                <p>{sub.message || "(No message body provided)"}</p>
-                                                {sub.telegramMediaUrl ? (
-                                                  <Link
-                                                    href={sub.telegramMediaUrl}
-                                                    target="_blank"
-                                                    className="tgMediaBtn"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                  >
-                                                    <span>View Attached Media in Telegram</span> ↗
-                                                  </Link>
-                                                ) : sub.hasMedia ? (
-                                                  <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: "0.3rem" }}>
-                                                    📎 Media attached (saved in Telegram Bot)
-                                                  </div>
-                                                ) : null}
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* TAB 2: DIRECT RESPONSES */}
-                              {currentTab === 'replies' && (
-                                <div>
-                                  <div className="drawerColHead" style={{ marginBottom: "0.5rem" }}>
-                                    <span>Direct Responses Sent to this User ({userReplies.length})</span>
-                                  </div>
-
-                                  <div className="responsesFeed">
-                                    {userReplies.length === 0 ? (
-                                      <div style={{
-                                        backgroundColor: "var(--bg-panel)",
-                                        border: "1px solid var(--border-subtle)",
-                                        borderRadius: "var(--r-sm)",
-                                        padding: "0.75rem",
-                                        textAlign: "center",
-                                        color: "var(--text-muted)",
-                                        fontSize: "0.72rem"
-                                      }}>
-                                        No direct responses sent to this user yet.
-                                      </div>
-                                    ) : (
-                                      userReplies.map((r) => (
-                                        <div key={r.id} className="responseItem">
-                                          <div className="responseItemHead">
-                                            <span className="responseSender">
-                                              <span className="statusIndicatorDot active" style={{ width: "5px", height: "5px" }} />
-                                              <span>{r.title || "Personal Reply"}</span>
-                                            </span>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                                              <span className="responseDate">{r.date}</span>
-                                              <button
-                                                type="button"
-                                                className="delReplyBtn"
-                                                onClick={() => handleDeleteReply(r.id)}
-                                                title="Delete notification"
-                                              >
-                                                ✕
-                                              </button>
-                                            </div>
-                                          </div>
-                                          <p className="responseText" style={{ marginTop: "0.25rem" }}>{r.message}</p>
-                                        </div>
-                                      ))
-                                    )}
-                                  </div>
-
-                                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
-                                    <button
-                                      type="button"
-                                      className="replyUserBtn"
-                                      onClick={() => {
-                                        setActiveTab("dispatch");
-                                        setDispatchForm({
-                                          ...dispatchForm,
-                                          category: "personal",
-                                          userId: profile.userId
-                                        });
-                                      }}
-                                    >
-                                      <span>+ Reply to User</span>
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* TAB 3: HARDWARE & SPECS */}
-                              {currentTab === 'specs' && (
-                                <div style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", padding: "0.75rem" }}>
-                                  <div className="drawerColHead" style={{ marginBottom: "0.5rem" }}>
-                                    <span>PC Telemetry & Environment Specs</span>
-                                  </div>
-                                  <div className="hardwareDetailRows">
-                                    <div className="hardwareRow">
-                                      <span className="hwLabel">OS & After Effects</span>
-                                      <span className="hwVal">{profile.os} • After Effects {profile.appVersion}</span>
-                                    </div>
-                                    <div className="hardwareRow">
-                                      <span className="hwLabel">GPU / CPU Specs</span>
-                                      <span className="hwVal">{profile.hardware}</span>
-                                    </div>
-                                    <div className="hardwareRow">
-                                      <span className="hwLabel">Session Telemetry</span>
-                                      <span className="hwVal">{profile.stats}</span>
-                                    </div>
-                                    <div className="hardwareRow">
-                                      <span className="hwLabel">Installation Time</span>
-                                      <span className="hwVal">{profile.daysInstalled} ({profile.installDate})</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                            </div>
                           </div>
                         </div>
                       </div>

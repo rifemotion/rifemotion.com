@@ -452,6 +452,45 @@ body {
   border-color: var(--border-focus);
 }
 
+/* FLOATING POPOVER RECTANGLES (ABSOLUTE FLOATING OVER TABLE) */
+.popoverAnchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.floatingPopover {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  background-color: #141416;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--r-md);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  z-index: 1000;
+  min-width: 330px;
+  max-width: 480px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 0.75rem;
+  animation: popoverFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.floatingPopover.alignRight {
+  left: auto;
+  right: 0;
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* DESKTOP VS MOBILE FILTER CONTROLS */
 .desktopFilterTabs {
   display: flex;
@@ -460,35 +499,50 @@ body {
   flex-wrap: wrap;
 }
 
-.mobileFilterSection {
+/* MOBILE 6-ICON EXPANDING ROW */
+.mobileFilterRow {
   display: none;
-  width: 100%;
-}
-
-.mobileFilterToggleBtn {
-  width: 100%;
-  background-color: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-sm);
-  padding: 0.45rem 0.65rem;
-  color: var(--text-pure);
-  font-size: 0.76rem;
-  font-weight: 600;
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  cursor: pointer;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+  scrollbar-width: none;
 }
 
-.mobileFilterGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
-  margin-top: 0.45rem;
-  padding: 0.45rem;
+.mobileFilterRow::-webkit-scrollbar {
+  display: none;
+}
+
+.mobileFilterIconBtn {
   background-color: var(--bg-inset);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  padding: 0.4rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  font-size: 0.73rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.mobileFilterIconBtn svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.mobileFilterIconBtn.active {
+  background-color: var(--bg-row-selected);
+  color: var(--text-pure);
+  border-color: var(--border-focus);
+  padding: 0.4rem 0.75rem;
 }
 
 @media (max-width: 768px) {
