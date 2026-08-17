@@ -68,8 +68,8 @@ export async function GET(request) {
       if (r.userId === 'all' || r.userId === userId) {
         notifications.push({
           id: r.id,
-          title: r.title || (r.userId === 'all' ? "Announcement" : "Direct Message"),
-          subtitle: r.category === 'announcements' ? "Announcement" : (r.userId === 'all' ? "Broadcast" : "Direct Message"),
+          title: r.title || (r.category === 'announcements' ? "Announcement" : r.category === 'warning' ? "System Notice" : "Personal Reply"),
+          subtitle: r.category === 'announcements' ? "Announcement" : r.category === 'warning' ? "System Notice" : "Personal Reply",
           body: r.message,
           date: r.date,
           unread: true

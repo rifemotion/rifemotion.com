@@ -992,9 +992,9 @@ export default function AdminDashboardPage() {
                     <label className="formLabel">Notification Category</label>
                     <CustomSelect
                       options={[
-                        { label: "Announcements (Объявления)", value: "announcements" },
-                        { label: "Updates (Обновления)", value: "update" },
-                        { label: "Personal (Личные)", value: "personal" },
+                        { label: "Announcement", value: "announcements" },
+                        { label: "System Notice", value: "warning" },
+                        { label: "Personal Reply", value: "personal" },
                       ]}
                       value={dispatchForm.category}
                       onChange={(val) => setDispatchForm({ ...dispatchForm, category: val })}
