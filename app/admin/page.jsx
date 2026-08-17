@@ -6,7 +6,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import "./admin.css";
 
-// Custom Dropdown Select Component
+// Custom Dropdown Select Component (Max 5px radius)
 function CustomSelect({ options, value, onChange, placeholder = "Select option..." }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -34,7 +34,7 @@ function CustomSelect({ options, value, onChange, placeholder = "Select option..
         }}
       >
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}><polyline points="6 9 12 15 18 9"></polyline></svg>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.12s ease' }}><polyline points="6 9 12 15 18 9"></polyline></svg>
       </button>
 
       {isOpen && (
@@ -61,7 +61,7 @@ export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Navigation tab
+  // Navigation tab: 'feedback' | 'dispatch' | 'status'
   const [activeTab, setActiveTab] = useState("feedback");
 
   // Database State
@@ -308,16 +308,6 @@ export default function AdminDashboardPage() {
 
   const userProfilesList = Object.values(usersGrouped);
 
-  // Statistics calculation for the Overview Segment Bar
-  const totalReviews = feedbackItems.filter(i => i.type === 'review').length;
-  const totalSuggestions = feedbackItems.filter(i => i.type === 'suggest').length;
-  const totalBugReports = feedbackItems.filter(i => i.type === 'report' || i.type === 'bug').length;
-  const totalSubmissionsCount = feedbackItems.length || 1;
-
-  const reviewPct = (totalReviews / totalSubmissionsCount) * 100;
-  const suggestPct = (totalSuggestions / totalSubmissionsCount) * 100;
-  const reportPct = (totalBugReports / totalSubmissionsCount) * 100;
-
   // Filter User Profiles
   const filteredUserProfiles = userProfilesList.filter((profile) => {
     const matchesSearch =
@@ -331,6 +321,7 @@ export default function AdminDashboardPage() {
     if (feedbackFilter === "kliner") return matchesSearch && profile.items.some(i => i.extension === "kliner");
     if (feedbackFilter === "bug") return matchesSearch && profile.items.some(i => i.type === "report" || i.type === "bug");
     if (feedbackFilter === "feature") return matchesSearch && profile.items.some(i => i.type === "suggest");
+    if (feedbackFilter === "review") return matchesSearch && profile.items.some(i => i.type === "review");
 
     return matchesSearch;
   });
@@ -338,7 +329,7 @@ export default function AdminDashboardPage() {
   if (status === "loading" || loadingDb) {
     return (
       <div className="appShell" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem", fontFamily: "var(--font-mono)" }}>Connecting to database...</p>
+        <p style={{ color: "var(--text-secondary)", fontSize: "0.78rem", fontFamily: "var(--font-mono)" }}>Connecting to database...</p>
       </div>
     );
   }
@@ -349,7 +340,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="appShell">
 
-      {/* 1. SIDEBAR */}
+      {/* 1. COMPACT SIDEBAR */}
       <aside className="sideNav">
         <div>
           {/* Profile Card */}
@@ -361,7 +352,7 @@ export default function AdminDashboardPage() {
                 <div className="avatarBadge">R</div>
               )}
               <div>
-                <div className="profileName">{user.name || "rifemotion admin"}</div>
+                <div className="profileName">{user.name || "rifemotion"}</div>
                 <div className="profileSub">{user.email}</div>
               </div>
             </div>
@@ -369,14 +360,14 @@ export default function AdminDashboardPage() {
 
           {/* Search Box */}
           <div className="searchBox">
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%" }}>
-              <img src="/icons_admin/search.svg" alt="Search" className="iconImg" style={{ width: "13px", height: "13px" }} />
-              <input type="text" className="searchInput" placeholder="Search portal..." />
+            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", width: "100%" }}>
+              <img src="/icons_admin/search.svg" alt="Search" className="iconImg" style={{ width: "11px", height: "11px" }} />
+              <input type="text" className="searchInput" placeholder="Search..." />
             </div>
-            <span className="searchKbd">⌘F</span>
+            <span className="searchKbd">⌘K</span>
           </div>
 
-          <div className="navGroupLabel">Essentials</div>
+          <div className="navGroupLabel">Database</div>
           <div className="navList">
             <button
               type="button"
@@ -426,8 +417,8 @@ export default function AdminDashboardPage() {
             <span className="brandIndicator"></span>
             <span>rifemotion</span>
           </div>
-          <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-            v4.2.0
+          <span style={{ fontSize: "0.64rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+            v4.3.0
           </span>
         </div>
       </aside>
@@ -442,62 +433,26 @@ export default function AdminDashboardPage() {
           <div>
             <div className="viewHeader">
               <div>
-                <h1 className="viewTitle">User Profiles & Telemetry Database</h1>
-                <p className="viewSubtitle">Real-time telemetry, chain submissions, attached media, and restriction controls</p>
+                <h1 className="viewTitle">Feedback & Telemetry Fleet</h1>
+                <p className="viewSubtitle">Real-time user submissions, hardware telemetry, attached media, and restriction control</p>
               </div>
             </div>
 
-            {/* OVERVIEW SEGMENT BAR (MATCHING REFERENCE BUDGET BREAKDOWN STYLE) */}
-            <div className="overviewSegmentBar">
-              <div className="segmentBarHeader">
-                <span className="segmentBarTitle">Activity Breakdown</span>
-                <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-                  {feedbackItems.length} Total Records
-                </span>
-              </div>
-
-              <div className="segmentTilesRow">
-                <div className="segmentTile">
-                  <span className="segmentTileLabel">Active Users</span>
-                  <span className="segmentTileValue">{userProfilesList.length}</span>
-                </div>
-                <div className="segmentTile">
-                  <span className="segmentTileLabel" style={{ color: "var(--accent-amber)" }}>Reviews</span>
-                  <span className="segmentTileValue">{totalReviews}</span>
-                </div>
-                <div className="segmentTile">
-                  <span className="segmentTileLabel" style={{ color: "var(--accent-purple)" }}>Suggestions</span>
-                  <span className="segmentTileValue">{totalSuggestions}</span>
-                </div>
-                <div className="segmentTile">
-                  <span className="segmentTileLabel" style={{ color: "var(--accent-rose)" }}>Bug Reports</span>
-                  <span className="segmentTileValue">{totalBugReports}</span>
-                </div>
-              </div>
-
-              {/* MULTI-SEGMENT PROGRESS BAR */}
-              <div className="segmentMultiProgress">
-                <div className="progressSlice" style={{ width: `${reviewPct}%`, backgroundColor: "var(--accent-amber)" }} />
-                <div className="progressSlice" style={{ width: `${suggestPct}%`, backgroundColor: "var(--accent-purple)" }} />
-                <div className="progressSlice" style={{ width: `${reportPct}%`, backgroundColor: "var(--accent-rose)" }} />
-              </div>
-            </div>
-
-            {/* FILTER & SEARCH ROW */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.8rem" }}>
-              <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+            {/* DENSE TOP TOOLBAR (REFERENCE 1 STYLE) */}
+            <div className="denseToolbar">
+              <div className="toolbarLeft">
                 {[
                   { id: "all", label: `All Users (${userProfilesList.length})` },
                   { id: "lapath", label: "LaPath" },
                   { id: "kliner", label: "KLiner" },
                   { id: "bug", label: "Bug Reports" },
                   { id: "feature", label: "Suggestions" },
+                  { id: "review", label: "Reviews" },
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     type="button"
-                    className={`pillChip ${feedbackFilter === tab.id ? "active" : ""}`}
-                    style={{ cursor: "pointer", borderRadius: "var(--radius-pill)", padding: "0.35rem 0.8rem", fontSize: "0.74rem" }}
+                    className={`denseTabBtn ${feedbackFilter === tab.id ? "denseTabBtnActive" : ""}`}
                     onClick={() => setFeedbackFilter(tab.id)}
                   >
                     {tab.label}
@@ -505,80 +460,100 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
 
-              <div style={{ width: "260px" }}>
+              <div className="toolbarRight">
                 <input
                   type="text"
-                  className="pillInput"
-                  placeholder="Search by ID, email, specs..."
+                  className="denseSearchInput"
+                  placeholder="Search ID, email, specs..."
                   value={feedbackSearchQuery}
                   onChange={(e) => setFeedbackSearchQuery(e.target.value)}
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck="false"
                 />
+                <span className="countChip">{filteredUserProfiles.length} records</span>
               </div>
             </div>
 
-            {/* UNIFIED USER PROFILE CARDS FEED */}
-            <div className="historyFeed">
-              {filteredUserProfiles.length === 0 ? (
-                <div className="userMasterCard" style={{ padding: "2.5rem", textAlign: "center", color: "var(--text-muted)" }}>
-                  No user records match your search filter.
-                </div>
-              ) : (
-                filteredUserProfiles.map((profile) => {
-                  const isExpanded = expandedUserId === profile.userId;
-                  const isSpecsExpanded = expandedSpecsMap[profile.userId] || false;
-                  const userMute = mutes[profile.userId];
-                  const isMuted = userMute && !userMute.shadowBanned && new Date(userMute.bannedUntil).getTime() > Date.now();
-                  const isShadowBanned = userMute && userMute.shadowBanned;
-                  const userReplies = replies.filter((r) => r.userId === profile.userId || r.userId === 'all');
+            {/* DATA TABLE (REFERENCE 2 DENSE GRID STYLE) */}
+            <div className="denseTablePanel">
+              {/* TABLE HEADER */}
+              <div className="denseTableHeader">
+                <div>User ID / Email</div>
+                <div>App & Environment</div>
+                <div>Status</div>
+                <div>Submissions</div>
+                <div></div>
+              </div>
 
-                  return (
-                    <div
-                      key={profile.userId}
-                      className={`userMasterCard ${isExpanded ? 'expanded' : ''}`}
-                      onClick={() => setExpandedUserId(isExpanded ? null : profile.userId)}
-                    >
-                      {/* CARD HEADER */}
-                      <div className="userCardHeader">
-                        <div className="userIdentBlock">
-                          <span className="userIdentCode">{profile.userId}</span>
-                          {profile.email !== 'none' && (
-                            <span className="userIdentEmail">({profile.email})</span>
-                          )}
-                          <span className="userIdentDate">• Installed: {profile.installDate || 'Recent'}</span>
-                        </div>
+              {/* TABLE BODY ROWS */}
+              <div className="denseTableBody">
+                {filteredUserProfiles.length === 0 ? (
+                  <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                    No telemetry records matching filter.
+                  </div>
+                ) : (
+                  filteredUserProfiles.map((profile) => {
+                    const isExpanded = expandedUserId === profile.userId;
+                    const isSpecsExpanded = expandedSpecsMap[profile.userId] || false;
+                    const userMute = mutes[profile.userId];
+                    const isMuted = userMute && !userMute.shadowBanned && new Date(userMute.bannedUntil).getTime() > Date.now();
+                    const isShadowBanned = userMute && userMute.shadowBanned;
+                    const userReplies = replies.filter((r) => r.userId === profile.userId || r.userId === 'all');
+                    const latestItem = profile.items[0];
 
-                        <div className="userChipsRow">
-                          {/* Status Chip */}
-                          {isShadowBanned ? (
-                            <span className="pillChip shadow">
-                              <span className="dotIndicator" />
-                              <span>Shadow Banned</span>
+                    return (
+                      <div
+                        key={profile.userId}
+                        className={`denseRowWrapper ${isExpanded ? 'isRowExpanded' : ''}`}
+                      >
+                        {/* MAIN ROW LINE */}
+                        <div
+                          className="denseRowMain"
+                          onClick={() => setExpandedUserId(isExpanded ? null : profile.userId)}
+                        >
+                          {/* USER CELL */}
+                          <div className="cellUser">
+                            <span className={`statusIndicatorDot ${isShadowBanned ? 'shadow' : isMuted ? 'muted' : 'active'}`} />
+                            <span className="userIdText">{profile.userId}</span>
+                            {profile.email !== 'none' && (
+                              <span className="userEmailText">({profile.email})</span>
+                            )}
+                          </div>
+
+                          {/* SPECS CELL */}
+                          <div className="cellSpecs">
+                            <span>{profile.extensionName}</span>
+                            <span style={{ color: "var(--text-muted)", margin: "0 0.35rem" }}>•</span>
+                            <span>{profile.os || 'Win'} / AE {profile.appVersion || '26.x'}</span>
+                          </div>
+
+                          {/* STATUS CELL */}
+                          <div className="cellStatus">
+                            {isShadowBanned ? (
+                              <span className="badgePill shadow">Shadow Banned</span>
+                            ) : isMuted ? (
+                              <span className="badgePill muted">Muted</span>
+                            ) : (
+                              <span className="badgePill active">Active</span>
+                            )}
+                          </div>
+
+                          {/* COUNT CELL */}
+                          <div className="cellCount">
+                            <span className="badgePill">
+                              {profile.items.length} {profile.items.length === 1 ? 'submission' : 'submissions'}
                             </span>
-                          ) : isMuted ? (
-                            <span className="pillChip muted">
-                              <span className="dotIndicator" />
-                              <span>Muted</span>
-                            </span>
-                          ) : (
-                            <span className="pillChip active">
-                              <span className="dotIndicator" />
-                              <span>Active</span>
-                            </span>
-                          )}
+                            {latestItem && latestItem.type === 'review' && latestItem.rating && (
+                              <span className="badgePill stars">★ {latestItem.rating}/5</span>
+                            )}
+                          </div>
 
-                          {/* Submissions Count Chip */}
-                          <span className="pillChip">
-                            {profile.items.length} {profile.items.length === 1 ? 'submission' : 'submissions'}
-                          </span>
-
-                          {/* 3-DOTS ACTION MENU */}
-                          <div style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
+                          {/* ACTIONS CELL */}
+                          <div className="cellActions" onClick={(e) => e.stopPropagation()}>
                             <button
                               type="button"
-                              className="dotsMenuBtn"
+                              className="dotsActionBtn"
                               onClick={() => setActiveMenuUserId(activeMenuUserId === profile.userId ? null : profile.userId)}
                             >
                               ⋮
@@ -594,7 +569,7 @@ export default function AdminDashboardPage() {
                                       setActiveMenuUserId(null);
                                     }}
                                   >
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                     <span>Unmute User</span>
                                   </div>
                                 ) : (
@@ -606,7 +581,7 @@ export default function AdminDashboardPage() {
                                         setActiveMenuUserId(null);
                                       }}
                                     >
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
                                       <span>Mute User...</span>
                                     </div>
                                     <div
@@ -616,7 +591,7 @@ export default function AdminDashboardPage() {
                                         setActiveMenuUserId(null);
                                       }}
                                     >
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                                       <span>Shadow Ban User</span>
                                     </div>
                                   </>
@@ -625,210 +600,204 @@ export default function AdminDashboardPage() {
                             )}
                           </div>
                         </div>
-                      </div>
 
-                      {/* EXPANDED CONTENT VIEW (SMOOTH TRANSITION GRID) */}
-                      <div className={`accordionContent ${isExpanded ? 'isExpanded' : ''}`}>
-                        <div className="accordionInner">
-                          <div className="expandedSplitGrid" onClick={(e) => e.stopPropagation()}>
-                            
-                            {/* LEFT COLUMN: TIMELINE SUBMISSIONS */}
-                            <div className="splitColumn">
-                              <div className="columnHeader">
-                                <span className="columnHeaderTitle">Submissions Chain</span>
-                                <span className="columnHeaderCount">{profile.items.length} Total</span>
-                              </div>
+                        {/* EXPANDABLE DRAWER */}
+                        <div className={`accordionContent ${isExpanded ? 'isExpanded' : ''}`}>
+                          <div className="accordionInner">
+                            <div className="drawerContainer" onClick={(e) => e.stopPropagation()}>
+                              <div className="drawerSplitGrid">
+                                
+                                {/* LEFT COLUMN: SUBMISSION CHAIN */}
+                                <div className="drawerColumn">
+                                  <div className="drawerColHead">
+                                    <span>Submissions Chain ({profile.items.length})</span>
+                                    <span style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>Right click to delete</span>
+                                  </div>
 
-                              <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem" }}>
-                                {profile.items.map((sub, idx) => {
-                                  const isSubExpanded = expandedSubMap[sub.id] || false;
-                                  const itemType = sub.type === 'review' ? 'review' : sub.type === 'suggest' ? 'suggest' : 'report';
-                                  const cleanTitle = sub.type === 'review' ? 'Review' : sub.type === 'suggest' ? 'Feature Suggestion' : 'Bug Report';
-                                  const hasMediaAttached = Boolean(sub.hasMedia || sub.telegramMediaUrl);
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                                    {profile.items.map((sub, idx) => {
+                                      const isSubExpanded = expandedSubMap[sub.id] || false;
+                                      const cleanTitle = sub.type === 'review' ? 'Review' : sub.type === 'suggest' ? 'Feature Suggestion' : 'Bug Report';
+                                      const hasMediaAttached = Boolean(sub.hasMedia || sub.telegramMediaUrl);
 
-                                  return (
-                                    <div
-                                      key={sub.id}
-                                      className="timelineRow"
-                                      onContextMenu={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setContextMenu({ x: e.clientX, y: e.clientY, subId: sub.id });
-                                      }}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setExpandedSubMap({ ...expandedSubMap, [sub.id]: !isSubExpanded });
-                                      }}
-                                    >
-                                      {/* ROW LINE 1 */}
-                                      <div className="timelineRowTop">
-                                        <div className="timelineRowLeft">
-                                          <span className={`timelineTimeTag ${itemType}`}>
-                                            #{profile.items.length - idx}
-                                          </span>
-                                          <span className="timelineTitle">{cleanTitle}</span>
-                                        </div>
+                                      return (
+                                        <div
+                                          key={sub.id}
+                                          className="subItemCard"
+                                          onContextMenu={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setContextMenu({ x: e.clientX, y: e.clientY, subId: sub.id });
+                                          }}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setExpandedSubMap({ ...expandedSubMap, [sub.id]: !isSubExpanded });
+                                          }}
+                                        >
+                                          <div className="subItemTop">
+                                            <div className="subItemLeft">
+                                              <span className="subNumberTag">#{profile.items.length - idx}</span>
+                                              <span className="subTitleText">{cleanTitle}</span>
+                                            </div>
 
-                                        <div className="timelineRowRight">
-                                          {hasMediaAttached && (
-                                            <span className="pillChip media">📎 Media</span>
-                                          )}
-                                          {sub.type === 'review' && sub.rating && (
-                                            <span className="pillChip stars">
-                                              {"★".repeat(sub.rating)} {sub.rating}/5
-                                            </span>
-                                          )}
-                                          <span className="pillChip">{sub.extensionName}</span>
-                                          <span className="timelineDate">{sub.date}</span>
-                                        </div>
-                                      </div>
+                                            <div className="subItemRight">
+                                              {hasMediaAttached && (
+                                                <span className="badgePill media">📎 Media</span>
+                                              )}
+                                              {sub.type === 'review' && sub.rating && (
+                                                <span className="badgePill stars">★ {sub.rating}/5</span>
+                                              )}
+                                              <span className="badgePill">{sub.extensionName}</span>
+                                              <span className="subDateText">{sub.date}</span>
+                                            </div>
+                                          </div>
 
-                                      {/* ROW LINE 2 (SMOOTH INSET BODY) */}
-                                      <div className={`accordionContent ${isSubExpanded ? 'isExpanded' : ''}`}>
-                                        <div className="accordionInner">
-                                          <div className="timelineBodyInset">
-                                            <p>{sub.message || "(No message body written)"}</p>
-                                            {sub.telegramMediaUrl ? (
-                                              <Link
-                                                href={sub.telegramMediaUrl}
-                                                target="_blank"
-                                                className="telegramMediaLink"
-                                                onClick={(e) => e.stopPropagation()}
-                                              >
-                                                <span>View Attached Media in Telegram</span> ↗
-                                              </Link>
-                                            ) : sub.hasMedia ? (
-                                              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "0.35rem" }}>
-                                                📎 Media attached (saved in Telegram Bot channel)
+                                          {/* LINE 2 INSET BODY */}
+                                          <div className={`accordionContent ${isSubExpanded ? 'isExpanded' : ''}`}>
+                                            <div className="accordionInner">
+                                              <div className="subItemBody">
+                                                <p>{sub.message || "(No message body provided)"}</p>
+                                                {sub.telegramMediaUrl ? (
+                                                  <Link
+                                                    href={sub.telegramMediaUrl}
+                                                    target="_blank"
+                                                    className="tgMediaBtn"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  >
+                                                    <span>View Attached Media in Telegram</span> ↗
+                                                  </Link>
+                                                ) : sub.hasMedia ? (
+                                                  <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: "0.3rem" }}>
+                                                    📎 Media attached (saved in Telegram Bot)
+                                                  </div>
+                                                ) : null}
                                               </div>
-                                            ) : null}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* RIGHT COLUMN: HARDWARE SPEC & REPLIES */}
+                                <div className="drawerColumn">
+                                  
+                                  {/* HARDWARE SPEC ACCORDION */}
+                                  <div
+                                    className="hardwareBox"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setExpandedSpecsMap({ ...expandedSpecsMap, [profile.userId]: !isSpecsExpanded });
+                                    }}
+                                  >
+                                    <div className="hardwareBoxHeader">
+                                      <span className="hardwareBoxTitle">
+                                        <span>PC Telemetry & Specs</span>
+                                        <span style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>{isSpecsExpanded ? '▴' : '▾'}</span>
+                                      </span>
+                                      <span className="hardwareBoxSub">
+                                        {profile.os} • AE {profile.appVersion}
+                                      </span>
+                                    </div>
+
+                                    <div className={`accordionContent ${isSpecsExpanded ? 'isExpanded' : ''}`}>
+                                      <div className="accordionInner">
+                                        <div className="hardwareDetailRows">
+                                          <div className="hardwareRow">
+                                            <span className="hwLabel">GPU / CPU</span>
+                                            <span className="hwVal">{profile.hardware}</span>
+                                          </div>
+                                          <div className="hardwareRow">
+                                            <span className="hwLabel">Telemetry</span>
+                                            <span className="hwVal">{profile.stats}</span>
+                                          </div>
+                                          <div className="hardwareRow">
+                                            <span className="hwLabel">Installed</span>
+                                            <span className="hwVal">{profile.daysInstalled}</span>
                                           </div>
                                         </div>
                                       </div>
                                     </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                            {/* RIGHT COLUMN: HARDWARE SPEC & DIRECT MESSAGES */}
-                            <div className="splitColumn">
-                              
-                              {/* HARDWARE SPECS BOX (ACCORDION) */}
-                              <div
-                                className="specsBoxContainer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setExpandedSpecsMap({ ...expandedSpecsMap, [profile.userId]: !isSpecsExpanded });
-                                }}
-                              >
-                                <div className="specsBoxHeader">
-                                  <span className="specsBoxTitle">
-                                    <span>PC Telemetry & Specs</span>
-                                    <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{isSpecsExpanded ? '▴' : '▾'}</span>
-                                  </span>
-                                  <span className="specsBoxSub">
-                                    OS: {profile.os} • AE {profile.appVersion}
-                                  </span>
-                                </div>
-
-                                <div className={`accordionContent ${isSpecsExpanded ? 'isExpanded' : ''}`}>
-                                  <div className="accordionInner">
-                                    <div className="specsDetailGrid">
-                                      <div className="specRow">
-                                        <span className="specLabel">GPU / CPU</span>
-                                        <span className="specValue">{profile.hardware}</span>
-                                      </div>
-                                      <div className="specRow">
-                                        <span className="specLabel">Telemetry</span>
-                                        <span className="specValue">{profile.stats}</span>
-                                      </div>
-                                      <div className="specRow">
-                                        <span className="specLabel">Installed</span>
-                                        <span className="specValue">{profile.daysInstalled}</span>
-                                      </div>
-                                    </div>
                                   </div>
-                                </div>
-                              </div>
 
-                              {/* DIRECT RESPONSES HEADER */}
-                              <div className="columnHeader" style={{ marginTop: "0.4rem" }}>
-                                <span className="columnHeaderTitle">Direct Responses</span>
-                                <span className="columnHeaderCount">{userReplies.length} Sent</span>
-                              </div>
-
-                              {/* DIRECT RESPONSES FEED */}
-                              <div className="directResponsesList">
-                                {userReplies.length === 0 ? (
-                                  <div style={{
-                                    backgroundColor: "var(--bg-card-inner)",
-                                    border: "1px solid var(--border-subtle)",
-                                    borderRadius: "var(--radius-md)",
-                                    padding: "0.9rem",
-                                    textAlign: "center",
-                                    color: "var(--text-muted)",
-                                    fontSize: "0.74rem"
-                                  }}>
-                                    No direct responses sent to this user yet.
+                                  {/* DIRECT RESPONSES HEADER */}
+                                  <div className="drawerColHead" style={{ marginTop: "0.3rem" }}>
+                                    <span>Direct Responses ({userReplies.length})</span>
                                   </div>
-                                ) : (
-                                  userReplies.map((r) => (
-                                    <div key={r.id} className="directResponseBubble">
-                                      <div className="directResponseHeader">
-                                        <span className="directResponseSender">
-                                          <span className="dotIndicator" style={{ backgroundColor: "var(--accent-sky)" }} />
-                                          <span>Support Team</span>
-                                        </span>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                          <span className="directResponseDate">{r.date}</span>
-                                          <button
-                                            type="button"
-                                            className="deleteBtn"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleDeleteReply(r.id);
-                                            }}
-                                            title="Delete notification"
-                                          >
-                                            ✕
-                                          </button>
+
+                                  {/* RESPONSES FEED */}
+                                  <div className="responsesFeed">
+                                    {userReplies.length === 0 ? (
+                                      <div style={{
+                                        backgroundColor: "var(--bg-panel)",
+                                        border: "1px solid var(--border-subtle)",
+                                        borderRadius: "var(--r-sm)",
+                                        padding: "0.75rem",
+                                        textAlign: "center",
+                                        color: "var(--text-muted)",
+                                        fontSize: "0.72rem"
+                                      }}>
+                                        No direct responses sent to this user yet.
+                                      </div>
+                                    ) : (
+                                      userReplies.map((r) => (
+                                        <div key={r.id} className="responseItem">
+                                          <div className="responseItemHead">
+                                            <span className="responseSender">
+                                              <span className="statusIndicatorDot active" style={{ width: "5px", height: "5px" }} />
+                                              <span>Support Team</span>
+                                            </span>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                              <span className="responseDate">{r.date}</span>
+                                              <button
+                                                type="button"
+                                                className="delReplyBtn"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDeleteReply(r.id);
+                                                }}
+                                                title="Delete notification"
+                                              >
+                                                ✕
+                                              </button>
+                                            </div>
+                                          </div>
+                                          <p className="responseText">{r.message}</p>
                                         </div>
-                                      </div>
-                                      <p className="directResponseText">{r.message}</p>
-                                    </div>
-                                  ))
-                                )}
-                              </div>
+                                      ))
+                                    )}
+                                  </div>
 
-                              {/* ACTION BUTTON */}
-                              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.4rem" }}>
-                                <button
-                                  type="button"
-                                  className="replyUserActionBtn"
-                                  onClick={() => {
-                                    setActiveTab("dispatch");
-                                    setDispatchForm({
-                                      ...dispatchForm,
-                                      category: "personal",
-                                      userId: profile.userId
-                                    });
-                                  }}
-                                >
-                                  <span>Reply to User</span>
-                                  <span>→</span>
-                                </button>
-                              </div>
+                                  {/* REPLY ACTION BUTTON */}
+                                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.3rem" }}>
+                                    <button
+                                      type="button"
+                                      className="replyUserBtn"
+                                      onClick={() => {
+                                        setActiveTab("dispatch");
+                                        setDispatchForm({
+                                          ...dispatchForm,
+                                          category: "personal",
+                                          userId: profile.userId
+                                        });
+                                      }}
+                                    >
+                                      <span>+ Reply to User</span>
+                                    </button>
+                                  </div>
 
+                                </div>
+
+                              </div>
                             </div>
-
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })
-              )}
+                    );
+                  })
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -837,7 +806,7 @@ export default function AdminDashboardPage() {
         {/* VIEW: DISPATCH NOTIFICATION */}
         {/* ========================================================================= */}
         {activeTab === "dispatch" && (
-          <div style={{ maxWidth: "680px" }}>
+          <div style={{ maxWidth: "600px" }}>
             <div className="viewHeader">
               <div>
                 <h1 className="viewTitle">Broadcast Notification</h1>
@@ -845,17 +814,17 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            <div className="cleanPanel" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", padding: "1.5rem" }}>
+            <div style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-md)", padding: "1.25rem" }}>
               {dispatchSuccess && (
                 <div style={{
-                  padding: "0.75rem 1rem",
-                  backgroundColor: "var(--accent-green-bg)",
-                  border: "1px solid var(--accent-green-border)",
-                  borderRadius: "var(--radius-md)",
-                  color: "var(--accent-green)",
-                  fontSize: "0.8rem",
+                  padding: "0.65rem 0.85rem",
+                  backgroundColor: "var(--acc-green-bg)",
+                  border: "1px solid var(--acc-green-border)",
+                  borderRadius: "var(--r-sm)",
+                  color: "var(--acc-green)",
+                  fontSize: "0.76rem",
                   fontWeight: 600,
-                  marginBottom: "1.2rem"
+                  marginBottom: "1rem"
                 }}>
                   ✓ Notification successfully dispatched to user extension.
                 </div>
@@ -879,7 +848,7 @@ export default function AdminDashboardPage() {
                     <label className="formLabel">User ID</label>
                     <input
                       type="text"
-                      className="pillInput"
+                      className="techInput"
                       placeholder="e.g. da3be79b-d6a7-4ba0-9c0a-..."
                       value={dispatchForm.userId}
                       onChange={(e) => setDispatchForm({ ...dispatchForm, userId: e.target.value })}
@@ -892,8 +861,8 @@ export default function AdminDashboardPage() {
                   <label className="formLabel">Notification Title</label>
                   <input
                     type="text"
-                    className="pillInput"
-                    placeholder="e.g. Feature Update or Feedback Response"
+                    className="techInput"
+                    placeholder="e.g. Feature Update or Support Reply"
                     value={dispatchForm.title}
                     onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value })}
                     required
@@ -903,16 +872,16 @@ export default function AdminDashboardPage() {
                 <div className="formGroup">
                   <label className="formLabel">Message Body</label>
                   <textarea
-                    className="pillTextarea"
-                    placeholder="Enter the message for the user..."
+                    className="techTextarea"
+                    placeholder="Enter message for user..."
                     value={dispatchForm.message}
                     onChange={(e) => setDispatchForm({ ...dispatchForm, message: e.target.value })}
                     required
                   />
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
-                  <button type="submit" className="submitPillBtn">
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.85rem" }}>
+                  <button type="submit" className="submitBtn">
                     Dispatch Notification →
                   </button>
                 </div>
@@ -928,8 +897,8 @@ export default function AdminDashboardPage() {
           <div>
             <div className="viewHeader">
               <div>
-                <h1 className="viewTitle">System Status</h1>
-                <p className="viewSubtitle">Real-time health telemetry across edge infrastructure</p>
+                <h1 className="viewTitle">System Telemetry</h1>
+                <p className="viewSubtitle">Real-time infrastructure health and edge telemetry</p>
               </div>
             </div>
 
@@ -944,7 +913,7 @@ export default function AdminDashboardPage() {
               <div className="metricCard">
                 <div className="metricCardLabel">Edge Latency</div>
                 <div className="metricCardValue">
-                  <span>14ms</span>
+                  <span>12ms</span>
                   <span className="metricCardNote">Optimal</span>
                 </div>
               </div>
@@ -970,22 +939,22 @@ export default function AdminDashboardPage() {
             left: contextMenu.x,
             background: "#1c1d25",
             border: "1px solid var(--border-medium)",
-            borderRadius: "var(--radius-sm)",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+            borderRadius: "var(--r-sm)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
             zIndex: 9999,
-            padding: "0.3rem"
+            padding: "0.25rem"
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <div
             className="dotsDropdownItem"
-            style={{ color: "var(--accent-rose)", cursor: "pointer", borderRadius: "4px" }}
+            style={{ color: "var(--acc-rose)", cursor: "pointer", borderRadius: "3px" }}
             onClick={() => {
               handleDeleteSubmission(contextMenu.subId);
               setContextMenu(null);
             }}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             <span>Delete this submission</span>
           </div>
         </div>
@@ -997,11 +966,11 @@ export default function AdminDashboardPage() {
           <div className="modalWindow" onClick={(e) => e.stopPropagation()}>
             <div className="modalTitle">Mute User Feedback</div>
             <div className="modalSub">
-              Restrict submissions for <code style={{ color: "var(--text-primary)" }}>{muteModalTargetUser.userId}</code>
+              Restrict submissions for <code style={{ color: "var(--text-pure)" }}>{muteModalTargetUser.userId}</code>
             </div>
 
-            <div style={{ marginBottom: "1rem" }}>
-              <label style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block", marginBottom: "0.35rem", fontWeight: 600 }}>
+            <div style={{ marginBottom: "0.85rem" }}>
+              <label style={{ fontSize: "0.7rem", color: "var(--text-muted)", display: "block", marginBottom: "0.3rem", fontWeight: 600 }}>
                 Restriction Duration
               </label>
               <CustomSelect
@@ -1017,8 +986,8 @@ export default function AdminDashboardPage() {
               />
             </div>
 
-            <div style={{ marginBottom: "1.4rem" }}>
-              <label style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block", marginBottom: "0.35rem", fontWeight: 600 }}>
+            <div style={{ marginBottom: "1.2rem" }}>
+              <label style={{ fontSize: "0.7rem", color: "var(--text-muted)", display: "block", marginBottom: "0.3rem", fontWeight: 600 }}>
                 Restriction Reason
               </label>
               <CustomSelect
@@ -1035,17 +1004,17 @@ export default function AdminDashboardPage() {
               />
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.6rem" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
               <button
                 type="button"
-                className="cancelPillBtn"
+                className="cancelBtn"
                 onClick={() => setMuteModalTargetUser(null)}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                className="submitPillBtn"
+                className="submitBtn"
                 onClick={handleConfirmMuteModal}
               >
                 Confirm Mute
