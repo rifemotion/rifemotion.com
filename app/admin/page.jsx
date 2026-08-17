@@ -1269,25 +1269,53 @@ export default function AdminDashboardPage() {
                     />
                   </div>
 
-                  {/* OPTIONAL ACTION BUTTON */}
-                  <div className="dispatchGridTwoCol" style={{ marginTop: "0.6rem" }}>
+                  {/* OPTIONAL ACTION BUTTON WITH PRESETS */}
+                  <div style={{ marginTop: "0.6rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
+                      <label className="formLabel" style={{ margin: 0 }}>Action / Button Preset</label>
+                    </div>
+
+                    <div className="presetPillRow">
+                      {[
+                        { label: "Subscribe (Email)", text: "Subscribe to Updates", url: "action:subscribe" },
+                        { label: "Poll (Agree/Decline 1/0)", text: "Participate in Poll", url: "action:yes_no" },
+                        { label: "Website Link", text: "Visit Website", url: "https://rifemotion.com" },
+                        { label: "Clear Action", text: "", url: "" }
+                      ].map((item) => (
+                        <button
+                          key={item.label}
+                          type="button"
+                          className="presetPillBtn"
+                          onClick={() => setDispatchForm((prev) => ({
+                            ...prev,
+                            buttonText: item.text,
+                            buttonUrl: item.url
+                          }))}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="dispatchGridTwoCol" style={{ marginTop: "0.45rem" }}>
                     <div className="formGroup" style={{ margin: 0 }}>
-                      <label className="formLabel">Button Label (Optional)</label>
+                      <label className="formLabel">Button Label</label>
                       <input
                         type="text"
                         className="techInput"
-                        placeholder="e.g. Open Website"
+                        placeholder="e.g. Subscribe to Updates"
                         value={dispatchForm.buttonText || ""}
                         onChange={(e) => setDispatchForm({ ...dispatchForm, buttonText: e.target.value })}
                       />
                     </div>
 
                     <div className="formGroup" style={{ margin: 0 }}>
-                      <label className="formLabel">Button Link / Action</label>
+                      <label className="formLabel">Action / Link URL</label>
                       <input
                         type="text"
                         className="techInput"
-                        placeholder="https://... or action:subscribe"
+                        placeholder="action:subscribe / action:yes_no / https://..."
                         value={dispatchForm.buttonUrl || ""}
                         onChange={(e) => setDispatchForm({ ...dispatchForm, buttonUrl: e.target.value })}
                       />
