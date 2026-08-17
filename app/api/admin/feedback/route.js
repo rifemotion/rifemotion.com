@@ -72,17 +72,18 @@ export async function POST(request) {
     if (action === 'delete_feedback') {
       const id = body.id;
       if (!db.deletedFeedbackIds) db.deletedFeedbackIds = [];
-      if (!db.deletedFeedbackIds.includes(id)) {
+      const strId = String(id);
+      if (!db.deletedFeedbackIds.map(String).includes(strId)) {
         db.deletedFeedbackIds.push(id);
       }
-      db.feedback = (db.feedback || []).filter(item => item.id !== id);
+      db.feedback = (db.feedback || []).filter(item => String(item.id) !== strId);
       await writeDb(db);
       return NextResponse.json({ ok: true, feedback: db.feedback });
     }
 
     if (action === 'delete_reply') {
-      const replyId = body.replyId;
-      db.replies = (db.replies || []).filter(r => r.id !== replyId);
+      const replyId = String(body.replyId);
+      db.replies = (db.replies || []).filter(r => String(r.id) !== replyId);
       await writeDb(db);
       return NextResponse.json({ ok: true, replies: db.replies });
     }
