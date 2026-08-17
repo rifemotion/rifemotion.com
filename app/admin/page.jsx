@@ -345,11 +345,15 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Group items by User ID (guaranteeing email persistence across entire history)
-  const knownUserEmails = {};
+  // Group items by User ID (collecting all unique known emails across entire history)
+  const userEmailsMap = {};
   feedbackItems.forEach((item) => {
     if (item.email && item.email.includes('@') && item.email !== 'none') {
-      knownUserEmails[item.userId] = item.email.trim();
+      if (!userEmailsMap[item.userId]) userEmailsMap[item.userId] = [];
+      const trimmed = item.email.trim();
+      if (!userEmailsMap[item.userId].includes(trimmed)) {
+        userEmailsMap[item.userId].push(trimmed);
+      }
     }
   });
 
@@ -358,7 +362,8 @@ export default function AdminDashboardPage() {
     if (!usersGrouped[item.userId]) {
       usersGrouped[item.userId] = {
         userId: item.userId,
-        email: knownUserEmails[item.userId] || 'none',
+        emails: userEmailsMap[item.userId] || (item.email && item.email.includes('@') && item.email !== 'none' ? [item.email.trim()] : []),
+        email: (userEmailsMap[item.userId] && userEmailsMap[item.userId][0]) || (item.email && item.email.includes('@') && item.email !== 'none' ? item.email.trim() : 'none'),
         extensionName: item.extensionName,
         hardware: item.hardware,
         stats: item.stats,
@@ -587,7 +592,7 @@ export default function AdminDashboardPage() {
                     const userMute = mutes[profile.userId];
                     const isMuted = userMute && !userMute.shadowBanned && new Date(userMute.bannedUntil).getTime() > Date.now();
                     const isShadowBanned = userMute && userMute.shadowBanned;
-                    const userReplies = replies.filter((r) => r.userId === profile.userId || r.userId === 'all');
+                    const userReplies = replies.filter((r) => r.userId === profile.userId);
                     const latestItem = profile.items[0];
                     const hasUnread = profile.items.some(i => i.type !== 'review' && !readFeedbackIds.includes(i.id));
 
@@ -622,8 +627,12 @@ export default function AdminDashboardPage() {
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                               )}
                             </span>
-                            {profile.email !== 'none' && (
-                              <span className="userEmailText">({profile.email})</span>
+                            {profile.emails && profile.emails.length > 0 && (
+                              <div style={{ display: "inline-flex", gap: "0.25rem", flexWrap: "wrap", alignItems: "center" }}>
+                                {profile.emails.map((em) => (
+                                  <span key={em} className="userEmailText">({em})</span>
+                                ))}
+                              </div>
                             )}
                             {hasUnread && (
                               <span className="badgePill new">NEW</span>
@@ -983,10 +992,9 @@ export default function AdminDashboardPage() {
                     <label className="formLabel">Notification Category</label>
                     <CustomSelect
                       options={[
-                        { label: "Announcements & Updates", value: "announcements" },
-                        { label: "Personal / Support Reply", value: "personal" },
-                        { label: "Warning & System Notice", value: "warning" },
-                        { label: "Promotions & News", value: "promo" },
+                        { label: "Announcements (Объявления)", value: "announcements" },
+                        { label: "Updates (Обновления)", value: "update" },
+                        { label: "Personal (Личные)", value: "personal" },
                       ]}
                       value={dispatchForm.category}
                       onChange={(val) => setDispatchForm({ ...dispatchForm, category: val })}
