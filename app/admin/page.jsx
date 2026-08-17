@@ -929,26 +929,45 @@ export default function AdminDashboardPage() {
 
                             {/* FLOATING POPOVER: HARDWARE SPECS */}
                             {currentTab === 'specs' && (
-                              <div className="floatingPopover alignRight" onClick={(e) => e.stopPropagation()}>
-                                <div className="drawerColHead" style={{ marginBottom: "0.55rem" }}>
-                                  <span>PC Telemetry & Environment Specs</span>
-                                </div>
-                                <div className="hardwareDetailRows">
-                                  <div className="hardwareRow">
-                                    <span className="hwLabel">OS & After Effects</span>
-                                    <span className="hwVal">{profile.os} • After Effects {profile.appVersion}</span>
+                              <div className="floatingPopover alignRight" style={{ width: "420px", maxWidth: "90vw" }} onClick={(e) => e.stopPropagation()}>
+                                <div className="specsTableContainer">
+                                  <div className="specsTableHead">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>
+                                    <span>PC Telemetry & Environment Specs</span>
                                   </div>
-                                  <div className="hardwareRow">
-                                    <span className="hwLabel">GPU / CPU Specs</span>
-                                    <span className="hwVal">{profile.hardware}</span>
-                                  </div>
-                                  <div className="hardwareRow">
-                                    <span className="hwLabel">Session Telemetry</span>
-                                    <span className="hwVal">{profile.stats}</span>
-                                  </div>
-                                  <div className="hardwareRow">
-                                    <span className="hwLabel">Installation Time</span>
-                                    <span className="hwVal">{profile.daysInstalled} ({profile.installDate})</span>
+
+                                  <div className="specsGrid">
+                                    <div className="specsRow">
+                                      <div className="specsLabel">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                        <span>Environment</span>
+                                      </div>
+                                      <div className="specsValue">{profile.os} • AE {profile.appVersion}</div>
+                                    </div>
+
+                                    <div className="specsRow">
+                                      <div className="specsLabel">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                                        <span>Hardware</span>
+                                      </div>
+                                      <div className="specsValue">{profile.hardware || "N/A"}</div>
+                                    </div>
+
+                                    <div className="specsRow">
+                                      <div className="specsLabel">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                                        <span>Telemetry</span>
+                                      </div>
+                                      <div className="specsValue">{profile.stats || "N/A"}</div>
+                                    </div>
+
+                                    <div className="specsRow">
+                                      <div className="specsLabel">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                        <span>Installed</span>
+                                      </div>
+                                      <div className="specsValue">{profile.daysInstalled} ({profile.installDate})</div>
+                                    </div>
                                   </div>
                                 </div>
                               </div>

@@ -504,6 +504,66 @@ body {
   right: 0;
 }
 
+/* SPECS POPOVER TABLE */
+.specsTableContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.specsTableHead {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-pure);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.specsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.specsRow {
+  display: grid;
+  grid-template-columns: 115px 1fr;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.4rem 0.55rem;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--r-sm);
+  font-size: 0.72rem;
+}
+
+.specsLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.specsLabel svg {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.specsValue {
+  color: var(--text-pure);
+  font-family: var(--font-mono);
+  font-size: 0.71rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
 @keyframes popoverFadeIn {
   from {
     opacity: 0;
