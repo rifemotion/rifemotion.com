@@ -72,6 +72,7 @@ export default function AdminDashboardPage() {
 
   // Read / Unread Status State
   const [readFeedbackIds, setReadFeedbackIds] = useState([]);
+  const [copiedUserId, setCopiedUserId] = useState(null);
 
   // Filters & State
   const [feedbackFilter, setFeedbackFilter] = useState("all");
@@ -79,6 +80,20 @@ export default function AdminDashboardPage() {
   const [expandedUserId, setExpandedUserId] = useState(null);
   const [expandedSpecsMap, setExpandedSpecsMap] = useState({});
   const [expandedSubMap, setExpandedSubMap] = useState({});
+
+  // Copy User ID handler
+  const handleCopyUserId = (e, userId) => {
+    e.stopPropagation();
+    try {
+      navigator.clipboard.writeText(userId);
+      setCopiedUserId(userId);
+      setTimeout(() => {
+        setCopiedUserId((curr) => (curr === userId ? null : curr));
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
   // Mute Modal State
   const [muteModalTargetUser, setMuteModalTargetUser] = useState(null);
@@ -585,7 +600,26 @@ export default function AdminDashboardPage() {
                           {/* USER CELL */}
                           <div className="cellUser">
                             <span className={`statusIndicatorDot ${isShadowBanned ? 'shadow' : isMuted ? 'muted' : 'active'}`} />
-                            <span className="userIdText">{profile.userId}</span>
+                            <span
+                              className="userIdText"
+                              title="Click to copy User ID"
+                              onClick={(e) => handleCopyUserId(e, profile.userId)}
+                              style={{
+                                cursor: "copy",
+                                textDecoration: "underline dotted",
+                                textUnderlineOffset: "3px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "0.35rem"
+                              }}
+                            >
+                              <span>{profile.userId}</span>
+                              {copiedUserId === profile.userId ? (
+                                <span style={{ fontSize: "0.62rem", color: "var(--acc-green)", fontWeight: 700 }}>✓ Copied!</span>
+                              ) : (
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                              )}
+                            </span>
                             {profile.email !== 'none' && (
                               <span className="userEmailText">({profile.email})</span>
                             )}
