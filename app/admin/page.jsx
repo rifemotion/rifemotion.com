@@ -1156,8 +1156,8 @@ export default function AdminDashboardPage() {
                                         <div key={r.id} className="responseItem">
                                           <div className="responseItemHead">
                                             <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap", fontSize: "0.72rem" }}>
-                                              <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>
-                                                Usr: {r.userId === 'all' ? 'All' : r.userId}
+                                              <span className="badgePill active" title={r.userId}>
+                                                {r.userId === 'all' ? 'All' : `Usr: ${r.userId.substring(0, 5)}`}
                                               </span>
                                               <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
                                               <span className="badgePill" style={{ background: "rgba(255, 255, 255, 0.08)", fontSize: "0.62rem" }}>
@@ -1645,8 +1645,8 @@ export default function AdminDashboardPage() {
                       <div key={r.id} className="responseItem">
                         <div className="responseItemHead">
                           <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap", fontSize: "0.72rem" }}>
-                            <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>
-                              Usr: {r.userId === 'all' ? 'All' : r.userId}
+                            <span className="badgePill active" title={r.userId}>
+                              {r.userId === 'all' ? 'All' : `Usr: ${r.userId.substring(0, 5)}`}
                             </span>
                             <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
                             <span className="badgePill" style={{ background: "rgba(255, 255, 255, 0.08)", fontSize: "0.62rem" }}>
