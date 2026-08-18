@@ -633,6 +633,10 @@ body {
   display: none;
 }
 
+.subBadgeTextMobile {
+  display: none;
+}
+
 .mobileMenuToggleBtn {
   display: none;
   background: var(--bg-inset);
@@ -651,32 +655,84 @@ body {
   border-color: var(--border-focus);
 }
 
-/* CONSOLIDATED EXTENSION & LICENSE BADGE */
+/* CONSOLIDATED EXTENSION & LICENSE BADGE WITH INNER GREEN SUB-PILL */
 .extLicenseBadge {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.15rem 0.45rem;
+  gap: 0.45rem;
+  padding: 0.15rem 0.2rem 0.15rem 0.5rem;
   border-radius: var(--r-sm);
   background-color: var(--bg-inset);
   border: 1px solid var(--border-subtle);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-pure);
   line-height: 1.2;
 }
 
-.extLicenseBadge .extDivider {
-  color: var(--border-medium);
-  font-size: 0.6rem;
-  opacity: 0.6;
-}
-
-.extLicenseBadge .extStatus {
+.extStatusPill.licensed {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.35);
   color: #10b981;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.extStatusPill.unlicensed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* MULTI-EMAIL EXPAND TRIGGER */
+.emailExpandTriggerBtn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  color: inherit;
+  outline: none;
+}
+
+.emailCountChip {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-pure);
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  line-height: 1.2;
+}
+
+.emailCaret {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.denseFilterTabs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
 }
 
 /* MOBILE SLIDE-OUT DRAWER */
@@ -783,13 +839,27 @@ body {
   .mobileMenuToggleBtn {
     display: inline-flex;
   }
-  .desktopFilterTabs, .mobileFilterRow {
-    display: none !important;
+  .denseFilterTabs {
+    display: flex !important;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .denseFilterTabs::-webkit-scrollbar {
+    display: none;
   }
   .specsBtnTextDesktop {
     display: none;
   }
   .specsBtnTextMobile {
+    display: inline;
+  }
+  .subBadgeTextDesktop {
+    display: none;
+  }
+  .subBadgeTextMobile {
     display: inline;
   }
   .extLicenseBadge .extStatusLabel {

@@ -679,11 +679,10 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* DENSE TOP TOOLBAR */}
+            {/* DENSE TOP TOOLBAR (SHOWN ON BOTH MOBILE & DESKTOP) */}
             <div className="denseToolbar">
               <div className="toolbarLeft">
-                {/* Desktop Tabs */}
-                <div className="desktopFilterTabs">
+                <div className="denseFilterTabs">
                   {filterOptions.map((tab) => (
                     <button
                       key={tab.id}
@@ -763,13 +762,43 @@ export default function AdminDashboardPage() {
                           <div className="cellUser">
                             <span className={`statusIndicatorDot ${isShadowBanned ? 'shadow' : isMuted ? 'muted' : 'active'}`} />
                             
-                            {/* EMAIL FIRST */}
+                            {/* EMAIL: SINGLE OR MULTI-DROPDOWN */}
                             {hasEmail ? (
-                              <div style={{ display: "inline-flex", gap: "0.25rem", flexWrap: "wrap", alignItems: "center" }}>
-                                {profile.emails.map((em) => (
-                                  <span key={em} className="userEmailText">{em}</span>
-                                ))}
-                              </div>
+                              profile.emails.length > 1 ? (
+                                <div className="popoverAnchor">
+                                  <button
+                                    type="button"
+                                    className="emailExpandTriggerBtn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleDrawer(profile.userId, 'emails');
+                                    }}
+                                    title="Click to view all emails for this user"
+                                  >
+                                    <span className="emailCountChip">{profile.emails.length}</span>
+                                    <span className="userEmailText">{profile.emails[0]}</span>
+                                    <span className="emailCaret">▾</span>
+                                  </button>
+
+                                  {currentTab === 'emails' && (
+                                    <div className="floatingPopover" style={{ minWidth: "230px", padding: "0.55rem" }} onClick={(e) => e.stopPropagation()}>
+                                      <div className="drawerColHead" style={{ marginBottom: "0.45rem" }}>
+                                        <span>User Emails ({profile.emails.length})</span>
+                                      </div>
+                                      <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                                        {profile.emails.map((em, emIdx) => (
+                                          <div key={em} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.74rem", color: "var(--text-pure)", background: "var(--bg-inset)", padding: "0.3rem 0.5rem", borderRadius: "var(--r-sm)", border: "1px solid var(--border-dim)" }}>
+                                            <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>#{emIdx + 1}</span>
+                                            <span style={{ wordBreak: "break-all" }}>{em}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="userEmailText">{profile.emails[0]}</span>
+                              )
                             ) : (
                               <span className="userEmailText" style={{ color: "var(--text-dark)" }}>-</span>
                             )}
@@ -787,7 +816,8 @@ export default function AdminDashboardPage() {
                                   title="Newsletter subscription: Click to view details"
                                 >
                                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                  <span>Subbed</span>
+                                  <span className="subBadgeTextDesktop">Subscribed</span>
+                                  <span className="subBadgeTextMobile">Subbed</span>
                                 </button>
 
                                 {currentTab === 'newsletter' && (
@@ -834,12 +864,11 @@ export default function AdminDashboardPage() {
                             </div>
                           </div>
 
-                          {/* 2. EXTENSION & LICENSE (CONSOLIDATED) */}
+                          {/* 2. EXTENSION & LICENSE (CONSOLIDATED WITH GREEN SUB-PILL) */}
                           <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", overflow: "hidden" }}>
                             <div className="extLicenseBadge">
                               <span className="extName">{profile.extensionName}</span>
-                              <span className="extDivider">/</span>
-                              <span className="extStatus licensed" title="Licensed">
+                              <span className="extStatusPill licensed" title="Licensed">
                                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                 <span className="extStatusLabel">Licensed</span>
                               </span>
