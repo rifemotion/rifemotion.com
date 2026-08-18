@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getDb, writeDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -22,8 +22,50 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId') || '';
     const channel = searchParams.get('channel') || 'lapath';
+    const hardware = searchParams.get('hardware');
+    const os = searchParams.get('os');
+    const stats = searchParams.get('stats');
+    const appVersion = searchParams.get('appVersion');
+    const installDate = searchParams.get('installDate');
+    const daysInstalled = searchParams.get('daysInstalled');
+    const extName = searchParams.get('extName') || channel;
 
     const db = await getDb();
+
+    // Auto-register / update user presence in db.users
+    if (userId && userId !== 'unknown') {
+      if (!db.users) db.users = {};
+      const now = new Date();
+      const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+
+      if (!db.users[userId]) {
+        db.users[userId] = {
+          userId: userId,
+          emails: [],
+          email: 'none',
+          extensionName: extName === 'kliner' ? 'KLiner' : 'LaPath',
+          extension: extName || 'lapath',
+          hardware: hardware || "Unknown Hardware",
+          stats: stats || "Launches: 1",
+          os: (os || "Windows 11").replace(/Windows\s*10\/11/gi, "Windows 11"),
+          appVersion: appVersion || "Unknown",
+          installDate: installDate || dateStr,
+          daysInstalled: daysInstalled || "First day",
+          newsletterSubscribed: false,
+          lastSeen: dateStr
+        };
+        writeDb(db);
+      } else {
+        let changed = false;
+        if (hardware && db.users[userId].hardware !== hardware) { db.users[userId].hardware = hardware; changed = true; }
+        if (stats && db.users[userId].stats !== stats) { db.users[userId].stats = stats; changed = true; }
+        if (os && db.users[userId].os !== os) { db.users[userId].os = os; changed = true; }
+        if (appVersion && db.users[userId].appVersion !== appVersion) { db.users[userId].appVersion = appVersion; changed = true; }
+        db.users[userId].lastSeen = dateStr;
+        if (changed) writeDb(db);
+      }
+    }
+
     const allReplies = db.replies || [];
     const mutes = db.mutes || {};
 

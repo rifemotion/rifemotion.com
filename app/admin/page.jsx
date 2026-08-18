@@ -188,6 +188,9 @@ export default function AdminDashboardPage() {
         setFeedbackItems(data.feedback || []);
         setMutes(data.mutes || {});
         setReplies(data.replies || []);
+        if (data.users) {
+          setKnownUsers((prev) => ({ ...prev, ...data.users }));
+        }
       }
     } catch (err) {
       console.error("Failed to fetch database:", err);

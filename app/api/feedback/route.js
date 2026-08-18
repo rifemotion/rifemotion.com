@@ -213,9 +213,40 @@ export async function POST(request) {
       hasMedia: hasMedia,
       mediaCount: mediaCount,
       telegramMediaUrl: telegramMediaUrl
-    };
-
     db.feedback = [newFeedback, ...(db.feedback || [])];
+
+    // Ensure db.users has this user registered with telemetry & email
+    if (!db.users) db.users = {};
+    if (!db.users[userId]) {
+      db.users[userId] = {
+        userId: userId,
+        emails: resolvedEmail && resolvedEmail !== 'none' ? [resolvedEmail] : [],
+        email: resolvedEmail && resolvedEmail !== 'none' ? resolvedEmail : 'none',
+        extensionName: metaObj.extName === 'kliner' ? 'KLiner' : 'LaPath',
+        extension: metaObj.extName || 'lapath',
+        hardware: metaObj.hardware || "Unknown Hardware",
+        stats: metaObj.stats || "Launches: 1",
+        os: (metaObj.os || "Windows 11").replace(/Windows\s*10\/11/gi, "Windows 11"),
+        appVersion: metaObj.appVersion || "Unknown",
+        installDate: metaObj.installDate || dateStr,
+        daysInstalled: metaObj.daysInstalled || "First day",
+        newsletterSubscribed: false,
+        lastSeen: dateStr
+      };
+    } else {
+      if (resolvedEmail && resolvedEmail !== 'none') {
+        if (!db.users[userId].emails) db.users[userId].emails = [];
+        if (!db.users[userId].emails.includes(resolvedEmail)) {
+          db.users[userId].emails.push(resolvedEmail);
+        }
+      }
+      if (metaObj.hardware) db.users[userId].hardware = metaObj.hardware;
+      if (metaObj.stats) db.users[userId].stats = metaObj.stats;
+      if (metaObj.os) db.users[userId].os = metaObj.os;
+      if (metaObj.appVersion) db.users[userId].appVersion = metaObj.appVersion;
+      db.users[userId].lastSeen = dateStr;
+    }
+
     await writeDb(db);
 
     return NextResponse.json({

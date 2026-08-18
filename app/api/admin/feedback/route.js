@@ -23,6 +23,7 @@ export async function GET() {
   const db = await getDb();
   return NextResponse.json({
     ok: true,
+    users: db.users || {},
     feedback: db.feedback || [],
     mutes: db.mutes || {},
     replies: db.replies || []
@@ -78,7 +79,7 @@ export async function POST(request) {
       }
       db.feedback = (db.feedback || []).filter(item => String(item.id) !== strId);
       await writeDb(db);
-      return NextResponse.json({ ok: true, feedback: db.feedback });
+      return NextResponse.json({ ok: true, feedback: db.feedback, users: db.users || {} });
     }
 
     if (action === 'delete_reply') {
@@ -117,8 +118,11 @@ export async function POST(request) {
       if (db.mutes && db.mutes[targetUid]) {
         delete db.mutes[targetUid];
       }
+      if (db.users && db.users[targetUid]) {
+        delete db.users[targetUid];
+      }
       await writeDb(db);
-      return NextResponse.json({ ok: true, feedback: db.feedback, replies: db.replies, mutes: db.mutes });
+      return NextResponse.json({ ok: true, feedback: db.feedback, replies: db.replies, mutes: db.mutes, users: db.users || {} });
     }
 
     if (action === 'unmute_user') {
