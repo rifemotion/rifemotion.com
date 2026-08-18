@@ -888,331 +888,334 @@ export default function AdminDashboardPage() {
                             </div>
                           </div>
 
-                          {/* 2. EXTENSION & LICENSE (CONSOLIDATED WITH GREEN SUB-PILL) */}
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", overflow: "hidden" }}>
-                            <div className="extLicenseBadge">
-                              <span className="extName">{profile.extensionName}</span>
-                              <span className="extStatusPill licensed" title="Licensed">
-                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                <span className="extStatusLabel">Licensed</span>
-                              </span>
+                          {/* 2. SECOND ROW ON MOBILE / COLUMNS 2..6 ON DESKTOP */}
+                          <div className="rowSecondaryCells">
+                            {/* EXTENSION & LICENSE (CONSOLIDATED WITH GREEN SUB-PILL) */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", overflow: "hidden" }}>
+                              <div className="extLicenseBadge">
+                                <span className="extName">{profile.extensionName}</span>
+                                <span className="extStatusPill licensed" title="Licensed">
+                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                  <span className="extStatusLabel">Licensed</span>
+                                </span>
+                              </div>
                             </div>
-                          </div>
 
-                          {/* 3. FEEDBACKS BUTTON WITH FLOATING POPOVER */}
-                          <div className="popoverAnchor">
-                            <button
-                              type="button"
-                              className={`interactivePillBtn ${currentTab === 'feedback' ? 'active' : ''}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleDrawer(profile.userId, 'feedback', profile.items);
-                              }}
-                              title="Toggle Submissions Popover"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                              <span>{profile.items.length} {profile.items.length === 1 ? 'Message' : 'Messages'}</span>
-                              {latestItem && latestItem.type === 'review' && latestItem.rating && (
-                                <span className="badgePill stars" style={{ padding: "0.05rem 0.25rem", fontSize: "0.62rem" }}>★ {latestItem.rating}/5</span>
-                              )}
-                              {hasUnread && (
-                                <span className="badgePill new" style={{ padding: "0.05rem 0.25rem", fontSize: "0.6rem" }}>NEW</span>
-                              )}
-                            </button>
+                            {/* 3. FEEDBACKS BUTTON WITH FLOATING POPOVER */}
+                            <div className="popoverAnchor">
+                              <button
+                                type="button"
+                                className={`interactivePillBtn ${currentTab === 'feedback' ? 'active' : ''}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleDrawer(profile.userId, 'feedback', profile.items);
+                                }}
+                                title="Toggle Submissions Popover"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                <span>{profile.items.length} {profile.items.length === 1 ? 'Message' : 'Messages'}</span>
+                                {latestItem && latestItem.type === 'review' && latestItem.rating && (
+                                  <span className="badgePill stars" style={{ padding: "0.05rem 0.25rem", fontSize: "0.62rem" }}>★ {latestItem.rating}/5</span>
+                                )}
+                                {hasUnread && (
+                                  <span className="badgePill new" style={{ padding: "0.05rem 0.25rem", fontSize: "0.6rem" }}>NEW</span>
+                                )}
+                              </button>
 
-                            {/* FLOATING POPOVER: FEEDBACK CHAIN */}
-                            {currentTab === 'feedback' && (
-                              <div className="floatingPopover" onClick={(e) => e.stopPropagation()}>
-                                <div className="drawerColHead" style={{ marginBottom: "0.55rem" }}>
-                                  <span>Submissions Chain ({profile.items.length})</span>
-                                </div>
+                              {/* FLOATING POPOVER: FEEDBACK CHAIN */}
+                              {currentTab === 'feedback' && (
+                                <div className="floatingPopover" onClick={(e) => e.stopPropagation()}>
+                                  <div className="drawerColHead" style={{ marginBottom: "0.55rem" }}>
+                                    <span>Submissions Chain ({profile.items.length})</span>
+                                  </div>
 
-                                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                                  {profile.items.map((sub, idx) => {
-                                    const isSubExpanded = expandedSubMap[sub.id] || false;
-                                    const cleanTitle = sub.type === 'review' ? 'Review' : sub.type === 'suggest' ? 'Feature Suggestion' : 'Bug Report';
-                                    const hasMediaAttached = Boolean(sub.hasMedia || sub.telegramMediaUrl);
-                                    const isItemUnread = sub.type !== 'review' && !readFeedbackIds.includes(sub.id);
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                                    {profile.items.map((sub, idx) => {
+                                      const isSubExpanded = expandedSubMap[sub.id] || false;
+                                      const cleanTitle = sub.type === 'review' ? 'Review' : sub.type === 'suggest' ? 'Feature Suggestion' : 'Bug Report';
+                                      const hasMediaAttached = Boolean(sub.hasMedia || sub.telegramMediaUrl);
+                                      const isItemUnread = sub.type !== 'review' && !readFeedbackIds.includes(sub.id);
 
-                                    return (
-                                      <div
-                                        key={sub.id}
-                                        className="subItemCard"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setExpandedSubMap({ ...expandedSubMap, [sub.id]: !isSubExpanded });
-                                          if (isItemUnread) {
-                                            saveReadIds([...readFeedbackIds, sub.id]);
-                                          }
-                                        }}
-                                      >
-                                        <div className="subItemTop">
-                                          <div className="subItemLeft">
-                                            <span className="subNumberTag">#{profile.items.length - idx}</span>
-                                            <span className="subTitleText">{cleanTitle}</span>
-                                            {isItemUnread && (
-                                              <span className="badgePill new">NEW</span>
-                                            )}
+                                      return (
+                                        <div
+                                          key={sub.id}
+                                          className="subItemCard"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setExpandedSubMap({ ...expandedSubMap, [sub.id]: !isSubExpanded });
+                                            if (isItemUnread) {
+                                              saveReadIds([...readFeedbackIds, sub.id]);
+                                            }
+                                          }}
+                                        >
+                                          <div className="subItemTop">
+                                            <div className="subItemLeft">
+                                              <span className="subNumberTag">#{profile.items.length - idx}</span>
+                                              <span className="subTitleText">{cleanTitle}</span>
+                                              {isItemUnread && (
+                                                <span className="badgePill new">NEW</span>
+                                              )}
+                                            </div>
+
+                                            <div className="subItemRight">
+                                              {hasMediaAttached && (
+                                                <span className="badgePill media">📎 Media</span>
+                                              )}
+                                              {sub.type === 'review' && sub.rating && (
+                                                <span className="badgePill stars">★ {sub.rating}/5</span>
+                                              )}
+                                              <span className="badgePill">{sub.extensionName}</span>
+                                              <span className="subDateText">{sub.date}</span>
+                                              <button
+                                                type="button"
+                                                className="delSubBtn"
+                                                title="Delete submission"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDeleteSubmission(sub.id);
+                                                }}
+                                              >
+                                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                              </button>
+                                            </div>
                                           </div>
 
-                                          <div className="subItemRight">
-                                            {hasMediaAttached && (
-                                              <span className="badgePill media">📎 Media</span>
-                                            )}
-                                            {sub.type === 'review' && sub.rating && (
-                                              <span className="badgePill stars">★ {sub.rating}/5</span>
-                                            )}
-                                            <span className="badgePill">{sub.extensionName}</span>
-                                            <span className="subDateText">{sub.date}</span>
-                                            <button
-                                              type="button"
-                                              className="delSubBtn"
-                                              title="Delete submission"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteSubmission(sub.id);
-                                              }}
-                                            >
-                                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                            </button>
-                                          </div>
-                                        </div>
-
-                                        {/* LINE 2 INSET BODY */}
-                                        <div className={`accordionContent ${isSubExpanded ? 'isExpanded' : ''}`}>
-                                          <div className="accordionInner">
-                                            <div className="subItemBody">
-                                              <p>{sub.message || "(No message body provided)"}</p>
-                                              {sub.telegramMediaUrl ? (
-                                                <Link
-                                                  href={sub.telegramMediaUrl}
-                                                  target="_blank"
-                                                  className="tgMediaBtn"
-                                                  onClick={(e) => e.stopPropagation()}
-                                                >
-                                                  <span>View Attached Media in Telegram</span> ↗
-                                                </Link>
-                                              ) : sub.hasMedia ? (
-                                                <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: "0.3rem" }}>
-                                                  📎 Media attached (saved in Telegram Bot)
-                                                </div>
-                                              ) : null}
+                                          {/* LINE 2 INSET BODY */}
+                                          <div className={`accordionContent ${isSubExpanded ? 'isExpanded' : ''}`}>
+                                            <div className="accordionInner">
+                                              <div className="subItemBody">
+                                                <p>{sub.message || "(No message body provided)"}</p>
+                                                {sub.telegramMediaUrl ? (
+                                                  <Link
+                                                    href={sub.telegramMediaUrl}
+                                                    target="_blank"
+                                                    className="tgMediaBtn"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  >
+                                                    <span>View Attached Media in Telegram</span> ↗
+                                                  </Link>
+                                                ) : sub.hasMedia ? (
+                                                  <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: "0.3rem" }}>
+                                                    📎 Media attached (saved in Telegram Bot)
+                                                  </div>
+                                                ) : null}
+                                              </div>
                                             </div>
                                           </div>
                                         </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* 4. DIRECT REPLIES BUTTON WITH FLOATING POPOVER */}
+                            <div className="popoverAnchor">
+                              <button
+                                type="button"
+                                className={`interactivePillBtn ${currentTab === 'replies' ? 'active' : ''}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleDrawer(profile.userId, 'replies');
+                                }}
+                                title="Toggle Direct Replies Popover"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                <span>{userReplies.length} Replies</span>
+                              </button>
+
+                              {/* FLOATING POPOVER: DIRECT RESPONSES */}
+                              {currentTab === 'replies' && (
+                                <div className="floatingPopover" onClick={(e) => e.stopPropagation()}>
+                                  <div className="drawerColHead" style={{ marginBottom: "0.55rem" }}>
+                                    <span>Direct Responses Sent to this User ({userReplies.length})</span>
+                                  </div>
+
+                                  <div className="responsesFeed">
+                                    {userReplies.length === 0 ? (
+                                      <div style={{
+                                        backgroundColor: "var(--bg-inset)",
+                                        border: "1px solid var(--border-subtle)",
+                                        borderRadius: "var(--r-sm)",
+                                        padding: "0.75rem",
+                                        textAlign: "center",
+                                        color: "var(--text-muted)",
+                                        fontSize: "0.72rem"
+                                      }}>
+                                        No direct responses sent to this user yet.
                                       </div>
-                                    );
-                                  })}
+                                    ) : (
+                                      userReplies.map((r) => (
+                                        <div key={r.id} className="responseItem">
+                                          <div className="responseItemHead">
+                                            <span className="responseSender">
+                                              <span className="statusIndicatorDot active" style={{ width: "5px", height: "5px" }} />
+                                              <span>{r.title || "Personal Reply"}</span>
+                                            </span>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                              <span className="responseDate">{r.date}</span>
+                                              <button
+                                                type="button"
+                                                className="delReplyBtn"
+                                                onClick={() => handleDeleteReply(r.id)}
+                                                title="Delete notification"
+                                              >
+                                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                              </button>
+                                            </div>
+                                          </div>
+                                          <p className="responseText" style={{ marginTop: "0.25rem" }}>{r.message}</p>
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+
+                                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.6rem" }}>
+                                    <button
+                                      type="button"
+                                      className="replyUserBtn"
+                                      onClick={() => {
+                                        setActiveTab("dispatch");
+                                        setDispatchForm({
+                                          ...dispatchForm,
+                                          category: "personal",
+                                          userId: profile.userId
+                                        });
+                                      }}
+                                    >
+                                      <span>+ Reply to User</span>
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                          </div>
+                              )}
+                            </div>
 
-                          {/* 4. DIRECT REPLIES BUTTON WITH FLOATING POPOVER */}
-                          <div className="popoverAnchor">
-                            <button
-                              type="button"
-                              className={`interactivePillBtn ${currentTab === 'replies' ? 'active' : ''}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleDrawer(profile.userId, 'replies');
-                              }}
-                              title="Toggle Direct Replies Popover"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                              <span>{userReplies.length} Replies</span>
-                            </button>
+                            {/* 5. HARDWARE & STATS BUTTON WITH FLOATING POPOVER */}
+                            <div className="popoverAnchor">
+                              <button
+                                type="button"
+                                className={`interactivePillBtn ${currentTab === 'specs' ? 'active' : ''}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleDrawer(profile.userId, 'specs');
+                                }}
+                                title="Toggle Hardware Specs Popover"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>
+                                <span className="specsBtnTextDesktop">Specs ({profile.os && profile.os.includes("Windows") ? "Win" : profile.os && profile.os.includes("Mac") ? "Mac" : profile.os || "Win"})</span>
+                                <span className="specsBtnTextMobile">Specs</span>
+                              </button>
 
-                            {/* FLOATING POPOVER: DIRECT RESPONSES */}
-                            {currentTab === 'replies' && (
-                              <div className="floatingPopover" onClick={(e) => e.stopPropagation()}>
-                                <div className="drawerColHead" style={{ marginBottom: "0.55rem" }}>
-                                  <span>Direct Responses Sent to this User ({userReplies.length})</span>
+                              {/* FLOATING POPOVER: HARDWARE SPECS */}
+                              {currentTab === 'specs' && (
+                                <div className="floatingPopover alignRight" style={{ width: "420px", maxWidth: "90vw" }} onClick={(e) => e.stopPropagation()}>
+                                  <div className="specsTableContainer">
+                                    <div className="specsTableHead">
+                                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>
+                                      <span>PC Telemetry & Environment Specs</span>
+                                    </div>
+
+                                    <div className="specsGrid">
+                                      <div className="specsRow">
+                                        <div className="specsLabel">
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>
+                                          <span>Environment</span>
+                                        </div>
+                                        <div className="specsValue">{profile.os} • AE {profile.appVersion}</div>
+                                      </div>
+
+                                      <div className="specsRow">
+                                        <div className="specsLabel">
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                                          <span>Hardware</span>
+                                        </div>
+                                        <div className="specsValue">{profile.hardware || "N/A"}</div>
+                                      </div>
+
+                                      <div className="specsRow">
+                                        <div className="specsLabel">
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                                          <span>Telemetry</span>
+                                        </div>
+                                        <div className="specsValue">{profile.stats || "N/A"}</div>
+                                      </div>
+
+                                      <div className="specsRow">
+                                        <div className="specsLabel">
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                          <span>Installed</span>
+                                        </div>
+                                        <div className="specsValue">{profile.daysInstalled} ({profile.installDate})</div>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
+                              )}
+                            </div>
 
-                                <div className="responsesFeed">
-                                  {userReplies.length === 0 ? (
-                                    <div style={{
-                                      backgroundColor: "var(--bg-inset)",
-                                      border: "1px solid var(--border-subtle)",
-                                      borderRadius: "var(--r-sm)",
-                                      padding: "0.75rem",
-                                      textAlign: "center",
-                                      color: "var(--text-muted)",
-                                      fontSize: "0.72rem"
-                                    }}>
-                                      No direct responses sent to this user yet.
+                            {/* 6. ACTIONS MENU */}
+                            <div className="cellActions" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                className="dotsActionBtn"
+                                onClick={() => setActiveMenuUserId(activeMenuUserId === profile.userId ? null : profile.userId)}
+                              >
+                                ⋮
+                              </button>
+
+                              {activeMenuUserId === profile.userId && (
+                                <div className="dotsDropdown">
+                                  {isMuted || isShadowBanned ? (
+                                    <div
+                                      className="dotsDropdownItem"
+                                      onClick={() => {
+                                        handleUnmuteUser(profile.userId);
+                                        setActiveMenuUserId(null);
+                                      }}
+                                    >
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                      <span>Unmute User</span>
                                     </div>
                                   ) : (
-                                    userReplies.map((r) => (
-                                      <div key={r.id} className="responseItem">
-                                        <div className="responseItemHead">
-                                          <span className="responseSender">
-                                            <span className="statusIndicatorDot active" style={{ width: "5px", height: "5px" }} />
-                                            <span>{r.title || "Personal Reply"}</span>
-                                          </span>
-                                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                                            <span className="responseDate">{r.date}</span>
-                                            <button
-                                              type="button"
-                                              className="delReplyBtn"
-                                              onClick={() => handleDeleteReply(r.id)}
-                                              title="Delete notification"
-                                            >
-                                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                            </button>
-                                          </div>
-                                        </div>
-                                        <p className="responseText" style={{ marginTop: "0.25rem" }}>{r.message}</p>
+                                    <>
+                                      <div
+                                        className="dotsDropdownItem"
+                                        onClick={() => {
+                                          setMuteModalTargetUser(profile);
+                                          setActiveMenuUserId(null);
+                                        }}
+                                      >
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                                        <span>Mute User...</span>
                                       </div>
-                                    ))
+                                      <div
+                                        className="dotsDropdownItem"
+                                        onClick={() => {
+                                          handleShadowBanUser(profile.userId);
+                                          setActiveMenuUserId(null);
+                                        }}
+                                      >
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                        <span>Shadow Ban User</span>
+                                      </div>
+                                    </>
                                   )}
-                                </div>
 
-                                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.6rem" }}>
-                                  <button
-                                    type="button"
-                                    className="replyUserBtn"
-                                    onClick={() => {
-                                      setActiveTab("dispatch");
-                                      setDispatchForm({
-                                        ...dispatchForm,
-                                        category: "personal",
-                                        userId: profile.userId
-                                      });
-                                    }}
-                                  >
-                                    <span>+ Reply to User</span>
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* 5. HARDWARE & STATS BUTTON WITH FLOATING POPOVER */}
-                          <div className="popoverAnchor">
-                            <button
-                              type="button"
-                              className={`interactivePillBtn ${currentTab === 'specs' ? 'active' : ''}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleDrawer(profile.userId, 'specs');
-                              }}
-                              title="Toggle Hardware Specs Popover"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>
-                              <span className="specsBtnTextDesktop">Specs ({profile.os && profile.os.includes("Windows") ? "Win" : profile.os && profile.os.includes("Mac") ? "Mac" : profile.os || "Win"})</span>
-                              <span className="specsBtnTextMobile">Specs</span>
-                            </button>
-
-                            {/* FLOATING POPOVER: HARDWARE SPECS */}
-                            {currentTab === 'specs' && (
-                              <div className="floatingPopover alignRight" style={{ width: "420px", maxWidth: "90vw" }} onClick={(e) => e.stopPropagation()}>
-                                <div className="specsTableContainer">
-                                  <div className="specsTableHead">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>
-                                    <span>PC Telemetry & Environment Specs</span>
-                                  </div>
-
-                                  <div className="specsGrid">
-                                    <div className="specsRow">
-                                      <div className="specsLabel">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>
-                                        <span>Environment</span>
-                                      </div>
-                                      <div className="specsValue">{profile.os} • AE {profile.appVersion}</div>
-                                    </div>
-
-                                    <div className="specsRow">
-                                      <div className="specsLabel">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-                                        <span>Hardware</span>
-                                      </div>
-                                      <div className="specsValue">{profile.hardware || "N/A"}</div>
-                                    </div>
-
-                                    <div className="specsRow">
-                                      <div className="specsLabel">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
-                                        <span>Telemetry</span>
-                                      </div>
-                                      <div className="specsValue">{profile.stats || "N/A"}</div>
-                                    </div>
-
-                                    <div className="specsRow">
-                                      <div className="specsLabel">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                        <span>Installed</span>
-                                      </div>
-                                      <div className="specsValue">{profile.daysInstalled} ({profile.installDate})</div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* 6. ACTIONS MENU */}
-                          <div className="cellActions" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              className="dotsActionBtn"
-                              onClick={() => setActiveMenuUserId(activeMenuUserId === profile.userId ? null : profile.userId)}
-                            >
-                              ⋮
-                            </button>
-
-                            {activeMenuUserId === profile.userId && (
-                              <div className="dotsDropdown">
-                                {isMuted || isShadowBanned ? (
                                   <div
                                     className="dotsDropdownItem"
+                                    style={{ color: "#ef4444", borderTop: "1px solid var(--border-subtle)", marginTop: "2px", paddingTop: "5px" }}
                                     onClick={() => {
-                                      handleUnmuteUser(profile.userId);
+                                      handleDeleteEntireUser(profile.userId);
                                       setActiveMenuUserId(null);
                                     }}
                                   >
-                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    <span>Unmute User</span>
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    <span>Delete User from DB</span>
                                   </div>
-                                ) : (
-                                  <>
-                                    <div
-                                      className="dotsDropdownItem"
-                                      onClick={() => {
-                                        setMuteModalTargetUser(profile);
-                                        setActiveMenuUserId(null);
-                                      }}
-                                    >
-                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
-                                      <span>Mute User...</span>
-                                    </div>
-                                    <div
-                                      className="dotsDropdownItem"
-                                      onClick={() => {
-                                        handleShadowBanUser(profile.userId);
-                                        setActiveMenuUserId(null);
-                                      }}
-                                    >
-                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                                      <span>Shadow Ban User</span>
-                                    </div>
-                                  </>
-                                )}
-
-                                <div
-                                  className="dotsDropdownItem"
-                                  style={{ color: "#ef4444", borderTop: "1px solid var(--border-subtle)", marginTop: "2px", paddingTop: "5px" }}
-                                  onClick={() => {
-                                    handleDeleteEntireUser(profile.userId);
-                                    setActiveMenuUserId(null);
-                                  }}
-                                >
-                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                  <span>Delete User from DB</span>
                                 </div>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

@@ -91,22 +91,7 @@ body {
 
 @media (max-width: 768px) {
   .sideNav {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--border-subtle);
-    padding: 0.65rem 0.85rem;
-  }
-  .navList {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.3rem;
-  }
-  .navButton {
-    width: auto;
-    flex: 1 1 auto;
-    font-size: 0.72rem;
-    padding: 0.35rem 0.5rem;
+    display: none !important;
   }
 }
 
@@ -835,6 +820,10 @@ body {
   }
 }
 
+.rowSecondaryCells {
+  display: contents;
+}
+
 @media (max-width: 768px) {
   .mobileMenuToggleBtn {
     display: inline-flex;
@@ -853,11 +842,9 @@ body {
   .mobileFilterRow::-webkit-scrollbar {
     display: none;
   }
-  .specsBtnTextDesktop {
-    display: none;
-  }
+  .specsBtnTextDesktop,
   .specsBtnTextMobile {
-    display: inline;
+    display: none !important;
   }
   .subBadgeTextDesktop {
     display: none;
@@ -887,11 +874,39 @@ body {
     display: none !important;
   }
   .denseRowMain {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.45rem;
-    padding: 0.75rem 0.65rem;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.45rem !important;
+    padding: 0.75rem 0.65rem !important;
+  }
+  .cellUser {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+  }
+  .rowSecondaryCells {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
+  }
+  .rowSecondaryCells .cellActions {
+    margin-left: auto !important;
+  }
+  .floatingPopover {
+    position: fixed !important;
+    left: 10px !important;
+    right: 10px !important;
+    top: auto !important;
+    bottom: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    z-index: 999999 !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
   }
 }
 
