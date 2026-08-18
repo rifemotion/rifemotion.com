@@ -877,14 +877,14 @@ body {
   .denseToolbar {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.5rem;
+    gap: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    margin-bottom: 0.4rem;
   }
   .toolbarRight {
-    width: 100%;
-    justify-content: space-between;
-  }
-  .denseSearchInput {
-    width: 100%;
+    display: none !important;
   }
   .denseRowMain {
     display: flex;
@@ -900,9 +900,8 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  position: relative;
 }
 
 .userIdWrapper {

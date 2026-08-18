@@ -456,7 +456,11 @@ export default function AdminDashboardPage() {
       if (!userEmailsMap[item.userId]) userEmailsMap[item.userId] = [];
       const trimmed = item.email.trim();
       if (!userEmailsMap[item.userId].includes(trimmed)) {
-        userEmailsMap[item.userId].push(trimmed);
+        if (item.newsletterSubscribed === true || item.type === 'newsletter') {
+          userEmailsMap[item.userId].unshift(trimmed); // Subscribed email ALWAYS first
+        } else {
+          userEmailsMap[item.userId].push(trimmed);
+        }
       }
     }
   });
@@ -797,7 +801,7 @@ export default function AdminDashboardPage() {
                                   >
                                     <span className="emailCountChip">{profile.emails.length}</span>
                                     <span className="userEmailText">{profile.emails[0]}</span>
-                                    <span className="emailCaret">▾</span>
+                                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}><polyline points="6 9 12 15 18 9"></polyline></svg>
                                   </button>
 
                                   {currentTab === 'emails' && (
@@ -1605,20 +1609,24 @@ export default function AdminDashboardPage() {
 
             {activeTab === "feedback" && (
               <div className="mobileDrawerSection">
-                <div className="navGroupLabel">Filters</div>
-                <div className="mobileDrawerFiltersList">
-                  {filterOptions.map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      className={`mobileDrawerFilterBtn ${feedbackFilter === tab.id ? "active" : ""}`}
-                      onClick={() => { setFeedbackFilter(tab.id); setMobileMenuOpen(false); }}
-                    >
-                      {tab.icon}
-                      <span>{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
+                <div className="navGroupLabel">Search Database</div>
+                <input
+                  type="text"
+                  className="denseSearchInput"
+                  style={{ width: "100%" }}
+                  placeholder="Search ID, email, specs..."
+                  value={feedbackSearchQuery}
+                  onChange={(e) => setFeedbackSearchQuery(e.target.value)}
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  className="markAllReadBtn"
+                  style={{ marginTop: "0.4rem", justifyContent: "center" }}
+                  onClick={() => { handleMarkAllRead(); setMobileMenuOpen(false); }}
+                >
+                  ✓ Mark All as Read
+                </button>
               </div>
             )}
 
