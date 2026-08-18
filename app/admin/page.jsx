@@ -234,9 +234,6 @@ export default function AdminDashboardPage() {
       console.error("Error deleting submission:", err);
     }
   };
-      console.error("Error deleting submission:", err);
-    }
-  };
 
   // Handle Delete Reply / Broadcast Notification
   const handleDeleteReply = async (replyId) => {
