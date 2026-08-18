@@ -965,6 +965,20 @@ body {
     z-index: 999999 !important;
     box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
   }
+  .mobileOnlyActions {
+    display: inline-flex !important;
+  }
+  .desktopOnlyActions {
+    display: none !important;
+  }
+}
+
+.mobileOnlyActions {
+  display: none !important;
+}
+
+.desktopOnlyActions {
+  display: inline-flex !important;
 }
 
 /* CELLS */
