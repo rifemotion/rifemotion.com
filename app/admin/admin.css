@@ -58,6 +58,74 @@
   -webkit-touch-callout: none;
   user-select: none;
   -webkit-user-select: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+/* Custom Sleek Thin Scrollbars for All Menus, Dropdowns, Popovers, and Tables */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.floatingPopover,
+.customSelectDropdown,
+.dotsDropdown,
+.tableContainer,
+.drawerContainer,
+.modalWindow,
+.selectOptionsList,
+.emailsDropdownList {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+.floatingPopover::-webkit-scrollbar,
+.customSelectDropdown::-webkit-scrollbar,
+.dotsDropdown::-webkit-scrollbar,
+.tableContainer::-webkit-scrollbar,
+.drawerContainer::-webkit-scrollbar,
+.modalWindow::-webkit-scrollbar,
+.selectOptionsList::-webkit-scrollbar,
+.emailsDropdownList::-webkit-scrollbar {
+  width: 3.5px;
+  height: 3.5px;
+}
+
+.floatingPopover::-webkit-scrollbar-thumb,
+.customSelectDropdown::-webkit-scrollbar-thumb,
+.dotsDropdown::-webkit-scrollbar-thumb,
+.tableContainer::-webkit-scrollbar-thumb,
+.drawerContainer::-webkit-scrollbar-thumb,
+.modalWindow::-webkit-scrollbar-thumb,
+.selectOptionsList::-webkit-scrollbar-thumb,
+.emailsDropdownList::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 4px;
+}
+
+.floatingPopover::-webkit-scrollbar-thumb:hover,
+.customSelectDropdown::-webkit-scrollbar-thumb:hover,
+.dotsDropdown::-webkit-scrollbar-thumb:hover,
+.tableContainer::-webkit-scrollbar-thumb:hover,
+.drawerContainer::-webkit-scrollbar-thumb:hover,
+.modalWindow::-webkit-scrollbar-thumb:hover,
+.selectOptionsList::-webkit-scrollbar-thumb:hover,
+.emailsDropdownList::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
 }
 
 input, textarea {
