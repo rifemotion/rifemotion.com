@@ -679,10 +679,11 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* DENSE TOP TOOLBAR (SHOWN ON BOTH MOBILE & DESKTOP) */}
+            {/* DENSE TOP TOOLBAR */}
             <div className="denseToolbar">
               <div className="toolbarLeft">
-                <div className="denseFilterTabs">
+                {/* Desktop Tabs: full icon + text */}
+                <div className="desktopFilterTabs">
                   {filterOptions.map((tab) => (
                     <button
                       key={tab.id}
@@ -694,6 +695,25 @@ export default function AdminDashboardPage() {
                       <span>{tab.label}</span>
                     </button>
                   ))}
+                </div>
+
+                {/* Mobile Filter Row: icons only, only ACTIVE expands with label */}
+                <div className="mobileFilterRow">
+                  {filterOptions.map((tab) => {
+                    const isActive = feedbackFilter === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        className={`mobileFilterIconBtn ${isActive ? "active" : ""}`}
+                        onClick={() => setFeedbackFilter(tab.id)}
+                        title={tab.label}
+                      >
+                        {tab.icon}
+                        {isActive && <span>{tab.label}</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

@@ -839,15 +839,18 @@ body {
   .mobileMenuToggleBtn {
     display: inline-flex;
   }
-  .denseFilterTabs {
+  .desktopFilterTabs {
+    display: none !important;
+  }
+  .mobileFilterRow {
     display: flex !important;
-    flex-wrap: nowrap;
+    width: 100%;
     overflow-x: auto;
     padding-bottom: 0.25rem;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
-  .denseFilterTabs::-webkit-scrollbar {
+  .mobileFilterRow::-webkit-scrollbar {
     display: none;
   }
   .specsBtnTextDesktop {
