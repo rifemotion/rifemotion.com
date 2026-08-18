@@ -771,6 +771,10 @@ body {
 .userEmailText {
   font-size: 0.72rem;
   color: var(--text-secondary);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  transform: translateY(-1.5px);
 }
 
 .cellSpecs {

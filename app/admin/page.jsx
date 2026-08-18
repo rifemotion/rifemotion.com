@@ -198,16 +198,13 @@ export default function AdminDashboardPage() {
     }
   }, [status, router]);
 
-  // Global mousedown listener to dismiss context menu & 3-dots dropdown on clicking anywhere outside
+  // Global mousedown listener to dismiss popovers & 3-dots dropdown on clicking anywhere outside
   useEffect(() => {
     const handleGlobalMouseDown = (e) => {
-      if (!e.target.closest('.customContextMenu')) {
-        setContextMenu(null);
-      }
       if (!e.target.closest('.dotsActionBtn') && !e.target.closest('.dotsDropdown')) {
         setActiveMenuUserId(null);
       }
-      if (!e.target.closest('.popoverAnchor') && !e.target.closest('.customContextMenu')) {
+      if (!e.target.closest('.popoverAnchor')) {
         setActiveDrawerTab({});
       }
     };
@@ -215,14 +212,10 @@ export default function AdminDashboardPage() {
     return () => window.removeEventListener('mousedown', handleGlobalMouseDown);
   }, []);
 
-  // Handle Delete Submission (Right-click menu or direct trash icon)
+  // Handle Delete Submission (Direct trash icon)
   const handleDeleteSubmission = async (subId) => {
-    setContextMenu(null);
-    const confirmed = window.confirm("Delete this submission permanently from database?");
-    if (!confirmed) return;
-
     // Optimistically update React state immediately
-    setFeedbackItems((prev) => prev.filter((item) => item.id !== subId));
+    setFeedbackItems((prev) => prev.filter((item) => String(item.id) !== String(subId)));
 
     try {
       const res = await fetch('/api/admin/feedback', {
@@ -238,6 +231,9 @@ export default function AdminDashboardPage() {
         setFeedbackItems(data.feedback);
       }
     } catch (err) {
+      console.error("Error deleting submission:", err);
+    }
+  };
       console.error("Error deleting submission:", err);
     }
   };
@@ -885,7 +881,6 @@ export default function AdminDashboardPage() {
                               <div className="floatingPopover" onClick={(e) => e.stopPropagation()}>
                                 <div className="drawerColHead" style={{ marginBottom: "0.55rem" }}>
                                   <span>Submissions Chain ({profile.items.length})</span>
-                                  <span style={{ fontSize: "0.62rem", color: "var(--text-muted)" }}>Right click to delete</span>
                                 </div>
 
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
@@ -899,11 +894,6 @@ export default function AdminDashboardPage() {
                                       <div
                                         key={sub.id}
                                         className="subItemCard"
-                                        onContextMenu={(e) => {
-                                          e.preventDefault();
-                                          e.stopPropagation();
-                                          setContextMenu({ x: e.clientX, y: e.clientY, subId: sub.id });
-                                        }}
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setExpandedSubMap({ ...expandedSubMap, [sub.id]: !isSubExpanded });
@@ -930,6 +920,17 @@ export default function AdminDashboardPage() {
                                             )}
                                             <span className="badgePill">{sub.extensionName}</span>
                                             <span className="subDateText">{sub.date}</span>
+                                            <button
+                                              type="button"
+                                              className="delSubBtn"
+                                              title="Delete submission"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteSubmission(sub.id);
+                                              }}
+                                            >
+                                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                            </button>
                                           </div>
                                         </div>
 
@@ -1498,36 +1499,6 @@ export default function AdminDashboardPage() {
         )}
 
       </main>
-
-      {/* FLOATING CONTEXT MENU FOR SUBMISSION RIGHT-CLICK */}
-      {contextMenu && (
-        <div
-          style={{
-            position: "fixed",
-            top: contextMenu.y,
-            left: contextMenu.x,
-            background: "#161619",
-            border: "1px solid var(--border-medium)",
-            borderRadius: "var(--r-sm)",
-            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.7)",
-            zIndex: 9999,
-            padding: "0.25rem"
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div
-            className="dotsDropdownItem"
-            style={{ color: "var(--acc-rose)", cursor: "pointer", borderRadius: "3px" }}
-            onClick={() => {
-              handleDeleteSubmission(contextMenu.subId);
-              setContextMenu(null);
-            }}
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            <span>Delete this submission</span>
-          </div>
-        </div>
-      )}
 
       {/* MUTE USER MODAL */}
       {muteModalTargetUser && (
