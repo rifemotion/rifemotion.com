@@ -121,6 +121,10 @@ export async function POST(request) {
       if (db.users && db.users[targetUid]) {
         delete db.users[targetUid];
       }
+      if (!db.deletedUserIds) db.deletedUserIds = [];
+      if (!db.deletedUserIds.includes(targetUid)) {
+        db.deletedUserIds.push(targetUid);
+      }
       await writeDb(db);
       return NextResponse.json({ ok: true, feedback: db.feedback, replies: db.replies, mutes: db.mutes, users: db.users || {} });
     }

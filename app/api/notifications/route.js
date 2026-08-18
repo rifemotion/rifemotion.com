@@ -33,7 +33,8 @@ export async function GET(request) {
     const db = await getDb();
 
     // Auto-register / update user presence in db.users
-    if (userId && userId !== 'unknown') {
+    const isDeletedUser = Boolean(db.deletedUserIds && db.deletedUserIds.includes(userId));
+    if (userId && userId !== 'unknown' && !isDeletedUser) {
       if (!db.users) db.users = {};
       const now = new Date();
       const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;

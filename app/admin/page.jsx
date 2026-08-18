@@ -177,7 +177,7 @@ export default function AdminDashboardPage() {
         setMutes(data.mutes || {});
         setReplies(data.replies || []);
         if (data.users) {
-          setKnownUsers((prev) => ({ ...prev, ...data.users }));
+          setKnownUsers(data.users);
         }
       }
     } catch (err) {
@@ -259,6 +259,7 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (data.ok && data.feedback) {
         setFeedbackItems(data.feedback);
+        if (data.users) setKnownUsers(data.users);
       }
     } catch (err) {
       console.error("Error deleting submission:", err);
@@ -291,22 +292,20 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Handle Delete Entire User from Database
-  const handleDeleteEntireUser = async (targetUid) => {
-    if (!targetUid) return;
-    const confirmed = window.confirm("Permanently delete this user and all their records from the database?");
+  // Handle Delete User (All records & profile)
+  const handleDeleteUserData = async (targetUid) => {
+    const confirmed = window.confirm(`Permanently delete all records and user card for ID: ${targetUid}?`);
     if (!confirmed) return;
 
-    setKnownUsers((prev) => {
+    // Optimistically remove user and all their feedback & replies
+    setFeedbackItems((prev) => prev.filter((item) => String(item.userId) !== String(targetUid)));
+    setReplies((prev) => prev.filter((r) => String(r.userId) !== String(targetUid)));
+    setMutes((prev) => {
       const copy = { ...prev };
       delete copy[targetUid];
       return copy;
     });
-
-    // Optimistically remove user immediately from state
-    setFeedbackItems((prev) => prev.filter((item) => String(item.userId) !== String(targetUid)));
-    setReplies((prev) => prev.filter((r) => String(r.userId) !== String(targetUid)));
-    setMutes((prev) => {
+    setKnownUsers((prev) => {
       const copy = { ...prev };
       delete copy[targetUid];
       return copy;
@@ -326,6 +325,7 @@ export default function AdminDashboardPage() {
         if (data.feedback) setFeedbackItems(data.feedback);
         if (data.replies) setReplies(data.replies);
         if (data.mutes) setMutes(data.mutes);
+        if (data.users) setKnownUsers(data.users);
       }
     } catch (err) {
       console.error("Error deleting user data:", err);
