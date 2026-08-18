@@ -213,6 +213,8 @@ export async function POST(request) {
       hasMedia: hasMedia,
       mediaCount: mediaCount,
       telegramMediaUrl: telegramMediaUrl
+    };
+
     db.feedback = [newFeedback, ...(db.feedback || [])];
 
     // Ensure db.users has this user registered with telemetry & email
