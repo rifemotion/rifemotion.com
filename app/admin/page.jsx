@@ -796,6 +796,8 @@ export default function AdminDashboardPage() {
                     const hasEmail = profile.emails && profile.emails.length > 0;
                     const isUserSubscribed = profile.items.some(i => i.newsletterSubscribed === true || i.type === 'newsletter');
 
+                    const latestReview = profile.items.find(i => i.type === 'review' && i.rating);
+
                     return (
                       <div
                         key={profile.userId}
@@ -999,12 +1001,11 @@ export default function AdminDashboardPage() {
                               >
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                                 <span>{profile.items.length} {profile.items.length === 1 ? 'Message' : 'Messages'}</span>
-                                {latestItem && latestItem.type === 'review' && latestItem.rating && (
-                                  <span className="badgePill stars" style={{ padding: "0.05rem 0.25rem", fontSize: "0.62rem" }}>★ {latestItem.rating}/5</span>
-                                )}
-                                {hasUnread && (
+                                {hasUnread ? (
                                   <span className="badgePill new" style={{ padding: "0.05rem 0.25rem", fontSize: "0.6rem" }}>NEW</span>
-                                )}
+                                ) : latestReview ? (
+                                  <span className="badgePill stars" style={{ padding: "0.05rem 0.25rem", fontSize: "0.62rem" }}>★ {latestReview.rating}/5</span>
+                                ) : null}
                               </button>
 
                               {/* FLOATING POPOVER: FEEDBACK CHAIN */}
@@ -1134,10 +1135,17 @@ export default function AdminDashboardPage() {
                                       userReplies.map((r) => (
                                         <div key={r.id} className="responseItem">
                                           <div className="responseItemHead">
-                                            <span className="responseSender">
+                                            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
                                               <span className="statusIndicatorDot active" style={{ width: "5px", height: "5px" }} />
-                                              <span>{r.title || "Personal Reply"}</span>
-                                            </span>
+                                              {r.category && (
+                                                <span className="badgePill" style={{ textTransform: "capitalize", fontSize: "0.62rem", background: "rgba(255, 255, 255, 0.08)" }}>
+                                                  {r.category}
+                                                </span>
+                                              )}
+                                              <span style={{ fontWeight: 600, color: "var(--text-pure)", fontSize: "0.74rem" }}>
+                                                {r.title || "Personal Reply"}
+                                              </span>
+                                            </div>
                                             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                                               <span className="responseDate">{r.date}</span>
                                               <button
@@ -1151,6 +1159,49 @@ export default function AdminDashboardPage() {
                                             </div>
                                           </div>
                                           <p className="responseText" style={{ marginTop: "0.25rem" }}>{r.message}</p>
+                                          {r.buttonText && (
+                                            <div style={{ marginTop: "0.4rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                              {r.buttonUrl && r.buttonUrl.startsWith("http") ? (
+                                                <Link
+                                                  href={r.buttonUrl}
+                                                  target="_blank"
+                                                  style={{
+                                                    display: "inline-flex",
+                                                    alignItems: "center",
+                                                    gap: "0.3rem",
+                                                    padding: "0.2rem 0.55rem",
+                                                    borderRadius: "var(--r-sm)",
+                                                    background: "var(--bg-inset)",
+                                                    border: "1px solid #FF3B00",
+                                                    color: "var(--text-pure)",
+                                                    fontSize: "0.7rem",
+                                                    fontWeight: 600,
+                                                    textDecoration: "none"
+                                                  }}
+                                                >
+                                                  <span>{r.buttonText}</span>
+                                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                                                </Link>
+                                              ) : (
+                                                <span
+                                                  style={{
+                                                    display: "inline-flex",
+                                                    alignItems: "center",
+                                                    gap: "0.3rem",
+                                                    padding: "0.2rem 0.55rem",
+                                                    borderRadius: "var(--r-sm)",
+                                                    background: "var(--bg-inset)",
+                                                    border: "1px solid #FF3B00",
+                                                    color: "var(--text-pure)",
+                                                    fontSize: "0.7rem",
+                                                    fontWeight: 600
+                                                  }}
+                                                >
+                                                  {r.buttonText}
+                                                </span>
+                                              )}
+                                            </div>
+                                          )}
                                         </div>
                                       ))
                                     )}
@@ -1574,6 +1625,11 @@ export default function AdminDashboardPage() {
                             ) : (
                               <span className="badgePill active">User: {r.userId.substring(0, 10)}...</span>
                             )}
+                            {r.category && (
+                              <span className="badgePill" style={{ textTransform: "capitalize", fontSize: "0.62rem", background: "rgba(255, 255, 255, 0.08)" }}>
+                                {r.category}
+                              </span>
+                            )}
                             <span style={{ fontWeight: 600, color: "var(--text-pure)", fontSize: "0.74rem" }}>
                               {r.title || "Notification"}
                             </span>
@@ -1591,6 +1647,49 @@ export default function AdminDashboardPage() {
                           </div>
                         </div>
                         <p className="responseText" style={{ marginTop: "0.25rem" }}>{r.message}</p>
+                        {r.buttonText && (
+                          <div style={{ marginTop: "0.4rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                            {r.buttonUrl && r.buttonUrl.startsWith("http") ? (
+                              <Link
+                                href={r.buttonUrl}
+                                target="_blank"
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "0.3rem",
+                                  padding: "0.2rem 0.55rem",
+                                  borderRadius: "var(--r-sm)",
+                                  background: "var(--bg-inset)",
+                                  border: "1px solid #FF3B00",
+                                  color: "var(--text-pure)",
+                                  fontSize: "0.7rem",
+                                  fontWeight: 600,
+                                  textDecoration: "none"
+                                }}
+                              >
+                                <span>{r.buttonText}</span>
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                              </Link>
+                            ) : (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "0.3rem",
+                                  padding: "0.2rem 0.55rem",
+                                  borderRadius: "var(--r-sm)",
+                                  background: "var(--bg-inset)",
+                                  border: "1px solid #FF3B00",
+                                  color: "var(--text-pure)",
+                                  fontSize: "0.7rem",
+                                  fontWeight: 600
+                                }}
+                              >
+                                {r.buttonText}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
