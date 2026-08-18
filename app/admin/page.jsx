@@ -499,6 +499,14 @@ export default function AdminDashboardPage() {
 
   // Group items by User ID (collecting all unique known emails across entire history)
   const userEmailsMap = {};
+  Object.values(knownUsers).forEach((u) => {
+    if (Array.isArray(u.emails) && u.emails.length > 0) {
+      userEmailsMap[u.userId] = [...u.emails];
+    } else if (u.email && u.email.includes('@') && u.email !== 'none') {
+      userEmailsMap[u.userId] = [u.email.trim()];
+    }
+  });
+
   feedbackItems.forEach((item) => {
     if (item.email && item.email.includes('@') && item.email !== 'none') {
       if (!userEmailsMap[item.userId]) userEmailsMap[item.userId] = [];
@@ -517,10 +525,13 @@ export default function AdminDashboardPage() {
 
   // 1. Initialize from known users so user card stays even with 0 messages
   Object.values(knownUsers).forEach((u) => {
+    const knownEmails = userEmailsMap[u.userId] || (Array.isArray(u.emails) && u.emails.length ? u.emails : (u.email && u.email !== 'none' ? [u.email] : []));
+    const primaryEmail = (knownEmails && knownEmails.length > 0) ? knownEmails[0] : (u.email && u.email !== 'none' ? u.email : 'none');
+
     usersGrouped[u.userId] = {
       userId: u.userId,
-      emails: userEmailsMap[u.userId] || [],
-      email: (userEmailsMap[u.userId] && userEmailsMap[u.userId][0]) || 'none',
+      emails: knownEmails,
+      email: primaryEmail,
       extensionName: u.extensionName || "LaPath",
       extension: u.extension || "lapath",
       hardware: u.hardware || "Unknown Hardware",
@@ -529,6 +540,7 @@ export default function AdminDashboardPage() {
       appVersion: u.appVersion || "Unknown",
       installDate: u.installDate || "-",
       daysInstalled: u.daysInstalled || "Unknown",
+      newsletterSubscribed: u.newsletterSubscribed === true,
       items: []
     };
   });
