@@ -84,17 +84,11 @@ export default function AdminDashboardPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Toggle specific drawer section for a user
-  const toggleDrawer = (userId, tabName, profileItems) => {
+  const toggleDrawer = (userId, tabName) => {
     setActiveDrawerTab((prev) => ({
       ...prev,
       [userId]: prev[userId] === tabName ? null : tabName
     }));
-
-    if (tabName === 'feedback' && profileItems) {
-      const userItemIds = profileItems.map(i => i.id);
-      const merged = Array.from(new Set([...readFeedbackIds, ...userItemIds]));
-      saveReadIds(merged);
-    }
   };
 
   // Copy User ID handler
@@ -167,16 +161,10 @@ export default function AdminDashboardPage() {
     saveReadIds(merged);
   };
 
-  // Mark single user's feedback as read when expanded
+  // Toggle user row expansion without auto-clearing read status
   const handleUserRowClick = (profile) => {
     const isCurrentlyExpanded = expandedUserId === profile.userId;
     setExpandedUserId(isCurrentlyExpanded ? null : profile.userId);
-
-    if (!isCurrentlyExpanded) {
-      const userItemIds = profile.items.map(i => i.id);
-      const merged = Array.from(new Set([...readFeedbackIds, ...userItemIds]));
-      saveReadIds(merged);
-    }
   };
 
   // Fetch Database function
@@ -1118,12 +1106,13 @@ export default function AdminDashboardPage() {
                                       return (
                                         <div
                                           key={sub.id}
-                                          className="subItemCard"
+                                          className={`subItemCard ${isSubExpanded ? 'isExpanded' : ''} ${isItemUnread ? 'isUnread' : ''}`}
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            setExpandedSubMap({ ...expandedSubMap, [sub.id]: !isSubExpanded });
-                                            if (isItemUnread) {
-                                              saveReadIds([...readFeedbackIds, sub.id]);
+                                            const willExpand = !isSubExpanded;
+                                            setExpandedSubMap((prev) => ({ ...prev, [sub.id]: willExpand }));
+                                            if (willExpand && isItemUnread) {
+                                              saveReadIds(Array.from(new Set([...readFeedbackIds, sub.id])));
                                             }
                                           }}
                                         >

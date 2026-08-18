@@ -1388,12 +1388,26 @@ body {
   border-radius: var(--r-sm);
   padding: 0.45rem 0.65rem;
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: all 0.15s ease;
 }
 
 .subItemCard:hover {
   background-color: var(--bg-row-hover);
   border-color: var(--border-medium);
+}
+
+.subItemCard.isExpanded {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.35) !important;
+  background-color: rgba(16, 185, 129, 0.04) !important;
+}
+
+.subItemCard.isUnread {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.subItemCard.isUnread:hover {
+  border-color: rgba(16, 185, 129, 0.7);
 }
 
 .subItemTop {
