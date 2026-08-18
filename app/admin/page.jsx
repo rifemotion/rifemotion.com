@@ -685,6 +685,28 @@ export default function AdminDashboardPage() {
 
             {/* DENSE TOP TOOLBAR */}
             <div className="denseToolbar">
+              {/* MOBILE ONLY SEARCH & MARK READ ROW (DIRECTLY ABOVE FILTERS) */}
+              <div className="mobileSearchRow">
+                <input
+                  type="text"
+                  className="denseSearchInput mobileSearchInput"
+                  placeholder="Search ID, email, specs..."
+                  value={feedbackSearchQuery}
+                  onChange={(e) => setFeedbackSearchQuery(e.target.value)}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                />
+                <button
+                  type="button"
+                  className="markAllReadBtn mobileMarkReadBtn"
+                  onClick={handleMarkAllRead}
+                  title="Mark all bug reports and suggestions as read"
+                >
+                  ✓ Read All
+                </button>
+              </div>
+
               <div className="toolbarLeft">
                 {/* Desktop Tabs: full icon + text */}
                 <div className="desktopFilterTabs">
@@ -885,6 +907,69 @@ export default function AdminDashboardPage() {
                                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                 )}
                               </button>
+
+                              {/* 3-DOTS BUTTON ON MOBILE (IMMEDIATELY AFTER COPY) */}
+                              <div className="cellActions mobileOnlyActions" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  className="dotsActionBtn"
+                                  onClick={() => setActiveMenuUserId(activeMenuUserId === profile.userId ? null : profile.userId)}
+                                >
+                                  ⋮
+                                </button>
+
+                                {activeMenuUserId === profile.userId && (
+                                  <div className="dotsDropdown">
+                                    {isMuted || isShadowBanned ? (
+                                      <div
+                                        className="dotsDropdownItem"
+                                        onClick={() => {
+                                          handleUnmuteUser(profile.userId);
+                                          setActiveMenuUserId(null);
+                                        }}
+                                      >
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        <span>Unmute User</span>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <div
+                                          className="dotsDropdownItem"
+                                          onClick={() => {
+                                            setMuteModalTargetUser(profile);
+                                            setActiveMenuUserId(null);
+                                          }}
+                                        >
+                                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                                          <span>Mute User...</span>
+                                        </div>
+                                        <div
+                                          className="dotsDropdownItem"
+                                          onClick={() => {
+                                            handleShadowBanUser(profile.userId);
+                                            setActiveMenuUserId(null);
+                                          }}
+                                        >
+                                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                          <span>Shadow Ban User</span>
+                                        </div>
+                                      </>
+                                    )}
+
+                                    <div
+                                      className="dotsDropdownItem"
+                                      style={{ color: "#ef4444", borderTop: "1px solid var(--border-subtle)", marginTop: "2px", paddingTop: "5px" }}
+                                      onClick={() => {
+                                        handleDeleteEntireUser(profile.userId);
+                                        setActiveMenuUserId(null);
+                                      }}
+                                    >
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                      <span>Delete User from DB</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
 
@@ -1154,8 +1239,8 @@ export default function AdminDashboardPage() {
                               )}
                             </div>
 
-                            {/* 6. ACTIONS MENU */}
-                            <div className="cellActions" onClick={(e) => e.stopPropagation()}>
+                            {/* 6. ACTIONS MENU (DESKTOP ONLY) */}
+                            <div className="cellActions desktopOnlyActions" onClick={(e) => e.stopPropagation()}>
                               <button
                                 type="button"
                                 className="dotsActionBtn"
