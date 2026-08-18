@@ -221,8 +221,38 @@ export default function AdminDashboardPage() {
     return () => window.removeEventListener('mousedown', handleGlobalMouseDown);
   }, []);
 
-  // Handle Delete Submission (Direct trash icon)
+  // Known users cache so deleting the last message keeps the user card in the table
+  const [knownUsers, setKnownUsers] = useState({});
+
+  useEffect(() => {
+    if (feedbackItems.length > 0) {
+      setKnownUsers((prev) => {
+        const next = { ...prev };
+        feedbackItems.forEach((item) => {
+          if (item && item.userId) {
+            next[item.userId] = {
+              userId: item.userId,
+              extensionName: item.extensionName || "LaPath",
+              extension: item.extension || "lapath",
+              hardware: item.hardware || "Unknown Hardware",
+              stats: item.stats || "Launches: 1",
+              os: (item.os || "Windows 11").replace(/Windows\s*10\/11/gi, "Windows 11"),
+              appVersion: item.appVersion || "Unknown",
+              installDate: item.installDate || "-",
+              daysInstalled: item.daysInstalled || "Unknown",
+            };
+          }
+        });
+        return next;
+      });
+    }
+  }, [feedbackItems]);
+
+  // Handle Delete Submission (Direct trash icon with confirmation)
   const handleDeleteSubmission = async (subId) => {
+    const confirmed = window.confirm("Delete this submission from database?");
+    if (!confirmed) return;
+
     // Optimistically update React state immediately
     setFeedbackItems((prev) => prev.filter((item) => String(item.id) !== String(subId)));
 
@@ -275,6 +305,12 @@ export default function AdminDashboardPage() {
     if (!targetUid) return;
     const confirmed = window.confirm("Permanently delete this user and all their records from the database?");
     if (!confirmed) return;
+
+    setKnownUsers((prev) => {
+      const copy = { ...prev };
+      delete copy[targetUid];
+      return copy;
+    });
 
     // Optimistically remove user immediately from state
     setFeedbackItems((prev) => prev.filter((item) => String(item.userId) !== String(targetUid)));
@@ -475,13 +511,34 @@ export default function AdminDashboardPage() {
   });
 
   const usersGrouped = {};
+
+  // 1. Initialize from known users so user card stays even with 0 messages
+  Object.values(knownUsers).forEach((u) => {
+    usersGrouped[u.userId] = {
+      userId: u.userId,
+      emails: userEmailsMap[u.userId] || [],
+      email: (userEmailsMap[u.userId] && userEmailsMap[u.userId][0]) || 'none',
+      extensionName: u.extensionName || "LaPath",
+      extension: u.extension || "lapath",
+      hardware: u.hardware || "Unknown Hardware",
+      stats: u.stats || "Launches: 1",
+      os: (u.os || "Windows 11").replace(/Windows\s*10\/11/gi, "Windows 11"),
+      appVersion: u.appVersion || "Unknown",
+      installDate: u.installDate || "-",
+      daysInstalled: u.daysInstalled || "Unknown",
+      items: []
+    };
+  });
+
+  // 2. Populate feedback submissions
   feedbackItems.forEach((item) => {
     if (!usersGrouped[item.userId]) {
       usersGrouped[item.userId] = {
         userId: item.userId,
         emails: userEmailsMap[item.userId] || (item.email && item.email.includes('@') && item.email !== 'none' ? [item.email.trim()] : []),
         email: (userEmailsMap[item.userId] && userEmailsMap[item.userId][0]) || (item.email && item.email.includes('@') && item.email !== 'none' ? item.email.trim() : 'none'),
-        extensionName: item.extensionName,
+        extensionName: item.extensionName || "LaPath",
+        extension: item.extension || "lapath",
         hardware: item.hardware,
         stats: item.stats,
         os: (item.os || "Windows 11").replace(/Windows\s*10\/11/gi, "Windows 11"),
@@ -519,8 +576,8 @@ export default function AdminDashboardPage() {
       profile.items.some(i => (i.title && i.title.toLowerCase().includes(feedbackSearchQuery.toLowerCase())) || (i.message && i.message.toLowerCase().includes(feedbackSearchQuery.toLowerCase())));
 
     if (feedbackFilter === "all") return matchesSearch;
-    if (feedbackFilter === "lapath") return matchesSearch && profile.items.some(i => i.extension === "lapath");
-    if (feedbackFilter === "kliner") return matchesSearch && profile.items.some(i => i.extension === "kliner");
+    if (feedbackFilter === "lapath") return matchesSearch && (profile.extension === "lapath" || profile.items.some(i => i.extension === "lapath"));
+    if (feedbackFilter === "kliner") return matchesSearch && (profile.extension === "kliner" || profile.items.some(i => i.extension === "kliner"));
     if (feedbackFilter === "bug") return matchesSearch && profile.items.some(i => i.type === "report" || i.type === "bug");
     if (feedbackFilter === "feature") return matchesSearch && profile.items.some(i => i.type === "suggest");
     if (feedbackFilter === "review") return matchesSearch && profile.items.some(i => i.type === "review");
@@ -1171,7 +1228,10 @@ export default function AdminDashboardPage() {
                                               <button
                                                 type="button"
                                                 className="delReplyBtn"
-                                                onClick={() => handleDeleteReply(r.id)}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDeleteReply(r.id);
+                                                }}
                                                 title="Delete notification"
                                               >
                                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -1660,7 +1720,10 @@ export default function AdminDashboardPage() {
                             <button
                               type="button"
                               className="delReplyBtn"
-                              onClick={() => handleDeleteReply(r.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteReply(r.id);
+                              }}
                               title="Delete notification"
                             >
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
