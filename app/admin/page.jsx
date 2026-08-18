@@ -120,13 +120,22 @@ export default function AdminDashboardPage() {
   const [contextMenu, setContextMenu] = useState(null);
   const [activeMenuUserId, setActiveMenuUserId] = useState(null);
 
+  // Category cleanup helper
+  const cleanCategoryName = (cat) => {
+    if (!cat) return "Personal Reply";
+    const lower = cat.toLowerCase();
+    if (lower.includes("announc")) return "Announcement";
+    if (lower.includes("warn") || lower.includes("system") || lower.includes("notice") || lower.includes("alert")) return "System Notice";
+    return "Personal Reply";
+  };
+
   // Dispatch Form states
   const [dispatchForm, setDispatchForm] = useState({
     product: "all",
     channelInApp: true,
     channelEmail: false,
     title: "",
-    category: "announcements",
+    category: "Announcement",
     targetType: "all",
     userId: "",
     message: "",
@@ -829,17 +838,28 @@ export default function AdminDashboardPage() {
                                   </button>
 
                                   {currentTab === 'emails' && (
-                                    <div className="floatingPopover" style={{ minWidth: "230px", padding: "0.55rem" }} onClick={(e) => e.stopPropagation()}>
+                                    <div className="floatingPopover" style={{ minWidth: "250px", padding: "0.55rem" }} onClick={(e) => e.stopPropagation()}>
                                       <div className="drawerColHead" style={{ marginBottom: "0.45rem" }}>
                                         <span>User Emails ({profile.emails.length})</span>
                                       </div>
                                       <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                                        {profile.emails.map((em, emIdx) => (
-                                          <div key={em} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.74rem", color: "var(--text-pure)", background: "var(--bg-inset)", padding: "0.3rem 0.5rem", borderRadius: "var(--r-sm)", border: "1px solid var(--border-dim)" }}>
-                                            <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>#{emIdx + 1}</span>
-                                            <span style={{ wordBreak: "break-all" }}>{em}</span>
-                                          </div>
-                                        ))}
+                                        {profile.emails.map((em, emIdx) => {
+                                          const isThisEmailSubscribed = profile.items.some(i => (i.newsletterSubscribed === true || i.type === 'newsletter') && i.email && i.email.trim() === em) || (emIdx === 0 && isUserSubscribed);
+                                          return (
+                                            <div key={em} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", fontSize: "0.74rem", color: "var(--text-pure)", background: "var(--bg-inset)", padding: "0.3rem 0.5rem", borderRadius: "var(--r-sm)", border: "1px solid var(--border-dim)" }}>
+                                              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", overflow: "hidden" }}>
+                                                <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>#{emIdx + 1}</span>
+                                                <span style={{ wordBreak: "break-all" }}>{em}</span>
+                                              </div>
+                                              {isThisEmailSubscribed && (
+                                                <span className="subCheckmarkBadge" style={{ padding: "0.1rem 0.35rem", fontSize: "0.62rem", flexShrink: 0, marginLeft: "0.4rem" }}>
+                                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                  <span>Subbed</span>
+                                                </span>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
                                       </div>
                                     </div>
                                   )}
@@ -1135,19 +1155,19 @@ export default function AdminDashboardPage() {
                                       userReplies.map((r) => (
                                         <div key={r.id} className="responseItem">
                                           <div className="responseItemHead">
-                                            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
-                                              <span className="statusIndicatorDot active" style={{ width: "5px", height: "5px" }} />
-                                              {r.category && (
-                                                <span className="badgePill" style={{ textTransform: "capitalize", fontSize: "0.62rem", background: "rgba(255, 255, 255, 0.08)" }}>
-                                                  {r.category}
-                                                </span>
-                                              )}
-                                              <span style={{ fontWeight: 600, color: "var(--text-pure)", fontSize: "0.74rem" }}>
-                                                {r.title || "Personal Reply"}
+                                            <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap", fontSize: "0.72rem" }}>
+                                              <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>
+                                                Usr: {r.userId === 'all' ? 'All' : r.userId}
+                                              </span>
+                                              <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
+                                              <span className="badgePill" style={{ background: "rgba(255, 255, 255, 0.08)", fontSize: "0.62rem" }}>
+                                                {cleanCategoryName(r.category)}
                                               </span>
                                             </div>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.68rem" }}>
+                                              <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
                                               <span className="responseDate">{r.date}</span>
+                                              <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
                                               <button
                                                 type="button"
                                                 className="delReplyBtn"
@@ -1158,7 +1178,12 @@ export default function AdminDashboardPage() {
                                               </button>
                                             </div>
                                           </div>
-                                          <p className="responseText" style={{ marginTop: "0.25rem" }}>{r.message}</p>
+                                          {r.title && (
+                                            <div style={{ fontWeight: 600, color: "var(--text-pure)", fontSize: "0.74rem", marginTop: "0.25rem" }}>
+                                              {r.title}
+                                            </div>
+                                          )}
+                                          <p className="responseText" style={{ marginTop: "0.2rem" }}>{r.message}</p>
                                           {r.buttonText && (
                                             <div style={{ marginTop: "0.4rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                                               {r.buttonUrl && r.buttonUrl.startsWith("http") ? (
@@ -1460,9 +1485,9 @@ export default function AdminDashboardPage() {
                       <label className="formLabel">Category</label>
                       <CustomSelect
                         options={[
-                          { label: "Announcement", value: "announcements" },
-                          { label: "System Notice", value: "warning" },
-                          { label: "Personal Reply", value: "personal" },
+                          { label: "Announcement", value: "Announcement" },
+                          { label: "System Notice", value: "System Notice" },
+                          { label: "Personal Reply", value: "Personal Reply" },
                         ]}
                         value={dispatchForm.category}
                         onChange={(val) => setDispatchForm({ ...dispatchForm, category: val })}
@@ -1564,7 +1589,7 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="dispatchGridTwoCol" style={{ marginTop: "0.45rem" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "0.4rem" }}>
                     <div className="formGroup" style={{ margin: 0 }}>
                       <label className="formLabel">Button Label</label>
                       <input
@@ -1619,23 +1644,19 @@ export default function AdminDashboardPage() {
                     replies.map((r) => (
                       <div key={r.id} className="responseItem">
                         <div className="responseItemHead">
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
-                            {r.userId === 'all' ? (
-                              <span className="badgePill suggest">All Users (Global)</span>
-                            ) : (
-                              <span className="badgePill active">User: {r.userId.substring(0, 10)}...</span>
-                            )}
-                            {r.category && (
-                              <span className="badgePill" style={{ textTransform: "capitalize", fontSize: "0.62rem", background: "rgba(255, 255, 255, 0.08)" }}>
-                                {r.category}
-                              </span>
-                            )}
-                            <span style={{ fontWeight: 600, color: "var(--text-pure)", fontSize: "0.74rem" }}>
-                              {r.title || "Notification"}
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap", fontSize: "0.72rem" }}>
+                            <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>
+                              Usr: {r.userId === 'all' ? 'All' : r.userId}
+                            </span>
+                            <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
+                            <span className="badgePill" style={{ background: "rgba(255, 255, 255, 0.08)", fontSize: "0.62rem" }}>
+                              {cleanCategoryName(r.category)}
                             </span>
                           </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.68rem" }}>
+                            <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
                             <span className="responseDate">{r.date}</span>
+                            <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
                             <button
                               type="button"
                               className="delReplyBtn"
@@ -1646,7 +1667,12 @@ export default function AdminDashboardPage() {
                             </button>
                           </div>
                         </div>
-                        <p className="responseText" style={{ marginTop: "0.25rem" }}>{r.message}</p>
+                        {r.title && (
+                          <div style={{ fontWeight: 600, color: "var(--text-pure)", fontSize: "0.74rem", marginTop: "0.25rem" }}>
+                            {r.title}
+                          </div>
+                        )}
+                        <p className="responseText" style={{ marginTop: "0.2rem" }}>{r.message}</p>
                         {r.buttonText && (
                           <div style={{ marginTop: "0.4rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                             {r.buttonUrl && r.buttonUrl.startsWith("http") ? (
