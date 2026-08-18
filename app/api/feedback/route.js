@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb, writeDb } from '@/lib/db';
+import { getDb, writeDb, getWarsawDateString } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -115,7 +115,7 @@ export async function POST(request) {
       report: "Bug Report"
     };
 
-    const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+    const dateStr = getWarsawDateString();
     const lastSeq = db.feedback && db.feedback.length > 0 ? (db.feedback[0].seqId || db.feedback.length) + 1 : 1;
 
     let resolvedEmail = email && email.includes('@') ? email.trim() : 'none';

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { getDb, writeDb } from '@/lib/db';
+import { getDb, writeDb, getWarsawDateString } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -41,8 +41,7 @@ export async function POST(request) {
     const { action, userId, ticketId, durationDays, message, customNotificationMessage } = body;
 
     const db = await getDb();
-    const now = new Date();
-    const dateStr = `${now.getDate().toString().padStart(2, "0")}.${(now.getMonth() + 1).toString().padStart(2, "0")}.${now.getFullYear()} ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+    const dateStr = getWarsawDateString();
 
     if (!db.mutes) db.mutes = {};
 

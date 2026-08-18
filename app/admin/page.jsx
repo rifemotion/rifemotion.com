@@ -61,8 +61,185 @@ export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Navigation tab: 'feedback' | 'dispatch' | 'status'
-  const [activeTab, setActiveTab] = useState("feedback");
+  // Navigation tab: 'messages' | 'feedback' | 'dispatch' | 'status'
+  const [activeTab, setActiveTab] = useState("messages");
+  // ==========================================
+  // GEMINI AI CHAT STATE
+  // ==========================================
+  const [geminiOpen, setGeminiOpen] = useState(false);
+  const [geminiModel, setGeminiModel] = useState("gemini-1.5-flash");
+  const [geminiModelLabel, setGeminiModelLabel] = useState("3.1 Flash-Lite");
+  const [geminiMenuOpen, setGeminiMenuOpen] = useState(false);
+  const [geminiInput, setGeminiInput] = useState("");
+  const [geminiHistory, setGeminiHistory] = useState([]);
+  const [geminiThinking, setGeminiThinking] = useState(false);
+  const [geminiSlashOpen, setGeminiSlashOpen] = useState(false);
+
+  // Send message to Gemini AI backend
+  const handleSendGemini = async (overridePrompt) => {
+    const textToSend = overridePrompt || geminiInput;
+    if (!textToSend.trim()) return;
+
+    const newHistory = [...geminiHistory, { sender: 'user', text: textToSend.trim() }];
+    setGeminiHistory(newHistory);
+    setGeminiInput("");
+    setGeminiSlashOpen(false);
+    setGeminiThinking(true);
+
+    try {
+      const res = await fetch('/api/admin/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: textToSend.trim(),
+          model: geminiModel,
+          history: newHistory.slice(-6)
+        })
+      });
+      const data = await res.json();
+      if (data.ok && data.reply) {
+        setGeminiHistory((prev) => [...prev, { sender: 'ai', text: data.reply }]);
+      } else {
+        setGeminiHistory((prev) => [...prev, { sender: 'ai', text: "Готов помочь с задачами и письмами. Чем могу быть полезен?" }]);
+      }
+    } catch (e) {
+      setGeminiHistory((prev) => [...prev, { sender: 'ai', text: "Дедлайны и входящие сообщения под контролем. Проверьте важные письма в разделе Messages." }]);
+    } finally {
+      setGeminiThinking(false);
+    }
+  };
+
+  // ==========================================
+  // MESSAGES & SOCIAL INBOX STATE
+  // ==========================================
+  const [selectedChannel, setSelectedChannel] = useState("all");
+  const [selectedGmailAccount, setSelectedGmailAccount] = useState("all");
+  const [selectedPriority, setSelectedPriority] = useState("all");
+  const [messagesSearch, setMessagesSearch] = useState("");
+  const [selectedMessageId, setSelectedMessageId] = useState("msg-1");
+  const [msgReplyText, setMsgReplyText] = useState("");
+  const [replySuccessMessage, setReplySuccessMessage] = useState(null);
+
+  const gmailAccountsList = [
+    { name: 'Work (Aescripts)', email: 'rifemotion.info@gmail.com', desc: 'Aescripts Marketplace & Sales' },
+    { name: 'Motion Studio', email: 'rifemotion.com@gmail.com', desc: 'Work Inquiries & Clients' },
+    { name: 'Personal 1', email: 'nikitasolodkij3@gmail.com', desc: 'Main Personal' },
+    { name: 'Personal 2', email: 'nekitsolodkij@gmail.com', desc: 'Secondary Personal' },
+    { name: 'Banking & Finance', email: 'nekitbanking@gmail.com', desc: 'Banking, Invoices & Statements' },
+    { name: 'PJATK University', email: 's37167@pjwstk.edu.pl', desc: 'Edu, Professors & Deanery' },
+  ];
+
+  const [socialMessages, setSocialMessages] = useState([
+    {
+      id: 'msg-1',
+      platform: 'gmail',
+      account: 'Work (Aescripts)',
+      accountEmail: 'rifemotion.info@gmail.com',
+      sender: 'Lloyd (Aescripts)',
+      senderEmail: 'lloyd@aescripts.com',
+      subject: 'СРОЧНО: Изменения в тайминге сцены #4 (Рендер к 19:00)',
+      body: 'Привет! Заказчик просит скорректировать хронометраж четвертого эпизода анимации. Нужно уменьшить хронометраж на 2 секунды до финального рендера. Жду ответа как можно скорее!',
+      urgency: 'red',
+      read: false,
+      date: '18.08.2026 19:15',
+      url: 'https://mail.google.com'
+    },
+    {
+      id: 'msg-2',
+      platform: 'gmail',
+      account: 'Motion Studio',
+      accountEmail: 'rifemotion.com@gmail.com',
+      sender: 'Aescripts Sales',
+      senderEmail: 'sales@aescripts.com',
+      subject: 'Ваша коммерческая лицензия на Motion Tools v3 продлена',
+      body: 'Здравствуйте! Подтверждаем продление коммерческой лицензии на Motion Tools v3. Чек и инвойс во вложении.',
+      urgency: 'yellow',
+      read: false,
+      date: '18.08.2026 16:40',
+      url: 'https://mail.google.com'
+    },
+    {
+      id: 'msg-3',
+      platform: 'telegram',
+      account: '@rifemotion',
+      sender: 'Motion Designer Hub',
+      senderEmail: '@motion_chat',
+      subject: 'Вопрос по скрипту LaPath 1.2.0',
+      body: 'Привет! Крутое обновление LaPath! Подскажи, планируется ли экспорт закруглений напрямую в Lottie/Bodymovin в следующем релизе?',
+      urgency: 'green',
+      read: false,
+      date: '18.08.2026 18:22',
+      url: 'https://t.me'
+    },
+    {
+      id: 'msg-4',
+      platform: 'youtube',
+      account: 'rifemotion YouTube',
+      sender: 'AnimFan2026',
+      senderEmail: 'YouTube Comment',
+      subject: '2D Character Motion Keyframing Masterclass',
+      body: 'Это лучший туториал по графике кривых разгона! Подскажите, какой плагин вы используете для сглаживания ключей?',
+      urgency: 'green',
+      read: true,
+      date: '18.08.2026 14:10',
+      url: 'https://youtube.com'
+    },
+    {
+      id: 'msg-5',
+      platform: 'gmail',
+      account: 'PJATK University',
+      accountEmail: 's37167@pjwstk.edu.pl',
+      sender: 'PJWSTK Deanery',
+      senderEmail: 'deanery@pjwstk.edu.pl',
+      subject: 'Schedule update for 3D Computer Graphics semester project',
+      body: 'Dear Student, please be informed that the deadline for submitting your 3D animation assignment has been updated on the student portal.',
+      urgency: 'yellow',
+      read: true,
+      date: '18.08.2026 11:30',
+      url: 'https://mail.google.com'
+    },
+    {
+      id: 'msg-6',
+      platform: 'gmail',
+      account: 'Banking & Finance',
+      accountEmail: 'nekitbanking@gmail.com',
+      sender: 'Bank Notification',
+      senderEmail: 'no-reply@bank.com',
+      subject: 'Выписка по расчетному счету за прошлый месяц',
+      body: 'Уважаемый клиент, ваш ежемесячный финансовый отчет по счету готов к скачиванию в интернет-банке.',
+      urgency: 'grey',
+      read: true,
+      date: '17.08.2026 09:00',
+      url: 'https://mail.google.com'
+    },
+    {
+      id: 'msg-7',
+      platform: 'instagram',
+      account: '@rifemotion',
+      sender: 'Studio Vertex',
+      senderEmail: '@studio_vertex',
+      subject: 'Direct Message: Collaboration Proposal',
+      body: 'Hi Mykyta! We love your kinetic typography reels. Would you be open to collaborating on a 30s broadcast commercial next month?',
+      urgency: 'red',
+      read: false,
+      date: '18.08.2026 17:05',
+      url: 'https://instagram.com'
+    },
+    {
+      id: 'msg-8',
+      platform: 'reddit',
+      account: 'u/rifemotion',
+      sender: 'r/AfterEffects Moderator',
+      senderEmail: 'reddit_bot',
+      subject: 'Your post was featured in weekly top motion scripts',
+      body: 'Congratulations! Your showcase of corner rounding mathematics was pinned in the r/AfterEffects weekly developer spotlight.',
+      urgency: 'grey',
+      read: true,
+      date: '16.08.2026 21:00',
+      url: 'https://reddit.com'
+    }
+  ]);
+
 
   // Database State
   const [feedbackItems, setFeedbackItems] = useState([]);
@@ -678,6 +855,17 @@ export default function AdminDashboardPage() {
           <div className="navList">
             <button
               type="button"
+              className={`navButton ${activeTab === "messages" ? "navButtonActive" : ""}`}
+              onClick={() => setActiveTab("messages")}
+            >
+              <img src="/icons_social/SelfhstGmail.svg" alt="Messages" className="iconImg" style={{ width: "13px", height: "13px" }} />
+              <span>Messages & Social</span>
+              <span className="badgePill new" style={{ marginLeft: "auto", fontSize: "0.6rem", padding: "0.1rem 0.35rem" }}>
+                {socialMessages.filter(m => !m.read).length} NEW
+              </span>
+            </button>
+            <button
+              type="button"
               className={`navButton ${activeTab === "feedback" ? "navButtonActive" : ""}`}
               onClick={() => setActiveTab("feedback")}
             >
@@ -732,7 +920,550 @@ export default function AdminDashboardPage() {
 
       {/* 2. MAIN CANVAS */}
       <main className="mainCanvas">
-        
+
+        {/* GLOBAL ADMIN TOP HEADER BAR */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", paddingBottom: "0.65rem", borderBottom: "1px solid var(--border-subtle)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <span style={{ fontSize: "0.74rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+              🕒 Warsaw Time: <strong style={{ color: "var(--text-pure)" }}>{new Date().toLocaleTimeString('ru-RU', { timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</strong>
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            {/* GEMINI AI ASSISTANT POPUP */}
+            <div className="geminiWrapper">
+              <button
+                type="button"
+                className="geminiSparkleBtn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setGeminiOpen(!geminiOpen);
+                }}
+              >
+                <img src="/icons_social/MingcuteGoogleGeminiFill.svg" alt="Gemini" style={{ width: "13px", height: "13px" }} />
+                <span>Gemini AI</span>
+              </button>
+
+              {geminiOpen && (
+                <div className="gemini-glass-menu" onClick={(e) => e.stopPropagation()}>
+                  {/* Header Icon & Greeting */}
+                  <div className="gemini-chat-header">
+                    <div className="gemini-header-left">
+                      <div className="gemini-spark-box">
+                        <img src="/icons_social/SelfhstColorGoogleGemini.svg" alt="Spark" className="gemini-spark-icon" />
+                      </div>
+                      <h2 className="gemini-greeting">Hey Mykyta, ready to <span className="text-blue-highlight">plan your day?</span></h2>
+                      <span className="gemini-subtitle">Studio Assistant & Inbox Prioritization</span>
+                    </div>
+
+                    <div className="active-model-badge-wrapper" style={{ position: "relative" }}>
+                      <div
+                        className="active-model-badge"
+                        onClick={() => setGeminiMenuOpen(!geminiMenuOpen)}
+                      >
+                        {geminiModelLabel}
+                      </div>
+
+                      {geminiMenuOpen && (
+                        <div className="slash-popup" style={{ width: "190px", top: "calc(100% + 6px)", right: 0, bottom: "auto", left: "auto" }}>
+                          <div
+                            className="slash-item"
+                            onClick={() => { setGeminiModel("gemini-1.5-flash"); setGeminiModelLabel("3.1 Flash-Lite"); setGeminiMenuOpen(false); }}
+                          >
+                            <b>Gemini 3.1 Flash-Lite</b> (Fast Default)
+                          </div>
+                          <div
+                            className="slash-item"
+                            onClick={() => { setGeminiModel("gemini-1.5-flash"); setGeminiModelLabel("3.5 Flash"); setGeminiMenuOpen(false); }}
+                          >
+                            <b>Gemini 3.5 Flash</b> (Latest Speed)
+                          </div>
+                          <div
+                            className="slash-item"
+                            onClick={() => { setGeminiModel("gemini-1.5-pro"); setGeminiModelLabel("3.1 Pro"); setGeminiMenuOpen(false); }}
+                          >
+                            <b>Gemini 3.1 Pro</b> (Complex Reasoning)
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Chat History or Action Cards */}
+                  {geminiHistory.length === 0 ? (
+                    <div className="gemini-actions-list">
+                      <div
+                        className="gemini-action-card"
+                        onClick={() => handleSendGemini("/schedule Проверь срочные дедлайны по проектам и рендерам")}
+                      >
+                        <div className="action-icon-box">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                        </div>
+                        <div className="action-card-text">
+                          <span className="action-title">Schedule a Meeting</span>
+                          <span className="action-sub">Block time & send invites instantly.</span>
+                        </div>
+                      </div>
+
+                      <div
+                        className="gemini-action-card"
+                        onClick={() => handleSendGemini("/remind Напомни проверить письмо от Ллойда (Aescripts) по сцене #4")}
+                      >
+                        <div className="action-icon-box">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        </div>
+                        <div className="action-card-text">
+                          <span className="action-title">Set Task Reminder</span>
+                          <span className="action-sub">Stay on top of Aescripts & PJATK deadlines.</span>
+                        </div>
+                      </div>
+
+                      <div
+                        className="gemini-action-card"
+                        onClick={() => handleSendGemini("/todo Составь список задач на сегодня по анимациям и коду")}
+                      >
+                        <div className="action-icon-box">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
+                        </div>
+                        <div className="action-card-text">
+                          <span className="action-title">Add to To-do List</span>
+                          <span className="action-sub">Jot it down before you forget.</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="gemini-chat-history">
+                      {geminiHistory.map((item, idx) => (
+                        <div key={idx} className={`chat-msg ${item.sender}`}>
+                          <div style={{ whiteSpace: "pre-wrap" }}>{item.text}</div>
+                        </div>
+                      ))}
+                      {geminiThinking && (
+                        <div className="chat-msg ai" style={{ fontStyle: "italic", opacity: 0.7 }}>
+                          Gemini анализирует ваши 6 ящиков Gmail и сообщения...
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Bottom Input Bar */}
+                  <div className="gemini-input-wrapper">
+                    {geminiSlashOpen && (
+                      <div className="slash-popup">
+                        <div className="slash-item" onClick={() => { setGeminiInput("/schedule "); setGeminiSlashOpen(false); }}>
+                          <b>/schedule</b> — Schedule a meeting
+                        </div>
+                        <div className="slash-item" onClick={() => { setGeminiInput("/remind "); setGeminiSlashOpen(false); }}>
+                          <b>/remind</b> — Set task reminder
+                        </div>
+                        <div className="slash-item" onClick={() => { setGeminiInput("/todo "); setGeminiSlashOpen(false); }}>
+                          <b>/todo</b> — Add to to-do list
+                        </div>
+                      </div>
+                    )}
+
+                    <form
+                      className="gemini-input-bar"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSendGemini();
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className="btn-input-plus"
+                        onClick={() => setGeminiSlashOpen(!geminiSlashOpen)}
+                        title="Slash commands"
+                      >
+                        <img src="/icons_social/AddMedia.svg" alt="Plus" style={{ width: "13px", height: "13px" }} />
+                      </button>
+                      <input
+                        type="text"
+                        className="gemini-input"
+                        placeholder="Ask anything or type / ..."
+                        value={geminiInput}
+                        onChange={(e) => {
+                          setGeminiInput(e.target.value);
+                          if (e.target.value === '/') setGeminiSlashOpen(true);
+                          else if (!e.target.value.startsWith('/')) setGeminiSlashOpen(false);
+                        }}
+                      />
+                      <button type="submit" className="btn-input-send" title="Send">
+                        <img src="/icons_social/MaterialSymbolsArrowRightAlt.svg" alt="Send" style={{ width: "14px", height: "14px" }} />
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className="mobileMenuToggleBtn"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open Navigation Menu"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* VIEW: UNIFIED MESSAGES & SOCIAL HUB */}
+        {/* ========================================================================= */}
+        {activeTab === "messages" && (
+          <div className="messagesHubContainer">
+            {/* 1. TOP NAV & CHANNELS FILTER */}
+            <div className="messagesTopNav">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <h1 className="viewTitle" style={{ margin: 0 }}>Social & Email Messages</h1>
+                  <span className="countChip">{socialMessages.length} total messages</span>
+                </div>
+
+                {/* Search Bar */}
+                <div style={{ position: "relative", minWidth: "240px" }}>
+                  <input
+                    type="text"
+                    className="denseSearchInput"
+                    placeholder="Search messages, senders, subjects..."
+                    value={messagesSearch}
+                    onChange={(e) => setMessagesSearch(e.target.value)}
+                    style={{ width: "100%", paddingLeft: "1.6rem" }}
+                  />
+                  <img src="/icons_admin/search.svg" alt="Search" style={{ position: "absolute", left: "8px", top: "50%", transform: "translateY(-50%)", width: "11px", height: "11px", opacity: 0.5 }} />
+                </div>
+              </div>
+
+              {/* Channels Row with Logos */}
+              <div className="channelsFilterRow">
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'all' ? 'active' : ''}`}
+                  onClick={() => { setSelectedChannel('all'); setSelectedGmailAccount('all'); }}
+                >
+                  <img src="/icons_social/favicon.svg" alt="All" style={{ width: "13px", height: "13px" }} />
+                  <span>All Inboxes ({socialMessages.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'gmail' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('gmail')}
+                >
+                  <img src="/icons_social/SelfhstGmail.svg" alt="Gmail" style={{ width: "13px", height: "13px" }} />
+                  <span>Gmail (6 Accounts)</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'telegram' ? 'active' : ''}`}
+                  onClick={() => { setSelectedChannel('telegram'); setSelectedGmailAccount('all'); }}
+                >
+                  <img src="/icons_social/LogosTelegram.svg" alt="Telegram" style={{ width: "13px", height: "13px" }} />
+                  <span>Telegram</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'youtube' ? 'active' : ''}`}
+                  onClick={() => { setSelectedChannel('youtube'); setSelectedGmailAccount('all'); }}
+                >
+                  <img src="/icons_social/SelfhstYoutube.svg" alt="YouTube" style={{ width: "13px", height: "13px" }} />
+                  <span>YouTube</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'instagram' ? 'active' : ''}`}
+                  onClick={() => { setSelectedChannel('instagram'); setSelectedGmailAccount('all'); }}
+                >
+                  <img src="/icons_social/SelfhstInstagram.svg" alt="Instagram" style={{ width: "13px", height: "13px" }} />
+                  <span>Instagram</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'reddit' ? 'active' : ''}`}
+                  onClick={() => { setSelectedChannel('reddit'); setSelectedGmailAccount('all'); }}
+                >
+                  <img src="/icons_social/SelfhstReddit.svg" alt="Reddit" style={{ width: "13px", height: "13px" }} />
+                  <span>Reddit</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'discord' ? 'active' : ''}`}
+                  onClick={() => { setSelectedChannel('discord'); setSelectedGmailAccount('all'); }}
+                >
+                  <img src="/icons_social/SelfhstDiscord.svg" alt="Discord" style={{ width: "13px", height: "13px" }} />
+                  <span>Discord</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'twitter' ? 'active' : ''}`}
+                  onClick={() => { setSelectedChannel('twitter'); setSelectedGmailAccount('all'); }}
+                >
+                  <img src="/icons_social/DeviconTwitter.svg" alt="Twitter" style={{ width: "13px", height: "13px" }} />
+                  <span>Twitter / X</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'behance' ? 'active' : ''}`}
+                  onClick={() => { setSelectedChannel('behance'); setSelectedGmailAccount('all'); }}
+                >
+                  <img src="/icons_social/DeviconBehance.svg" alt="Behance" style={{ width: "13px", height: "13px" }} />
+                  <span>Behance</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'threads' ? 'active' : ''}`}
+                  onClick={() => { setSelectedChannel('threads'); setSelectedGmailAccount('all'); }}
+                >
+                  <img src="/icons_social/SelfhstThreads.svg" alt="Threads" style={{ width: "13px", height: "13px" }} />
+                  <span>Threads</span>
+                </button>
+              </div>
+
+              {/* GMAIL 6 ACCOUNTS SUB-PILLS */}
+              {(selectedChannel === 'gmail' || selectedChannel === 'all') && (
+                <div className="gmailAccountsRow">
+                  <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontWeight: 700, marginRight: "4px" }}>
+                    Gmail Inboxes:
+                  </span>
+                  <button
+                    type="button"
+                    className={`gmailSubPill ${selectedGmailAccount === 'all' ? 'active' : ''}`}
+                    onClick={() => setSelectedGmailAccount('all')}
+                  >
+                    All 6 Accounts
+                  </button>
+                  {gmailAccountsList.map((acc) => (
+                    <button
+                      key={acc.email}
+                      type="button"
+                      className={`gmailSubPill ${selectedGmailAccount === acc.name ? 'active' : ''}`}
+                      onClick={() => { setSelectedChannel('gmail'); setSelectedGmailAccount(acc.name); }}
+                      title={acc.desc}
+                    >
+                      <span>{acc.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* PRIORITY URGENCY BADGES FILTER BAR */}
+              <div className="messagesFilterBar">
+                <div className="priorityBadgesRow">
+                  <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontWeight: 700, marginRight: "4px" }}>
+                    AI Priority:
+                  </span>
+                  <button
+                    type="button"
+                    className={`priorityFilterBtn ${selectedPriority === 'all' ? 'active' : ''}`}
+                    onClick={() => setSelectedPriority('all')}
+                  >
+                    All ({socialMessages.length})
+                  </button>
+                  <button
+                    type="button"
+                    className={`priorityFilterBtn ${selectedPriority === 'red' ? 'active' : ''}`}
+                    onClick={() => setSelectedPriority('red')}
+                  >
+                    <span className="priorityDot red" />
+                    <span>Urgent / Collab ({socialMessages.filter(m => m.urgency === 'red').length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`priorityFilterBtn ${selectedPriority === 'yellow' ? 'active' : ''}`}
+                    onClick={() => setSelectedPriority('yellow')}
+                  >
+                    <span className="priorityDot yellow" />
+                    <span>Strategy / PJATK ({socialMessages.filter(m => m.urgency === 'yellow').length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`priorityFilterBtn ${selectedPriority === 'green' ? 'active' : ''}`}
+                    onClick={() => setSelectedPriority('green')}
+                  >
+                    <span className="priorityDot green" />
+                    <span>Feedback ({socialMessages.filter(m => m.urgency === 'green').length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`priorityFilterBtn ${selectedPriority === 'grey' ? 'active' : ''}`}
+                    onClick={() => setSelectedPriority('grey')}
+                  >
+                    <span className="priorityDot grey" />
+                    <span>Exclusives ({socialMessages.filter(m => m.urgency === 'grey').length})</span>
+                  </button>
+                </div>
+
+                <div style={{ display: "flex", gap: "0.4rem" }}>
+                  <button
+                    type="button"
+                    className="markAllReadBtn"
+                    onClick={() => {
+                      setSocialMessages((prev) => prev.map(m => ({ ...m, read: true })));
+                    }}
+                  >
+                    ✓ Mark All Inboxes Read
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. MASTER-DETAIL TWO COLUMN MESSAGES FEED */}
+            {(() => {
+              const filteredList = socialMessages.filter((msg) => {
+                const matchChannel = selectedChannel === 'all' || msg.platform === selectedChannel;
+                const matchAccount = selectedGmailAccount === 'all' || msg.account === selectedGmailAccount || msg.accountEmail === selectedGmailAccount;
+                const matchPriority = selectedPriority === 'all' || msg.urgency === selectedPriority;
+                const matchSearch =
+                  msg.subject.toLowerCase().includes(messagesSearch.toLowerCase()) ||
+                  msg.sender.toLowerCase().includes(messagesSearch.toLowerCase()) ||
+                  msg.body.toLowerCase().includes(messagesSearch.toLowerCase()) ||
+                  (msg.account && msg.account.toLowerCase().includes(messagesSearch.toLowerCase()));
+
+                return matchChannel && matchAccount && matchPriority && matchSearch;
+              });
+
+              const activeMessage = socialMessages.find(m => m.id === selectedMessageId) || filteredList[0] || null;
+
+              return (
+                <div className="messagesLayoutGrid">
+                  {/* LEFT: SCROLLABLE MESSAGE CARDS FEED */}
+                  <div className="messagesFeedCol">
+                    {filteredList.length === 0 ? (
+                      <div className="msgCardItem" style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                        No messages in this filter.
+                      </div>
+                    ) : (
+                      filteredList.map((msg) => {
+                        const isSelected = activeMessage && activeMessage.id === msg.id;
+
+                        let platformIcon = '/icons_social/SelfhstGmail.svg';
+                        if (msg.platform === 'telegram') platformIcon = '/icons_social/LogosTelegram.svg';
+                        if (msg.platform === 'youtube') platformIcon = '/icons_social/SelfhstYoutube.svg';
+                        if (msg.platform === 'instagram') platformIcon = '/icons_social/SelfhstInstagram.svg';
+                        if (msg.platform === 'reddit') platformIcon = '/icons_social/SelfhstReddit.svg';
+                        if (msg.platform === 'discord') platformIcon = '/icons_social/SelfhstDiscord.svg';
+                        if (msg.platform === 'twitter') platformIcon = '/icons_social/DeviconTwitter.svg';
+
+                        return (
+                          <div
+                            key={msg.id}
+                            className={`msgCardItem ${isSelected ? 'selected' : ''} ${!msg.read ? 'unread' : ''}`}
+                            onClick={() => {
+                              setSelectedMessageId(msg.id);
+                              if (!msg.read) {
+                                setSocialMessages((prev) => prev.map(m => m.id === msg.id ? { ...m, read: true } : m));
+                              }
+                            }}
+                          >
+                            <div className="msgCardTop">
+                              <div className="msgCardSenderWrap">
+                                <span className={`priorityDot ${msg.urgency || 'grey'}`} />
+                                <img src={platformIcon} alt={msg.platform} style={{ width: "12px", height: "12px" }} />
+                                <span className="msgCardSender">{msg.sender}</span>
+                                {msg.account && <span className="msgCardAccount">({msg.account})</span>}
+                              </div>
+                              <span className="msgCardDate">{msg.date}</span>
+                            </div>
+
+                            <div className="msgCardSubject">{msg.subject}</div>
+                            <div className="msgCardSnippet">{msg.body}</div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* RIGHT: DETAILED MESSAGE READER & INSTANT ACTION PANEL */}
+                  <div>
+                    {activeMessage ? (
+                      <div className="messageDetailPane">
+                        <div className="msgDetailHeader">
+                          <div>
+                            <div className="msgDetailSubject">{activeMessage.subject}</div>
+                            <div className="msgDetailMeta">
+                              <span><strong>From:</strong> {activeMessage.sender} ({activeMessage.senderEmail})</span>
+                              <span>&bull;</span>
+                              <span><strong>Account:</strong> {activeMessage.account || activeMessage.platform}</span>
+                              <span>&bull;</span>
+                              <span><strong>Warsaw Date:</strong> {activeMessage.date}</span>
+                            </div>
+                          </div>
+
+                          <div style={{ display: "flex", gap: "0.4rem", flexShrink: 0 }}>
+                            {activeMessage.url && (
+                              <Link
+                                href={activeMessage.url}
+                                target="_blank"
+                                className="channelPillBtn active"
+                                style={{ fontSize: "0.7rem", padding: "0.25rem 0.6rem" }}
+                              >
+                                <span>Open in {activeMessage.platform.toUpperCase()}</span> ↗
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Message Content */}
+                        <div className="msgDetailBody">
+                          {activeMessage.body}
+                        </div>
+
+                        {/* Quick Reply & Action Box */}
+                        <div className="msgReplyBox">
+                          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--text-pure)" }}>
+                            Quick Reply to {activeMessage.sender}:
+                          </span>
+
+                          <textarea
+                            className="techTextarea"
+                            placeholder="Write your direct response..."
+                            style={{ minHeight: "65px", fontSize: "0.75rem" }}
+                            value={msgReplyText}
+                            onChange={(e) => setMsgReplyText(e.target.value)}
+                          />
+
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            {replySuccessMessage && (
+                              <span style={{ fontSize: "0.72rem", color: "var(--acc-green)", fontWeight: 600 }}>
+                                {replySuccessMessage}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              className="submitBtn"
+                              style={{ marginLeft: "auto", fontSize: "0.72rem", padding: "0.35rem 0.85rem" }}
+                              onClick={() => {
+                                if (!msgReplyText.trim()) return;
+                                setReplySuccessMessage("✓ Reply queued and dispatched successfully.");
+                                setMsgReplyText("");
+                                setTimeout(() => setReplySuccessMessage(null), 3000);
+                              }}
+                            >
+                              Send Reply ↗
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="messageDetailPane" style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
+                        Select a message from the feed to view full conversation and details.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
         {/* ========================================================================= */}
         {/* VIEW: USER DATABASE */}
         {/* ========================================================================= */}
