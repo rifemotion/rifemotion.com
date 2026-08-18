@@ -629,12 +629,171 @@ body {
   padding: 0.4rem 0.75rem;
 }
 
+.specsBtnTextMobile {
+  display: none;
+}
+
+.mobileMenuToggleBtn {
+  display: none;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  color: var(--text-pure);
+  padding: 0.35rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.mobileMenuToggleBtn:hover {
+  background: var(--bg-row-hover);
+  border-color: var(--border-focus);
+}
+
+/* CONSOLIDATED EXTENSION & LICENSE BADGE */
+.extLicenseBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--r-sm);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-pure);
+  line-height: 1.2;
+}
+
+.extLicenseBadge .extDivider {
+  color: var(--border-medium);
+  font-size: 0.6rem;
+  opacity: 0.6;
+}
+
+.extLicenseBadge .extStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #10b981;
+}
+
+/* MOBILE SLIDE-OUT DRAWER */
+.mobileDrawerBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 999999;
+  display: flex;
+  justify-content: flex-start;
+  animation: backdropFadeIn 0.2s ease;
+}
+
+.mobileDrawerContent {
+  width: 280px;
+  max-width: 85vw;
+  height: 100%;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-subtle);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.8);
+  animation: drawerSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+
+.mobileDrawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.mobileDrawerCloseBtn {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.mobileDrawerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mobileDrawerFiltersList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mobileDrawerFilterBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mobileDrawerFilterBtn.active {
+  background: var(--bg-row-selected);
+  border-color: var(--border-focus);
+  color: var(--text-pure);
+}
+
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 768px) {
-  .desktopFilterTabs {
+  .mobileMenuToggleBtn {
+    display: inline-flex;
+  }
+  .desktopFilterTabs, .mobileFilterRow {
+    display: none !important;
+  }
+  .specsBtnTextDesktop {
     display: none;
   }
-  .mobileFilterSection {
-    display: block;
+  .specsBtnTextMobile {
+    display: inline;
+  }
+  .extLicenseBadge .extStatusLabel {
+    display: none;
   }
   .mainCanvas {
     padding: 0.75rem 0.65rem;

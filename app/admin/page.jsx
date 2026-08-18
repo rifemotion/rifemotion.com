@@ -81,7 +81,7 @@ export default function AdminDashboardPage() {
   const [feedbackFilter, setFeedbackFilter] = useState("all");
   const [feedbackSearchQuery, setFeedbackSearchQuery] = useState("");
   const [expandedSubMap, setExpandedSubMap] = useState({});
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Toggle specific drawer section for a user
   const toggleDrawer = (userId, tabName, profileItems) => {
@@ -666,9 +666,16 @@ export default function AdminDashboardPage() {
         {activeTab === "feedback" && (
           <div>
             <div className="viewHeader">
-              <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                 <h1 className="viewTitle">User Database</h1>
-                <p className="viewSubtitle">Registered users, email subscriptions, extension license status, feedback, and telemetry</p>
+                <button
+                  type="button"
+                  className="mobileMenuToggleBtn"
+                  onClick={() => setMobileMenuOpen(true)}
+                  aria-label="Open Navigation Menu"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
               </div>
             </div>
 
@@ -688,25 +695,6 @@ export default function AdminDashboardPage() {
                       <span>{tab.label}</span>
                     </button>
                   ))}
-                </div>
-
-                {/* Mobile Icon Row (Active expands with label) */}
-                <div className="mobileFilterRow">
-                  {filterOptions.map((tab) => {
-                    const isActive = feedbackFilter === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        className={`mobileFilterIconBtn ${isActive ? "active" : ""}`}
-                        onClick={() => setFeedbackFilter(tab.id)}
-                        title={tab.label}
-                      >
-                        {tab.icon}
-                        {isActive && <span>{tab.label}</span>}
-                      </button>
-                    );
-                  })}
                 </div>
               </div>
 
@@ -798,8 +786,8 @@ export default function AdminDashboardPage() {
                                   }}
                                   title="Newsletter subscription: Click to view details"
                                 >
-                                  <span>✓</span>
-                                  <span>Subscribed</span>
+                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                  <span>Subbed</span>
                                 </button>
 
                                 {currentTab === 'newsletter' && (
@@ -846,10 +834,16 @@ export default function AdminDashboardPage() {
                             </div>
                           </div>
 
-                          {/* 2. EXTENSION & LICENSE */}
+                          {/* 2. EXTENSION & LICENSE (CONSOLIDATED) */}
                           <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", overflow: "hidden" }}>
-                            <span className="badgePill">{profile.extensionName}</span>
-                            <span className="badgePill active" style={{ fontSize: "0.64rem" }}>✓ Licensed</span>
+                            <div className="extLicenseBadge">
+                              <span className="extName">{profile.extensionName}</span>
+                              <span className="extDivider">/</span>
+                              <span className="extStatus licensed" title="Licensed">
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span className="extStatusLabel">Licensed</span>
+                              </span>
+                            </div>
                           </div>
 
                           {/* 3. FEEDBACKS BUTTON WITH FLOATING POPOVER */}
@@ -1054,7 +1048,8 @@ export default function AdminDashboardPage() {
                               title="Toggle Hardware Specs Popover"
                             >
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>
-                              <span>Specs ({profile.os || 'Win'})</span>
+                              <span className="specsBtnTextDesktop">Specs ({profile.os && profile.os.includes("Windows") ? "Win" : profile.os && profile.os.includes("Mac") ? "Mac" : profile.os || "Win"})</span>
+                              <span className="specsBtnTextMobile">Specs</span>
                             </button>
 
                             {/* FLOATING POPOVER: HARDWARE SPECS */}
@@ -1069,7 +1064,7 @@ export default function AdminDashboardPage() {
                                   <div className="specsGrid">
                                     <div className="specsRow">
                                       <div className="specsLabel">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>
                                         <span>Environment</span>
                                       </div>
                                       <div className="specsValue">{profile.os} • AE {profile.appVersion}</div>
@@ -1182,9 +1177,16 @@ export default function AdminDashboardPage() {
         {activeTab === "dispatch" && (
           <div>
             <div className="viewHeader">
-              <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                 <h1 className="viewTitle">Broadcast & Notification Center</h1>
-                <p className="viewSubtitle">Dispatch messages directly to CEP panels and manage broadcast history</p>
+                <button
+                  type="button"
+                  className="mobileMenuToggleBtn"
+                  onClick={() => setMobileMenuOpen(true)}
+                  aria-label="Open Navigation Menu"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
               </div>
             </div>
 
@@ -1463,9 +1465,16 @@ export default function AdminDashboardPage() {
         {activeTab === "status" && (
           <div>
             <div className="viewHeader">
-              <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                 <h1 className="viewTitle">System Telemetry</h1>
-                <p className="viewSubtitle">Real-time infrastructure health and edge telemetry</p>
+                <button
+                  type="button"
+                  className="mobileMenuToggleBtn"
+                  onClick={() => setMobileMenuOpen(true)}
+                  aria-label="Open Navigation Menu"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
               </div>
             </div>
 
@@ -1496,6 +1505,87 @@ export default function AdminDashboardPage() {
         )}
 
       </main>
+
+      {/* MOBILE SLIDE-OUT DRAWER */}
+      {mobileMenuOpen && (
+        <div className="mobileDrawerBackdrop" onClick={() => setMobileMenuOpen(false)}>
+          <div className="mobileDrawerContent" onClick={(e) => e.stopPropagation()}>
+            <div className="mobileDrawerHeader">
+              <div className="brandLabel">
+                <span className="brandIndicator"></span>
+                <span>rifemotion</span>
+              </div>
+              <button
+                type="button"
+                className="mobileDrawerCloseBtn"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mobileDrawerSection">
+              <div className="navGroupLabel">Navigation</div>
+              <div className="navList">
+                <button
+                  type="button"
+                  className={`navButton ${activeTab === "feedback" ? "navButtonActive" : ""}`}
+                  onClick={() => { setActiveTab("feedback"); setMobileMenuOpen(false); }}
+                >
+                  <img src="/icons_admin/chat.svg" alt="Database" className="iconImg" />
+                  <span>User Database</span>
+                </button>
+                <button
+                  type="button"
+                  className={`navButton ${activeTab === "dispatch" ? "navButtonActive" : ""}`}
+                  onClick={() => { setActiveTab("dispatch"); setMobileMenuOpen(false); }}
+                >
+                  <img src="/icons_admin/mail.svg" alt="Broadcast" className="iconImg" />
+                  <span>Broadcast Notice</span>
+                </button>
+                <button
+                  type="button"
+                  className={`navButton ${activeTab === "status" ? "navButtonActive" : ""}`}
+                  onClick={() => { setActiveTab("status"); setMobileMenuOpen(false); }}
+                >
+                  <img src="/icons_admin/dashboard.svg" alt="Status" className="iconImg" />
+                  <span>System Telemetry</span>
+                </button>
+              </div>
+            </div>
+
+            {activeTab === "feedback" && (
+              <div className="mobileDrawerSection">
+                <div className="navGroupLabel">Filters</div>
+                <div className="mobileDrawerFiltersList">
+                  {filterOptions.map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={`mobileDrawerFilterBtn ${feedbackFilter === tab.id ? "active" : ""}`}
+                      onClick={() => { setFeedbackFilter(tab.id); setMobileMenuOpen(false); }}
+                    >
+                      {tab.icon}
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mobileDrawerSection" style={{ marginTop: "auto" }}>
+              <button
+                type="button"
+                className="navButton"
+                onClick={() => signOut({ callbackUrl: "/admin/login" })}
+              >
+                <img src="/icons_admin/logout.svg" alt="Sign Out" className="iconImg" />
+                <span>Sign out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MUTE USER MODAL */}
       {muteModalTargetUser && (
