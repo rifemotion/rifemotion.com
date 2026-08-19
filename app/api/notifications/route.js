@@ -96,11 +96,11 @@ export async function GET(request) {
       }
 
       notifications.push({
-        id: 99999,
+        id: muteRecord?.mutedAt ? new Date(muteRecord.mutedAt).getTime() : Date.now(),
         title: "Feedback Access Restricted",
         subtitle: "System Notice",
         body: bodyText,
-        date: "Today",
+        date: muteRecord?.mutedAt || getWarsawDateString(),
         unread: true
       });
     }
