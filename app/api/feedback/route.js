@@ -115,7 +115,7 @@ export async function POST(request) {
       report: "Bug Report"
     };
 
-    const dateStr = getWarsawDateString();
+    const dateStr = new Date().toISOString();
     const lastSeq = db.feedback && db.feedback.length > 0 ? (db.feedback[0].seqId || db.feedback.length) + 1 : 1;
 
     let resolvedEmail = email && email.includes('@') ? email.trim() : 'none';

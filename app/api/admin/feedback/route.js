@@ -41,7 +41,7 @@ export async function POST(request) {
     const { action, userId, ticketId, durationDays, message, customNotificationMessage } = body;
 
     const db = await getDb();
-    const dateStr = getWarsawDateString();
+    const dateStr = new Date().toISOString();
 
     if (!db.mutes) db.mutes = {};
 

@@ -57,6 +57,41 @@ function CustomSelect({ options, value, onChange, placeholder = "Select option..
   );
 }
 
+function formatAdminDate(dateVal) {
+  if (!dateVal) return '';
+  try {
+    let d;
+    if (typeof dateVal === 'string' && dateVal.includes('T')) {
+      d = new Date(dateVal);
+    } else if (typeof dateVal === 'string') {
+      const match = dateVal.match(/^(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})/);
+      if (match) {
+        const day = match[1];
+        const month = match[2];
+        const year = match[3];
+        const hour = match[4];
+        const min = match[5];
+        const monthNum = parseInt(month, 10);
+        const offset = (monthNum >= 4 && monthNum <= 10) ? '+02:00' : '+01:00';
+        d = new Date(`${year}-${month}-${day}T${hour}:${min}:00${offset}`);
+      } else {
+        d = new Date(dateVal);
+      }
+    } else if (typeof dateVal === 'number') {
+      d = new Date(dateVal);
+    }
+    if (d && !isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const mins = String(d.getMinutes()).padStart(2, '0');
+      return `${day}.${month}.${year} ${hours}:${mins}`;
+    }
+  } catch(e) {}
+  return String(dateVal);
+}
+
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -1371,7 +1406,7 @@ export default function AdminDashboardPage() {
                                 <span className="msgCardSender">{msg.sender}</span>
                                 {msg.account && <span className="msgCardAccount">({msg.account})</span>}
                               </div>
-                              <span className="msgCardDate">{msg.date}</span>
+                              <span className="msgCardDate">{formatAdminDate(msg.date)}</span>
                             </div>
 
                             <div className="msgCardSubject">{msg.subject}</div>
@@ -1394,7 +1429,7 @@ export default function AdminDashboardPage() {
                               <span>&bull;</span>
                               <span><strong>Account:</strong> {activeMessage.account || activeMessage.platform}</span>
                               <span>&bull;</span>
-                              <span><strong>Warsaw Date:</strong> {activeMessage.date}</span>
+                              <span><strong>Date:</strong> {formatAdminDate(activeMessage.date)}</span>
                             </div>
                           </div>
 
@@ -1864,7 +1899,7 @@ export default function AdminDashboardPage() {
                                                 <span className="badgePill stars">★ {sub.rating}/5</span>
                                               )}
                                               <span className="badgePill">{sub.extensionName}</span>
-                                              <span className="subDateText">{sub.date}</span>
+                                              <span className="subDateText">{formatAdminDate(sub.date)}</span>
                                               <button
                                                 type="button"
                                                 className="delSubBtn"
@@ -1959,7 +1994,7 @@ export default function AdminDashboardPage() {
                                             </div>
                                             <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.68rem" }}>
                                               <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
-                                              <span className="responseDate">{r.date}</span>
+                                              <span className="responseDate">{formatAdminDate(r.date)}</span>
                                               <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
                                               <button
                                                 type="button"
@@ -2451,7 +2486,7 @@ export default function AdminDashboardPage() {
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.68rem" }}>
                             <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
-                            <span className="responseDate">{r.date}</span>
+                            <span className="responseDate">{formatAdminDate(r.date)}</span>
                             <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
                             <button
                               type="button"

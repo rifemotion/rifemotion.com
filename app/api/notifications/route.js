@@ -100,7 +100,7 @@ export async function GET(request) {
         title: "Feedback Access Restricted",
         subtitle: "System Notice",
         body: bodyText,
-        date: muteRecord?.mutedAt || getWarsawDateString(),
+        date: muteRecord?.mutedAt || new Date().toISOString(),
         unread: true
       });
     }
