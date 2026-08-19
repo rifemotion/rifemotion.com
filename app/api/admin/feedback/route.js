@@ -60,6 +60,7 @@ export async function POST(request) {
         userId: userId,
         bannedUntil: bannedUntil,
         bannedAt: dateStr,
+        mutedAt: dateStr,
         durationDays: durationDays,
         reason: body.reason || 'Violation of Guidelines',
         shadowBanned: false

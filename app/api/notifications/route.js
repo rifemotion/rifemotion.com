@@ -88,19 +88,22 @@ export async function GET(request) {
 
     const notifications = [];
 
-    // 1. If muted, add single clean System Notice to user feed
+    // 1. If muted, add single clean System Notice to user feed with STABLE ID
     if (isMuted) {
       let bodyText = `Your feedback submission access has been restricted until ${mutedUntil}.`;
       if (muteReason) {
         bodyText += ` Reason: ${muteReason}.`;
       }
 
+      const stableMuteDate = muteRecord?.bannedAt || muteRecord?.mutedAt || new Date().toISOString();
+      const stableMuteId = `mute_${userId}_${stableMuteDate}`;
+
       notifications.push({
-        id: muteRecord?.mutedAt ? new Date(muteRecord.mutedAt).getTime() : Date.now(),
+        id: stableMuteId,
         title: "Feedback Access Restricted",
         subtitle: "System Notice",
         body: bodyText,
-        date: muteRecord?.mutedAt || new Date().toISOString(),
+        date: stableMuteDate,
         unread: true
       });
     }
