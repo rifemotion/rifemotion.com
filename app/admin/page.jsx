@@ -109,6 +109,7 @@ export default function AdminDashboardPage() {
   const [geminiHistory, setGeminiHistory] = useState([]);
   const [geminiThinking, setGeminiThinking] = useState(false);
   const [geminiSlashOpen, setGeminiSlashOpen] = useState(false);
+  const [geminiAttachments, setGeminiAttachments] = useState([]);
 
   // Send message to Gemini AI backend
   const handleSendGemini = async (overridePrompt) => {
@@ -893,7 +894,7 @@ export default function AdminDashboardPage() {
               className={`navButton ${activeTab === "messages" ? "navButtonActive" : ""}`}
               onClick={() => setActiveTab("messages")}
             >
-              <img src="/icons_social/SelfhstGmail.svg" alt="Messages" className="iconImg" style={{ width: "13px", height: "13px" }} />
+              <img src="/icons/SelfhstGmail.svg" alt="Messages" className="iconImg" style={{ width: "13px", height: "13px" }} />
               <span>Messages & Social</span>
               <span className="badgePill new" style={{ marginLeft: "auto", fontSize: "0.6rem", padding: "0.1rem 0.35rem" }}>
                 {socialMessages.filter(m => !m.read).length} NEW
@@ -958,10 +959,13 @@ export default function AdminDashboardPage() {
 
         {/* GLOBAL ADMIN TOP HEADER BAR */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", paddingBottom: "0.65rem", borderBottom: "1px solid var(--border-subtle)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-            <span style={{ fontSize: "0.74rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-              🕒 Warsaw Time: <strong style={{ color: "var(--text-pure)" }}>{new Date().toLocaleTimeString('ru-RU', { timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</strong>
-            </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <h1 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--text-pure)", letterSpacing: "-0.01em", margin: 0 }}>
+              {activeTab === "messages" && "Messages & Social Hub"}
+              {activeTab === "feedback" && "User Database & Telemetry"}
+              {activeTab === "dispatch" && "Broadcast & Notifications"}
+              {activeTab === "status" && "System Health & Telemetry"}
+            </h1>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
@@ -975,23 +979,23 @@ export default function AdminDashboardPage() {
                   setGeminiOpen(!geminiOpen);
                 }}
               >
-                <img src="/icons_social/MingcuteGoogleGeminiFill.svg" alt="Gemini" style={{ width: "13px", height: "13px" }} />
+                <img src="/icons/MingcuteGoogleGeminiFill.svg" alt="Gemini" style={{ width: "13px", height: "13px" }} />
                 <span>Gemini AI</span>
               </button>
 
-              {geminiOpen && (
+                            {geminiOpen && (
                 <div className="gemini-glass-menu" onClick={(e) => e.stopPropagation()}>
                   {/* Header Icon & Greeting */}
                   <div className="gemini-chat-header">
                     <div className="gemini-header-left">
                       <div className="gemini-spark-box">
-                        <img src="/icons_social/SelfhstColorGoogleGemini.svg" alt="Spark" className="gemini-spark-icon" />
+                        <img src="/icons/SelfhstColorGoogleGemini.svg" alt="Spark" className="gemini-spark-icon" />
                       </div>
                       <h2 className="gemini-greeting">Hey Mykyta, ready to <span className="text-blue-highlight">plan your day?</span></h2>
-                      <span className="gemini-subtitle">Studio Assistant & Inbox Prioritization</span>
+                      <span className="gemini-subtitle">Things you can do</span>
                     </div>
 
-                    <div className="active-model-badge-wrapper" style={{ position: "relative" }}>
+                    <div className="active-model-badge-wrapper">
                       <div
                         className="active-model-badge"
                         onClick={() => setGeminiMenuOpen(!geminiMenuOpen)}
@@ -1000,24 +1004,36 @@ export default function AdminDashboardPage() {
                       </div>
 
                       {geminiMenuOpen && (
-                        <div className="slash-popup" style={{ width: "190px", top: "calc(100% + 6px)", right: 0, bottom: "auto", left: "auto" }}>
+                        <div className="slash-popup" style={{ width: "200px", top: "calc(100% + 6px)", right: 0, bottom: "auto", left: "auto" }}>
                           <div
                             className="slash-item"
-                            onClick={() => { setGeminiModel("gemini-1.5-flash"); setGeminiModelLabel("3.1 Flash-Lite"); setGeminiMenuOpen(false); }}
+                            onClick={() => { setGeminiModel("gemini-3.1-flash-lite"); setGeminiModelLabel("3.1 Flash-Lite"); setGeminiMenuOpen(false); }}
                           >
-                            <b>Gemini 3.1 Flash-Lite</b> (Fast Default)
+                            <b>3.1 Flash-Lite</b> (Default)
                           </div>
                           <div
                             className="slash-item"
-                            onClick={() => { setGeminiModel("gemini-1.5-flash"); setGeminiModelLabel("3.5 Flash"); setGeminiMenuOpen(false); }}
+                            onClick={() => { setGeminiModel("gemini-3.5-flash"); setGeminiModelLabel("3.5 Flash"); setGeminiMenuOpen(false); }}
                           >
-                            <b>Gemini 3.5 Flash</b> (Latest Speed)
+                            <b>3.5 Flash</b>
                           </div>
                           <div
                             className="slash-item"
-                            onClick={() => { setGeminiModel("gemini-1.5-pro"); setGeminiModelLabel("3.1 Pro"); setGeminiMenuOpen(false); }}
+                            onClick={() => { setGeminiModel("gemini-3.6-flash"); setGeminiModelLabel("3.6 Flash"); setGeminiMenuOpen(false); }}
                           >
-                            <b>Gemini 3.1 Pro</b> (Complex Reasoning)
+                            <b>3.6 Flash</b>
+                          </div>
+                          <div
+                            className="slash-item"
+                            onClick={() => { setGeminiModel("gemini-3.1-pro"); setGeminiModelLabel("3.1 Pro"); setGeminiMenuOpen(false); }}
+                          >
+                            <b>3.1 Pro</b>
+                          </div>
+                          <div
+                            className="slash-item"
+                            onClick={() => { setGeminiModel("gemini-3.5-pro"); setGeminiModelLabel("3.5 Pro"); setGeminiMenuOpen(false); }}
+                          >
+                            <b>3.5 Pro</b>
                           </div>
                         </div>
                       )}
@@ -1029,7 +1045,7 @@ export default function AdminDashboardPage() {
                     <div className="gemini-actions-list">
                       <div
                         className="gemini-action-card"
-                        onClick={() => handleSendGemini("/schedule Проверь срочные дедлайны по проектам и рендерам")}
+                        onClick={() => handleSendGemini("/schedule Проверь расписание и дедлайны студии")}
                       >
                         <div className="action-icon-box">
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
@@ -1042,20 +1058,20 @@ export default function AdminDashboardPage() {
 
                       <div
                         className="gemini-action-card"
-                        onClick={() => handleSendGemini("/remind Напомни проверить письмо от Ллойда (Aescripts) по сцене #4")}
+                        onClick={() => handleSendGemini("/remind Напомни проверить письма от Aescripts и PJATK")}
                       >
                         <div className="action-icon-box">
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                         </div>
                         <div className="action-card-text">
                           <span className="action-title">Set Task Reminder</span>
-                          <span className="action-sub">Stay on top of Aescripts & PJATK deadlines.</span>
+                          <span className="action-sub">Stay on top of deadlines.</span>
                         </div>
                       </div>
 
                       <div
                         className="gemini-action-card"
-                        onClick={() => handleSendGemini("/todo Составь список задач на сегодня по анимациям и коду")}
+                        onClick={() => handleSendGemini("/todo Составь список задач на сегодня")}
                       >
                         <div className="action-icon-box">
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
@@ -1075,9 +1091,30 @@ export default function AdminDashboardPage() {
                       ))}
                       {geminiThinking && (
                         <div className="chat-msg ai" style={{ fontStyle: "italic", opacity: 0.7 }}>
-                          Gemini анализирует ваши 6 ящиков Gmail и сообщения...
+                          Gemini анализирует ваши 6 ящиков Gmail и базу студии...
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Attachments Bar */}
+                  {geminiAttachments.length > 0 && (
+                    <div className="attachments-bar">
+                      {geminiAttachments.map((att, attIdx) => (
+                        <div key={attIdx} className="attachment-chip" title={att.name}>
+                          {att.isImage ? (
+                            <img src={att.base64} alt={att.name} className="thumb" />
+                          ) : (
+                            <span className="file-ext">{att.name.split('.').pop() || 'FILE'}</span>
+                          )}
+                          <span
+                            className="btn-remove-file"
+                            onClick={() => removeGeminiAttachment(attIdx)}
+                          >
+                            ✕
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   )}
 
@@ -1086,7 +1123,7 @@ export default function AdminDashboardPage() {
                     {geminiSlashOpen && (
                       <div className="slash-popup">
                         <div className="slash-item" onClick={() => { setGeminiInput("/schedule "); setGeminiSlashOpen(false); }}>
-                          <b>/schedule</b> — Schedule a meeting
+                          <b>/schedule</b> — Schedule a meeting / deadlines
                         </div>
                         <div className="slash-item" onClick={() => { setGeminiInput("/remind "); setGeminiSlashOpen(false); }}>
                           <b>/remind</b> — Set task reminder
@@ -1104,18 +1141,28 @@ export default function AdminDashboardPage() {
                         handleSendGemini();
                       }}
                     >
+                      <input
+                        type="file"
+                        id="gemini-file-input"
+                        multiple
+                        style={{ display: "none" }}
+                        onChange={handleGeminiFileUpload}
+                      />
                       <button
                         type="button"
                         className="btn-input-plus"
-                        onClick={() => setGeminiSlashOpen(!geminiSlashOpen)}
-                        title="Slash commands"
+                        onClick={() => {
+                          const fileEl = document.getElementById('gemini-file-input');
+                          if (fileEl) fileEl.click();
+                        }}
+                        title="Attach files or media"
                       >
-                        <img src="/icons_social/AddMedia.svg" alt="Plus" style={{ width: "13px", height: "13px" }} />
+                        <img src="/icons/AddMedia.svg" alt="Plus" style={{ width: "15px", height: "15px" }} />
                       </button>
                       <input
                         type="text"
                         className="gemini-input"
-                        placeholder="Ask anything or type / ..."
+                        placeholder="Ask anything"
                         value={geminiInput}
                         onChange={(e) => {
                           setGeminiInput(e.target.value);
@@ -1123,8 +1170,8 @@ export default function AdminDashboardPage() {
                           else if (!e.target.value.startsWith('/')) setGeminiSlashOpen(false);
                         }}
                       />
-                      <button type="submit" className="btn-input-send" title="Send">
-                        <img src="/icons_social/MaterialSymbolsArrowRightAlt.svg" alt="Send" style={{ width: "14px", height: "14px" }} />
+                      <button type="submit" className="btn-input-send" title="Send message">
+                        <img src="/icons/MaterialSymbolsArrowUpwardAlt.svg" alt="Send" className="icon-send" />
                       </button>
                     </form>
                   </div>
@@ -1177,7 +1224,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'all' ? 'active' : ''}`}
                   onClick={() => { setSelectedChannel('all'); setSelectedGmailAccount('all'); }}
                 >
-                  <img src="/icons_social/favicon.svg" alt="All" style={{ width: "13px", height: "13px" }} />
+                  <img src="/icons/favicon.svg" alt="All" style={{ width: "13px", height: "13px" }} />
                   <span>All Inboxes ({socialMessages.length})</span>
                 </button>
 
@@ -1186,7 +1233,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'gmail' ? 'active' : ''}`}
                   onClick={() => setSelectedChannel('gmail')}
                 >
-                  <img src="/icons_social/SelfhstGmail.svg" alt="Gmail" style={{ width: "13px", height: "13px" }} />
+                  <img src="/icons/SelfhstGmail.svg" alt="Gmail" style={{ width: "13px", height: "13px" }} />
                   <span>Gmail (6 Accounts)</span>
                 </button>
 
@@ -1195,7 +1242,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'telegram' ? 'active' : ''}`}
                   onClick={() => { setSelectedChannel('telegram'); setSelectedGmailAccount('all'); }}
                 >
-                  <img src="/icons_social/LogosTelegram.svg" alt="Telegram" style={{ width: "13px", height: "13px" }} />
+                  <img src="/icons/LogosTelegram.svg" alt="Telegram" style={{ width: "13px", height: "13px" }} />
                   <span>Telegram</span>
                 </button>
 
@@ -1204,7 +1251,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'youtube' ? 'active' : ''}`}
                   onClick={() => { setSelectedChannel('youtube'); setSelectedGmailAccount('all'); }}
                 >
-                  <img src="/icons_social/SelfhstYoutube.svg" alt="YouTube" style={{ width: "13px", height: "13px" }} />
+                  <img src="/icons/SelfhstYoutube.svg" alt="YouTube" style={{ width: "13px", height: "13px" }} />
                   <span>YouTube</span>
                 </button>
 
@@ -1213,7 +1260,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'instagram' ? 'active' : ''}`}
                   onClick={() => { setSelectedChannel('instagram'); setSelectedGmailAccount('all'); }}
                 >
-                  <img src="/icons_social/SelfhstInstagram.svg" alt="Instagram" style={{ width: "13px", height: "13px" }} />
+                  <img src="/icons/SelfhstInstagram.svg" alt="Instagram" style={{ width: "13px", height: "13px" }} />
                   <span>Instagram</span>
                 </button>
 
@@ -1222,7 +1269,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'reddit' ? 'active' : ''}`}
                   onClick={() => { setSelectedChannel('reddit'); setSelectedGmailAccount('all'); }}
                 >
-                  <img src="/icons_social/SelfhstReddit.svg" alt="Reddit" style={{ width: "13px", height: "13px" }} />
+                  <img src="/icons/SelfhstReddit.svg" alt="Reddit" style={{ width: "13px", height: "13px" }} />
                   <span>Reddit</span>
                 </button>
 
@@ -1231,7 +1278,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'discord' ? 'active' : ''}`}
                   onClick={() => { setSelectedChannel('discord'); setSelectedGmailAccount('all'); }}
                 >
-                  <img src="/icons_social/SelfhstDiscord.svg" alt="Discord" style={{ width: "13px", height: "13px" }} />
+                  <img src="/icons/SelfhstDiscord.svg" alt="Discord" style={{ width: "13px", height: "13px" }} />
                   <span>Discord</span>
                 </button>
 
@@ -1240,7 +1287,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'twitter' ? 'active' : ''}`}
                   onClick={() => { setSelectedChannel('twitter'); setSelectedGmailAccount('all'); }}
                 >
-                  <img src="/icons_social/DeviconTwitter.svg" alt="Twitter" style={{ width: "13px", height: "13px" }} />
+                  <img src="/icons/DeviconTwitter.svg" alt="Twitter" style={{ width: "13px", height: "13px" }} />
                   <span>Twitter / X</span>
                 </button>
 
@@ -1249,7 +1296,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'behance' ? 'active' : ''}`}
                   onClick={() => { setSelectedChannel('behance'); setSelectedGmailAccount('all'); }}
                 >
-                  <img src="/icons_social/DeviconBehance.svg" alt="Behance" style={{ width: "13px", height: "13px" }} />
+                  <img src="/icons/DeviconBehance.svg" alt="Behance" style={{ width: "13px", height: "13px" }} />
                   <span>Behance</span>
                 </button>
 
@@ -1258,7 +1305,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'threads' ? 'active' : ''}`}
                   onClick={() => { setSelectedChannel('threads'); setSelectedGmailAccount('all'); }}
                 >
-                  <img src="/icons_social/SelfhstThreads.svg" alt="Threads" style={{ width: "13px", height: "13px" }} />
+                  <img src="/icons/SelfhstThreads.svg" alt="Threads" style={{ width: "13px", height: "13px" }} />
                   <span>Threads</span>
                 </button>
               </div>
@@ -1380,13 +1427,13 @@ export default function AdminDashboardPage() {
                       filteredList.map((msg) => {
                         const isSelected = activeMessage && activeMessage.id === msg.id;
 
-                        let platformIcon = '/icons_social/SelfhstGmail.svg';
-                        if (msg.platform === 'telegram') platformIcon = '/icons_social/LogosTelegram.svg';
-                        if (msg.platform === 'youtube') platformIcon = '/icons_social/SelfhstYoutube.svg';
-                        if (msg.platform === 'instagram') platformIcon = '/icons_social/SelfhstInstagram.svg';
-                        if (msg.platform === 'reddit') platformIcon = '/icons_social/SelfhstReddit.svg';
-                        if (msg.platform === 'discord') platformIcon = '/icons_social/SelfhstDiscord.svg';
-                        if (msg.platform === 'twitter') platformIcon = '/icons_social/DeviconTwitter.svg';
+                        let platformIcon = '/icons/SelfhstGmail.svg';
+                        if (msg.platform === 'telegram') platformIcon = '/icons/LogosTelegram.svg';
+                        if (msg.platform === 'youtube') platformIcon = '/icons/SelfhstYoutube.svg';
+                        if (msg.platform === 'instagram') platformIcon = '/icons/SelfhstInstagram.svg';
+                        if (msg.platform === 'reddit') platformIcon = '/icons/SelfhstReddit.svg';
+                        if (msg.platform === 'discord') platformIcon = '/icons/SelfhstDiscord.svg';
+                        if (msg.platform === 'twitter') platformIcon = '/icons/DeviconTwitter.svg';
 
                         return (
                           <div
