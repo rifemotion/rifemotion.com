@@ -110,6 +110,22 @@ export default function AdminDashboardPage() {
   const [geminiThinking, setGeminiThinking] = useState(false);
   const [geminiSlashOpen, setGeminiSlashOpen] = useState(false);
   const [geminiAttachments, setGeminiAttachments] = useState([]);
+  const [userApiKey, setUserApiKey] = useState("");
+  const [showKeyInput, setShowKeyInput] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedKey = localStorage.getItem('rifemotion_gemini_api_key');
+      if (savedKey) setUserApiKey(savedKey);
+    } catch(e) {}
+  }, []);
+
+  const saveApiKey = (k) => {
+    setUserApiKey(k);
+    try {
+      localStorage.setItem('rifemotion_gemini_api_key', k);
+    } catch(e) {}
+  };
 
   // Handle file uploads for Gemini chat
   const handleGeminiFileUpload = (e) => {
@@ -166,7 +182,8 @@ export default function AdminDashboardPage() {
           prompt: textToSend,
           model: geminiModel,
           history: nextHistory.slice(-8),
-          attachments: currentAtts
+          attachments: currentAtts,
+          userApiKey: userApiKey
         })
       });
 
@@ -1038,7 +1055,24 @@ export default function AdminDashboardPage() {
                       <span className="gemini-subtitle">Things you can do</span>
                     </div>
 
-                    <div className="active-model-badge-wrapper">
+                    <div className="active-model-badge-wrapper" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowKeyInput(!showKeyInput)}
+                        style={{
+                          background: userApiKey ? "rgba(163, 106, 255, 0.15)" : "rgba(255, 70, 70, 0.18)",
+                          border: userApiKey ? "1px solid rgba(163, 106, 255, 0.3)" : "1px solid rgba(255, 70, 70, 0.4)",
+                          color: userApiKey ? "#a36aff" : "#ff6666",
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          padding: "3px 6px",
+                          borderRadius: "4px",
+                          cursor: "pointer"
+                        }}
+                        title={userApiKey ? "API Key configured" : "Click to enter Google Gemini API Key"}
+                      >
+                        {userApiKey ? "🔑 Key" : "⚠️ Set Key"}
+                      </button>
                       <div
                         className="active-model-badge"
                         onClick={() => setGeminiMenuOpen(!geminiMenuOpen)}
@@ -1082,6 +1116,26 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* API KEY INPUT ROW IF EXPANDED */}
+                  {showKeyInput && (
+                    <div style={{ display: "flex", gap: "4px", background: "#181818", padding: "6px", borderRadius: "4px", border: "1px solid #333" }}>
+                      <input
+                        type="password"
+                        placeholder="Paste Google AI Studio API Key (AIzaSy...)"
+                        value={userApiKey}
+                        onChange={(e) => saveApiKey(e.target.value)}
+                        style={{ flex: 1, background: "#101010", border: "1px solid #282828", color: "#fff", fontSize: "11px", padding: "4px 6px", borderRadius: "4px", outline: "none" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowKeyInput(false)}
+                        style={{ background: "#a36aff", color: "#fff", border: "none", borderRadius: "4px", fontSize: "10px", fontWeight: 700, padding: "4px 8px", cursor: "pointer" }}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  )}
 
                   {/* Chat History or Action Cards */}
                   {geminiHistory.length === 0 ? (

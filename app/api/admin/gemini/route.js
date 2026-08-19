@@ -13,14 +13,23 @@ export async function POST(request) {
   }
 
   try {
-    const { prompt, model = 'gemini-1.5-flash', history = [], attachments = [] } = await request.json();
+    const body = await request.json();
+    const { prompt, model = 'gemini-1.5-flash', history = [], attachments = [], userApiKey } = body;
+
+    const apiKey = (userApiKey && userApiKey.trim()) || process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: false,
+        error: "NO_API_KEY",
+        reply: "⚠️ **Gemini API Key не указан.**\n\nПожалуйста, введите ваш Google AI Studio API ключ (начинается с `AIzaSy...`) в поле настройки ключа или добавьте в `.env.local` как `GEMINI_API_KEY`."
+      });
+    }
 
     const db = await getDb();
     const totalUsers = Object.keys(db.users || {}).length;
     const pendingFeedback = (db.feedback || []).slice(0, 10);
     const activeMutes = Object.keys(db.mutes || {}).length;
-
-    const apiKey = process.env.GEMINI_API_KEY || "";
 
     const systemContext = `Ты — персональный AI-ассистент и менеджер motion-дизайн студии rifemotion.com (Никиты Солодкого).
 Текущее время: ${new Date().toISOString()} (Europe/Warsaw).
@@ -31,7 +40,7 @@ export async function POST(request) {
 - Последние фидбеки: ${JSON.stringify(pendingFeedback.map(f => ({ id: f.id, user: f.userId, type: f.type, msg: f.message, rating: f.rating })))}
 
 Входящие ящики Gmail:
-1. Personal 1 (nikitasolodkij3@gmail.com)
+1. Personal 1 (nikitasodkij3@gmail.com)
 2. Personal 2 (nekitsolodkij@gmail.com)
 3. Work 1 (rifemotion.com@gmail.com)
 4. Work 2 / Aescripts (rifemotion.info@gmail.com)
@@ -39,15 +48,15 @@ export async function POST(request) {
 6. Edu / PJATK University (s37167@pjwstk.edu.pl)
 
 Инструкция:
-- Отвечай красиво, структурировано, вежливо и по существу на русском языке.
+- Отвечай красиво, структурировано, прямо и по существу на русском языке.
 - Используй Markdown (жирный шрифт, списки, выделения).
-- Если спрашивают про дедлайны или расписание (/schedule), приоритеты (/remind) или задачи (/todo), давай четкий план действий.`;
+- Если пользователь задает прямой вопрос, отвечай на него конкретно и без шаблонов.`;
 
-    // Map UI model names to Generative Language models
+    // Map model names
     let targetModel = 'gemini-1.5-flash';
-    if (model.includes('pro') || model.includes('3.1-pro') || model.includes('3.5-pro')) {
+    if (model.includes('pro')) {
       targetModel = 'gemini-1.5-pro';
-    } else if (model.includes('flash') || model.includes('3.1-flash') || model.includes('3.5-flash') || model.includes('3.6-flash')) {
+    } else if (model.includes('flash')) {
       targetModel = 'gemini-1.5-flash';
     }
 
@@ -86,34 +95,23 @@ export async function POST(request) {
       parts: userParts
     });
 
-    let candidateText = "";
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents })
+    });
 
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents })
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Gemini API Error:", res.status, errText);
+      return NextResponse.json({
+        ok: false,
+        reply: `⚠️ **Ошибка Gemini API (${res.status}):** ${errText.slice(0, 300)}\n\nПроверьте правильность вашего API ключа.`
       });
-
-      if (res.ok) {
-        const data = await res.json();
-        candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      }
-    } catch (eFetch) {
-      console.error("Gemini direct API fetch error:", eFetch);
     }
 
-    if (!candidateText) {
-      if (prompt.includes('/schedule')) {
-        candidateText = `**📅 План на сегодня:**\n\n1. **Aescripts / LaPath v1.2.0:** Проверить финальный билд и отправку в маркетинг.\n2. **Университет PJATK:** Проверить расписание лекций и лабораторных работ.\n3. **Почта:** Ответить на 2 новых входящих запроса от клиентов.\n\n*Все дедлайны синхронизированы с Варшавским временем.*`;
-      } else if (prompt.includes('/remind')) {
-        candidateText = `**🔔 Приоритетные напоминания:**\n\n- Проверить статус модерации обновления на Aescripts + ae scripts support.\n- Проверить обратную связь от пользователей расширения LaPath.\n- Согласовать превью-анимации для соцсетей.`;
-      } else if (prompt.includes('/todo')) {
-        candidateText = `**✅ Список задач в очереди:**\n\n- [ ] Протестировать центры уведомлений в расширении и на сайте\n- [ ] Проверить баланс подписок и аналитику просмотров YouTube\n- [ ] Сделать бэкап пользовательской базы`;
-      } else {
-        candidateText = `**Gemini AI (${model}):**\n\nЯ проверил ваши входящие сообщения по 6 ящикам Gmail, комментарии и фидбеки пользователей. Все системы работают в штатном режиме. Чем могу помочь по коду или анимациям?`;
-      }
-    }
+    const data = await res.json();
+    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Пустой ответ от модели.";
 
     return NextResponse.json({
       ok: true,
@@ -123,8 +121,8 @@ export async function POST(request) {
   } catch (error) {
     console.error("Gemini route error:", error);
     return NextResponse.json({
-      ok: true,
-      reply: "Ассистент готов к работе. Чем могу помочь по проектам или почте?"
-    });
+      ok: false,
+      reply: `⚠️ Ошибка выполнения запроса: ${error.message}`
+    }, { status: 500 });
   }
 }

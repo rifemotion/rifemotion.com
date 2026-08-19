@@ -3140,3 +3140,79 @@ body {
   height: 15px !important;
   filter: brightness(0) invert(1) !important;
 }
+
+
+/* ========================================================================= */
+/* CRISP STUDIO DESIGN - 4px/6px CORNERS                                      */
+/* ========================================================================= */
+
+.gemini-glass-menu {
+  border-radius: 6px !important;
+}
+
+.gemini-spark-box {
+  border-radius: 4px !important;
+}
+
+.active-model-badge {
+  border-radius: 4px !important;
+}
+
+.gemini-action-card {
+  border-radius: 4px !important;
+}
+
+.action-icon-box {
+  border-radius: 4px !important;
+}
+
+.chat-msg.user {
+  border-radius: 4px !important;
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
+
+.chat-msg.ai {
+  border-radius: 4px !important;
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
+
+.gemini-input-bar {
+  border-radius: 4px !important;
+  padding: 4px 6px !important;
+}
+
+.btn-input-send {
+  border-radius: 4px !important;
+  width: 26px !important;
+  height: 26px !important;
+}
+
+.btn-input-plus {
+  border-radius: 4px !important;
+}
+
+.slash-popup {
+  border-radius: 4px !important;
+}
+
+.slash-item {
+  border-radius: 3px !important;
+}
+
+.attachment-chip {
+  border-radius: 4px !important;
+}
+
+.btn-icon {
+  border-radius: 4px !important;
+}
+
+.channelPillBtn {
+  border-radius: 4px !important;
+}
+
+.gmailSubPill {
+  border-radius: 4px !important;
+}
