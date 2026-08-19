@@ -40,23 +40,26 @@ export async function POST(request) {
     const pendingFeedback = (db.feedback || []).slice(0, 10);
     const activeMutes = Object.keys(db.mutes || {}).length;
 
-    const systemContext = "Ты — персональный AI-ассистент и менеджер motion-дизайн студии rifemotion.com (Никиты Солодкого).\n" +
-      "Текущее время: " + new Date().toISOString() + " (Europe/Warsaw).\n\n" +
-      "У тебя есть доступ к базе данных студии:\n" +
-      "- Пользователей расширений: " + totalUsers + "\n" +
-      "- Блокировок: " + activeMutes + "\n" +
-      "- Последние фидбеки: " + JSON.stringify(pendingFeedback.map(f => ({ id: f.id, user: f.userId, type: f.type, msg: f.message, rating: f.rating }))) + "\n\n" +
-      "Входящие ящики Gmail:\n" +
-      "1. Personal 1 (nikitasolodkij3@gmail.com)\n" +
-      "2. Personal 2 (nekitsolodkij@gmail.com)\n" +
-      "3. Work 1 (rifemotion.com@gmail.com)\n" +
-      "4. Work 2 / Aescripts (rifemotion.info@gmail.com)\n" +
-      "5. Banking (nekitbanking@gmail.com)\n" +
-      "6. Edu / PJATK University (s37167@pjwstk.edu.pl)\n\n" +
-      "Инструкция:\n" +
-      "- Отвечай вежливо, кратко, четко, структурировано и по существу на русском языке.\n" +
-      "- Используй Markdown (жирный шрифт, списки, выделения).\n" +
-      "- Отвечай прямо на конкретный вопрос пользователя без лишних шаблонов.";
+    const systemContext = `You are the personal AI assistant and workspace manager for rifemotion.com (Mykyta Solodkyi).
+Current timestamp: ${new Date().toISOString()} (Europe/Warsaw).
+
+Studio telemetry and database state:
+- Extension Users: ${totalUsers}
+- Active Mutes: ${activeMutes}
+- Latest User Feedback: ${JSON.stringify(pendingFeedback.map(f => ({ id: f.id, user: f.userId, type: f.type, msg: f.message, rating: f.rating })))}
+
+Connected Gmail Inboxes:
+1. Personal 1 (nikitasolodkij3@gmail.com)
+2. Personal 2 (nekitsolodkij@gmail.com)
+3. Work 1 (rifemotion.com@gmail.com)
+4. Work 2 / Aescripts (rifemotion.info@gmail.com)
+5. Banking (nekitbanking@gmail.com)
+6. Edu / PJATK University (s37167@pjwstk.edu.pl)
+
+LANGUAGE & TONE INSTRUCTIONS:
+- DEFAULT LANGUAGE: ALWAYS answer in concise, professional, fluent ENGLISH by default.
+- DYNAMIC SWITCHING: ONLY if the user addresses you in Russian (contains Cyrillic characters), reply in natural, fluent Russian.
+- FORMATTING: Use clean, well-structured Markdown with bold highlights and bullet points. Never output raw messy asterisks. Answer directly without unnecessary meta-chatter.`;
 
     // Map exact available model names supported by API
     let targetModel = 'gemini-3.1-flash-lite';
@@ -98,7 +101,7 @@ export async function POST(request) {
       });
     }
 
-    userParts.push({ text: systemContext + "\n\nЗапрос пользователя: " + prompt });
+    userParts.push({ text: systemContext + "\n\nUser query: " + prompt });
 
     contents.push({
       role: 'user',
@@ -116,12 +119,12 @@ export async function POST(request) {
       console.error("Gemini API Error:", res.status, errText);
       return NextResponse.json({
         ok: false,
-        reply: "⚠️ **Ошибка Gemini API (" + res.status + "):** " + errText.slice(0, 300)
+        reply: "⚠️ Gemini API Error (" + res.status + "): " + errText.slice(0, 300)
       });
     }
 
     const data = await res.json();
-    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Пустой ответ от модели.";
+    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Empty response from model.";
 
     return NextResponse.json({
       ok: true,
@@ -132,7 +135,7 @@ export async function POST(request) {
     console.error("Gemini route error:", error);
     return NextResponse.json({
       ok: false,
-      reply: "⚠️ Ошибка выполнения запроса: " + error.message
+      reply: "⚠️ Request failed: " + error.message
     }, { status: 500 });
   }
 }

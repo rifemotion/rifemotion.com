@@ -1,5 +1,59 @@
 "use client";
 
+function renderFormattedMessage(text) {
+  if (!text) return null;
+  const lines = text.split('\n');
+  return (
+    <div className="formatted-ai-msg" style={{ fontSize: "11.5px", lineHeight: "1.5" }}>
+      {lines.map((line, lIdx) => {
+        const isBullet = /^[\*\-]\s+/.test(line);
+        const cleanLine = isBullet ? line.replace(/^[\*\-]\s+/, '') : line;
+        
+        const parts = [];
+        const tokenRegex = /(\*\*(.*?)\*\*|`([^`]+)`|\*([^\*]+)\*)/g;
+        let match;
+        let lastIndex = 0;
+        let pIdx = 0;
+
+        while ((match = tokenRegex.exec(cleanLine)) !== null) {
+          if (match.index > lastIndex) {
+            parts.push(cleanLine.substring(lastIndex, match.index));
+          }
+          if (match[2] !== undefined) {
+            parts.push(<strong key={pIdx++} style={{ color: "#ffffff", fontWeight: 700 }}>{match[2]}</strong>);
+          } else if (match[3] !== undefined) {
+            parts.push(<code key={pIdx++} style={{ background: "rgba(255,255,255,0.14)", padding: "1px 5px", borderRadius: "3px", fontFamily: "var(--font-mono)", fontSize: "10.5px" }}>{match[3]}</code>);
+          } else if (match[4] !== undefined) {
+            parts.push(<em key={pIdx++}>{match[4]}</em>);
+          }
+          lastIndex = tokenRegex.lastIndex;
+        }
+
+        if (lastIndex < cleanLine.length) {
+          parts.push(cleanLine.substring(lastIndex));
+        }
+
+        if (isBullet) {
+          return (
+            <div key={lIdx} style={{ display: "flex", gap: "6px", marginLeft: "4px", marginTop: "2px", marginBottom: "2px" }}>
+              <span style={{ color: "#a36aff" }}>•</span>
+              <div>{parts.length > 0 ? parts : cleanLine}</div>
+            </div>
+          );
+        }
+
+        if (!line.trim()) {
+          return <div key={lIdx} style={{ height: "6px" }} />;
+        }
+
+        return <div key={lIdx}>{parts.length > 0 ? parts : line}</div>;
+      })}
+    </div>
+  );
+}
+
+
+
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
@@ -233,8 +287,8 @@ export default function AdminDashboardPage() {
       accountEmail: 'rifemotion.info@gmail.com',
       sender: 'Lloyd (Aescripts)',
       senderEmail: 'lloyd@aescripts.com',
-      subject: 'СРОЧНО: Изменения в тайминге сцены #4 (Рендер к 19:00)',
-      body: 'Привет! Заказчик просит скорректировать хронометраж четвертого эпизода анимации. Нужно уменьшить хронометраж на 2 секунды до финального рендера. Жду ответа как можно скорее!',
+      subject: 'URGENT: Timing adjustment for Scene #4 (Render by 19:00)',
+      body: 'Hey! Client requested a 2-second timing adjustment for Scene #4 before final render. Please review as soon as possible.',
       urgency: 'red',
       read: false,
       date: '18.08.2026 19:15',
@@ -247,8 +301,8 @@ export default function AdminDashboardPage() {
       accountEmail: 'rifemotion.com@gmail.com',
       sender: 'Aescripts Sales',
       senderEmail: 'sales@aescripts.com',
-      subject: 'Ваша коммерческая лицензия на Motion Tools v3 продлена',
-      body: 'Здравствуйте! Подтверждаем продление коммерческой лицензии на Motion Tools v3. Чек и инвойс во вложении.',
+      subject: 'Commercial license for Motion Tools v3 renewed',
+      body: 'Hello! Confirming the successful renewal of your commercial license for Motion Tools v3. Receipt attached.',
       urgency: 'yellow',
       read: false,
       date: '18.08.2026 16:40',
@@ -260,8 +314,8 @@ export default function AdminDashboardPage() {
       account: '@rifemotion',
       sender: 'Motion Designer Hub',
       senderEmail: '@motion_chat',
-      subject: 'Вопрос по скрипту LaPath 1.2.0',
-      body: 'Привет! Крутое обновление LaPath! Подскажи, планируется ли экспорт закруглений напрямую в Lottie/Bodymovin в следующем релизе?',
+      subject: 'Inquiry regarding LaPath 1.2.0 script',
+      body: 'Hey! Amazing update for LaPath! Is direct corner export to Lottie planned in the next release?',
       urgency: 'green',
       read: false,
       date: '18.08.2026 18:22',
@@ -274,7 +328,7 @@ export default function AdminDashboardPage() {
       sender: 'AnimFan2026',
       senderEmail: 'YouTube Comment',
       subject: '2D Character Motion Keyframing Masterclass',
-      body: 'Это лучший туториал по графике кривых разгона! Подскажите, какой плагин вы используете для сглаживания ключей?',
+      body: 'Best curve acceleration tutorial ever! What easing plugin are you using?',
       urgency: 'green',
       read: true,
       date: '18.08.2026 14:10',
@@ -301,8 +355,8 @@ export default function AdminDashboardPage() {
       accountEmail: 'nekitbanking@gmail.com',
       sender: 'Bank Notification',
       senderEmail: 'no-reply@bank.com',
-      subject: 'Выписка по расчетному счету за прошлый месяц',
-      body: 'Уважаемый клиент, ваш ежемесячный финансовый отчет по счету готов к скачиванию в интернет-банке.',
+      subject: 'Monthly business bank statement available',
+      body: 'Dear client, your monthly financial account summary is ready for download.',
       urgency: 'grey',
       read: true,
       date: '17.08.2026 09:00',
@@ -1107,7 +1161,7 @@ export default function AdminDashboardPage() {
                     <div className="gemini-actions-list">
                       <div
                         className="gemini-action-card"
-                        onClick={() => handleSendGemini("/schedule Проверь расписание и дедлайны студии")}
+                        onClick={() => handleSendGemini("/schedule Check studio schedule and project deadlines")}
                       >
                         <div className="action-icon-box">
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
@@ -1120,7 +1174,7 @@ export default function AdminDashboardPage() {
 
                       <div
                         className="gemini-action-card"
-                        onClick={() => handleSendGemini("/remind Напомни проверить письма от Aescripts и PJATK")}
+                        onClick={() => handleSendGemini("/remind Remind me to check emails from Aescripts and PJATK")}
                       >
                         <div className="action-icon-box">
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -1133,7 +1187,7 @@ export default function AdminDashboardPage() {
 
                       <div
                         className="gemini-action-card"
-                        onClick={() => handleSendGemini("/todo Составь список задач на сегодня")}
+                        onClick={() => handleSendGemini("/todo Create today's motion tasks to-do list")}
                       >
                         <div className="action-icon-box">
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
@@ -1148,12 +1202,12 @@ export default function AdminDashboardPage() {
                     <div className="gemini-chat-history">
                       {geminiHistory.map((item, idx) => (
                         <div key={idx} className={`chat-msg ${item.sender}`}>
-                          <div style={{ whiteSpace: "pre-wrap" }}>{item.text}</div>
+                          {item.sender === "ai" ? renderFormattedMessage(item.text) : <div style={{ whiteSpace: "pre-wrap" }}>{item.text}</div>}
                         </div>
                       ))}
                       {geminiThinking && (
                         <div className="chat-msg ai" style={{ fontStyle: "italic", opacity: 0.7 }}>
-                          Gemini анализирует ваши 6 ящиков Gmail и базу студии...
+                          Gemini is analyzing your inboxes and studio database...
                         </div>
                       )}
                     </div>
