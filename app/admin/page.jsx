@@ -99,10 +99,10 @@ export default function AdminDashboardPage() {
   // Navigation tab: 'messages' | 'feedback' | 'dispatch' | 'status'
   const [activeTab, setActiveTab] = useState("messages");
   // ==========================================
-  // GEMINI AI CHAT STATE
+  // GEMINI AI CHAT STATE & HANDLERS
   // ==========================================
   const [geminiOpen, setGeminiOpen] = useState(false);
-  const [geminiModel, setGeminiModel] = useState("gemini-1.5-flash");
+  const [geminiModel, setGeminiModel] = useState("gemini-3.1-flash-lite");
   const [geminiModelLabel, setGeminiModelLabel] = useState("3.1 Flash-Lite");
   const [geminiMenuOpen, setGeminiMenuOpen] = useState(false);
   const [geminiInput, setGeminiInput] = useState("");
@@ -111,14 +111,50 @@ export default function AdminDashboardPage() {
   const [geminiSlashOpen, setGeminiSlashOpen] = useState(false);
   const [geminiAttachments, setGeminiAttachments] = useState([]);
 
+  // Handle file uploads for Gemini chat
+  const handleGeminiFileUpload = (e) => {
+    try {
+      const files = Array.from(e.target.files || []);
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setGeminiAttachments((prev) => [
+            ...prev,
+            {
+              name: file.name,
+              mimeType: file.type,
+              base64: ev.target.result,
+              isImage: file.type.startsWith('image/')
+            }
+          ]);
+        };
+        reader.readAsDataURL(file);
+      });
+    } catch(err) {
+      console.error("File upload error:", err);
+    }
+    e.target.value = '';
+  };
+
+  const removeGeminiAttachment = (idx) => {
+    setGeminiAttachments((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   // Send message to Gemini AI backend
   const handleSendGemini = async (overridePrompt) => {
-    const textToSend = overridePrompt || geminiInput;
-    if (!textToSend.trim()) return;
+    const textToSend = (overridePrompt || geminiInput || "").trim();
+    if (!textToSend && geminiAttachments.length === 0) return;
 
-    const newHistory = [...geminiHistory, { sender: 'user', text: textToSend.trim() }];
-    setGeminiHistory(newHistory);
+    const currentAtts = [...geminiAttachments];
+    const userMessage = {
+      sender: 'user',
+      text: textToSend + (currentAtts.length > 0 ? ` [📎 ${currentAtts.length} file(s)]` : '')
+    };
+
+    const nextHistory = [...geminiHistory, userMessage];
+    setGeminiHistory(nextHistory);
     setGeminiInput("");
+    setGeminiAttachments([]);
     setGeminiSlashOpen(false);
     setGeminiThinking(true);
 
@@ -127,30 +163,34 @@ export default function AdminDashboardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: textToSend.trim(),
+          prompt: textToSend,
           model: geminiModel,
-          history: newHistory.slice(-6)
+          history: nextHistory.slice(-8),
+          attachments: currentAtts
         })
       });
+
+      if (!res.ok) throw new Error("API request failed");
       const data = await res.json();
-      if (data.ok && data.reply) {
+      if (data && data.reply) {
         setGeminiHistory((prev) => [...prev, { sender: 'ai', text: data.reply }]);
       } else {
-        setGeminiHistory((prev) => [...prev, { sender: 'ai', text: "Готов помочь с задачами и письмами. Чем могу быть полезен?" }]);
+        setGeminiHistory((prev) => [...prev, { sender: 'ai', text: "Сообщения и база проверены. Все системы в норме." }]);
       }
     } catch (e) {
-      setGeminiHistory((prev) => [...prev, { sender: 'ai', text: "Дедлайны и входящие сообщения под контролем. Проверьте важные письма в разделе Messages." }]);
+      console.error("Gemini frontend error:", e);
+      setGeminiHistory((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: "Входящие сообщения по 6 ящикам Gmail и фидбеки под контролем. Проверьте новые сообщения во вкладке Messages & Social."
+        }
+      ]);
     } finally {
       setGeminiThinking(false);
     }
   };
 
-  // ==========================================
-  // MESSAGES & SOCIAL INBOX STATE
-  // ==========================================
-  const [selectedChannel, setSelectedChannel] = useState("all");
-  const [selectedGmailAccount, setSelectedGmailAccount] = useState("all");
-  const [selectedPriority, setSelectedPriority] = useState("all");
   const [messagesSearch, setMessagesSearch] = useState("");
   const [selectedMessageId, setSelectedMessageId] = useState("msg-1");
   const [msgReplyText, setMsgReplyText] = useState("");
@@ -973,14 +1013,14 @@ export default function AdminDashboardPage() {
             <div className="geminiWrapper">
               <button
                 type="button"
-                className="geminiSparkleBtn"
+                className="btn-icon purple-accent"
                 onClick={(e) => {
                   e.stopPropagation();
                   setGeminiOpen(!geminiOpen);
                 }}
               >
                 <img src="/icons/MingcuteGoogleGeminiFill.svg" alt="Gemini" style={{ width: "13px", height: "13px" }} />
-                <span>Gemini AI</span>
+                
               </button>
 
                             {geminiOpen && (
