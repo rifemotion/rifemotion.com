@@ -955,7 +955,7 @@ export default function AdminDashboardPage() {
               onClick={() => setActiveTab("messages")}
             >
               <img src="/icons/SelfhstGmail.svg" alt="Messages" className="iconImg" style={{ width: "13px", height: "13px" }} />
-              <span>Messages & Social</span>
+              <span>Messages</span>
               <span className="badgePill new" style={{ marginLeft: "auto", fontSize: "0.6rem", padding: "0.1rem 0.35rem" }}>
                 {socialMessages.filter(m => !m.read).length} NEW
               </span>
@@ -1033,7 +1033,7 @@ export default function AdminDashboardPage() {
             <div className="geminiWrapper">
               <button
                 type="button"
-                className="geminiSparkleBtn"
+                className="geminiHeaderSquareBtn"
                 onClick={(e) => {
                   e.stopPropagation();
                   setGeminiOpen(!geminiOpen);
