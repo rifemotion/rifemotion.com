@@ -3444,3 +3444,35 @@ body {
   box-shadow: 0 6px 18px rgba(163, 106, 255, 0.4) !important;
   transform: none !important;
 }
+
+
+.geminiHeaderSquareBtn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: #a36aff !important;
+  background-color: #a36aff !important;
+  border: 1px solid #b886ff !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+  box-shadow: 0 4px 14px rgba(163, 106, 255, 0.4) !important;
+  flex-shrink: 0 !important;
+  transform: none !important;
+}
+
+.geminiHeaderSquareBtn:hover {
+  background: #8b46ff !important;
+  background-color: #8b46ff !important;
+  border-color: #a36aff !important;
+  box-shadow: 0 6px 18px rgba(163, 106, 255, 0.55) !important;
+  transform: none !important;
+}
+
+.geminiHeaderSquareBtn img {
+  width: 16px !important;
+  height: 16px !important;
+  filter: brightness(0) invert(1) !important;
+}

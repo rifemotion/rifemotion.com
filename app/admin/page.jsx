@@ -1407,100 +1407,15 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
 
-              {/* GMAIL 6 ACCOUNTS SUB-PILLS */}
-              {(selectedChannel === 'gmail' || selectedChannel === 'all') && (
-                <div className="gmailAccountsRow">
-                  <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontWeight: 700, marginRight: "4px" }}>
-                    Gmail Inboxes:
-                  </span>
-                  <button
-                    type="button"
-                    className={`gmailSubPill ${selectedGmailAccount === 'all' ? 'active' : ''}`}
-                    onClick={() => setSelectedGmailAccount('all')}
-                  >
-                    All 6 Accounts
-                  </button>
-                  {gmailAccountsList.map((acc) => (
-                    <button
-                      key={acc.email}
-                      type="button"
-                      className={`gmailSubPill ${selectedGmailAccount === acc.name ? 'active' : ''}`}
-                      onClick={() => { setSelectedChannel('gmail'); setSelectedGmailAccount(acc.name); }}
-                      title={acc.desc}
-                    >
-                      <span>{acc.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
 
-              {/* PRIORITY URGENCY BADGES FILTER BAR */}
-              <div className="messagesFilterBar">
-                <div className="priorityBadgesRow">
-                  <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontWeight: 700, marginRight: "4px" }}>
-                    AI Priority:
-                  </span>
-                  <button
-                    type="button"
-                    className={`priorityFilterBtn ${selectedPriority === 'all' ? 'active' : ''}`}
-                    onClick={() => setSelectedPriority('all')}
-                  >
-                    All ({socialMessages.length})
-                  </button>
-                  <button
-                    type="button"
-                    className={`priorityFilterBtn ${selectedPriority === 'red' ? 'active' : ''}`}
-                    onClick={() => setSelectedPriority('red')}
-                  >
-                    <span className="priorityDot red" />
-                    <span>Urgent / Collab ({socialMessages.filter(m => m.urgency === 'red').length})</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`priorityFilterBtn ${selectedPriority === 'yellow' ? 'active' : ''}`}
-                    onClick={() => setSelectedPriority('yellow')}
-                  >
-                    <span className="priorityDot yellow" />
-                    <span>Strategy / PJATK ({socialMessages.filter(m => m.urgency === 'yellow').length})</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`priorityFilterBtn ${selectedPriority === 'green' ? 'active' : ''}`}
-                    onClick={() => setSelectedPriority('green')}
-                  >
-                    <span className="priorityDot green" />
-                    <span>Feedback ({socialMessages.filter(m => m.urgency === 'green').length})</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`priorityFilterBtn ${selectedPriority === 'grey' ? 'active' : ''}`}
-                    onClick={() => setSelectedPriority('grey')}
-                  >
-                    <span className="priorityDot grey" />
-                    <span>Exclusives ({socialMessages.filter(m => m.urgency === 'grey').length})</span>
-                  </button>
-                </div>
-
-                <div style={{ display: "flex", gap: "0.4rem" }}>
-                  <button
-                    type="button"
-                    className="markAllReadBtn"
-                    onClick={() => {
-                      setSocialMessages((prev) => prev.map(m => ({ ...m, read: true })));
-                    }}
-                  >
-                    ✓ Mark All Inboxes Read
-                  </button>
-                </div>
-              </div>
             </div>
 
             {/* 2. MASTER-DETAIL TWO COLUMN MESSAGES FEED */}
             {(() => {
               const filteredList = socialMessages.filter((msg) => {
                 const matchChannel = selectedChannel === 'all' || msg.platform === selectedChannel;
-                const matchAccount = selectedGmailAccount === 'all' || msg.account === selectedGmailAccount || msg.accountEmail === selectedGmailAccount;
-                const matchPriority = selectedPriority === 'all' || msg.urgency === selectedPriority;
+                const matchAccount = true;
+                const matchPriority = true;
                 const matchSearch =
                   msg.subject.toLowerCase().includes(messagesSearch.toLowerCase()) ||
                   msg.sender.toLowerCase().includes(messagesSearch.toLowerCase()) ||
