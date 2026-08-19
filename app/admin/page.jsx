@@ -1033,7 +1033,7 @@ export default function AdminDashboardPage() {
             <div className="geminiWrapper">
               <button
                 type="button"
-                className="btn-icon purple-accent"
+                className="geminiSparkleBtn"
                 onClick={(e) => {
                   e.stopPropagation();
                   setGeminiOpen(!geminiOpen);

@@ -3216,3 +3216,205 @@ body {
 .gmailSubPill {
   border-radius: 4px !important;
 }
+
+
+/* ========================================================================= */
+/* AUTHENTIC LIQUID GLASS GEMINI DESIGN WITH PILLS & NO POSITION HOVER       */
+/* ========================================================================= */
+
+.geminiSparkleBtn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: linear-gradient(135deg, rgba(163, 106, 255, 0.18) 0%, rgba(96, 165, 250, 0.15) 100%) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(163, 106, 255, 0.35) !important;
+  color: #ffffff !important;
+  padding: 6px 12px !important;
+  border-radius: 20px !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease !important;
+  box-shadow: 0 4px 15px rgba(163, 106, 255, 0.2) !important;
+  transform: none !important;
+}
+
+.geminiSparkleBtn:hover {
+  background: linear-gradient(135deg, rgba(163, 106, 255, 0.28) 0%, rgba(96, 165, 250, 0.25) 100%) !important;
+  border-color: rgba(163, 106, 255, 0.55) !important;
+  box-shadow: 0 6px 20px rgba(163, 106, 255, 0.35) !important;
+  transform: none !important;
+}
+
+.gemini-glass-menu {
+  position: absolute !important;
+  top: calc(100% + 10px) !important;
+  right: 0 !important;
+  width: 380px !important;
+  min-height: 440px !important;
+  max-height: 520px !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(16, 16, 16, 0.88) 100%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  padding: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  z-index: 99999 !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.92), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  overflow: hidden !important;
+}
+
+.gemini-spark-box {
+  width: 34px !important;
+  height: 34px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.active-model-badge {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #e7e7e7 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: background 0.2s ease, border-color 0.2s ease !important;
+  transform: none !important;
+}
+
+.active-model-badge:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  transform: none !important;
+}
+
+.gemini-action-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease, border-color 0.2s ease !important;
+  transform: none !important;
+}
+
+.gemini-action-card:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  transform: none !important;
+}
+
+.action-icon-box {
+  width: 30px !important;
+  height: 30px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.chat-msg.user {
+  align-self: flex-end !important;
+  background: rgba(163, 106, 255, 0.28) !important;
+  border: 1px solid rgba(163, 106, 255, 0.45) !important;
+  padding: 8px 12px !important;
+  border-radius: 8px 8px 0px 8px !important;
+  color: #fff !important;
+  max-width: 86% !important;
+}
+
+.chat-msg.ai {
+  align-self: flex-start !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  padding: 8px 12px !important;
+  border-radius: 8px 8px 8px 0px !important;
+  color: #e7e7e7 !important;
+  max-width: 92% !important;
+}
+
+.gemini-input-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 24px !important;
+  padding: 4px 6px 4px 10px !important;
+}
+
+.btn-input-send {
+  background-color: #a36aff !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease, opacity 0.2s ease !important;
+  flex-shrink: 0 !important;
+  transform: none !important;
+}
+
+.btn-input-send:hover {
+  background-color: #8b46ff !important;
+  transform: none !important;
+}
+
+.btn-input-plus {
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px !important;
+  border-radius: 50% !important;
+  transition: opacity 0.2s ease !important;
+  transform: none !important;
+}
+
+.btn-input-plus:hover {
+  opacity: 0.8 !important;
+  transform: none !important;
+}
+
+.channelPillBtn {
+  border-radius: 20px !important;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+  transform: none !important;
+}
+
+.channelPillBtn:hover {
+  transform: none !important;
+}
+
+.gmailSubPill {
+  border-radius: 20px !important;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+  transform: none !important;
+}
+
+.gmailSubPill:hover {
+  transform: none !important;
+}

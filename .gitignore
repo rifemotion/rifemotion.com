@@ -46,3 +46,6 @@ yarn-error.log*
 
 .vercel
 .env*
+
+# APIs and credentials
+APIs/

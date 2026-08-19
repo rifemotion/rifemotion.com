@@ -2,9 +2,25 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getDb } from '@/lib/db';
+import fs from 'fs';
+import path from 'path';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+function getGeminiApiKey() {
+  if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) {
+    return process.env.GEMINI_API_KEY.trim();
+  }
+  try {
+    const filePath = path.join(process.cwd(), 'APIs', 'GeminiAPI.json');
+    if (fs.existsSync(filePath)) {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      if (data && data.API) return data.API.trim();
+    }
+  } catch (e) {}
+  return "";
+}
 
 export async function POST(request) {
   const session = await getServerSession(authOptions);
@@ -14,45 +30,33 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { prompt, model = 'gemini-1.5-flash', history = [], attachments = [], userApiKey } = body;
+    const { prompt, model = 'gemini-3.1-flash-lite', history = [], attachments = [], userApiKey } = body;
 
-    const apiKey = (userApiKey && userApiKey.trim()) || process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      return NextResponse.json({
-        ok: false,
-        error: "NO_API_KEY",
-        reply: "⚠️ **Gemini API Key не указан.**\n\nПожалуйста, введите ваш Google AI Studio API ключ (начинается с `AIzaSy...`) в поле настройки ключа или добавьте в `.env.local` как `GEMINI_API_KEY`."
-      });
-    }
+    const apiKey = (userApiKey && userApiKey.trim()) || getGeminiApiKey();
 
     const db = await getDb();
     const totalUsers = Object.keys(db.users || {}).length;
     const pendingFeedback = (db.feedback || []).slice(0, 10);
     const activeMutes = Object.keys(db.mutes || {}).length;
 
-    const systemContext = `Ты — персональный AI-ассистент и менеджер motion-дизайн студии rifemotion.com (Никиты Солодкого).
-Текущее время: ${new Date().toISOString()} (Europe/Warsaw).
+    const systemContext = "Ты — персональный AI-ассистент и менеджер motion-дизайн студии rifemotion.com (Никиты Солодкого).\n" +
+      "Текущее время: " + new Date().toISOString() + " (Europe/Warsaw).\n\n" +
+      "У тебя есть доступ к базе данных студии:\n" +
+      "- Пользователей расширений: " + totalUsers + "\n" +
+      "- Блокировок: " + activeMutes + "\n" +
+      "- Последние фидбеки: " + JSON.stringify(pendingFeedback.map(f => ({ id: f.id, user: f.userId, type: f.type, msg: f.message, rating: f.rating }))) + "\n\n" +
+      "Входящие ящики Gmail:\n" +
+      "1. Personal 1 (nikitasolodkij3@gmail.com)\n" +
+      "2. Personal 2 (nekitsolodkij@gmail.com)\n" +
+      "3. Work 1 (rifemotion.com@gmail.com)\n" +
+      "4. Work 2 / Aescripts (rifemotion.info@gmail.com)\n" +
+      "5. Banking (nekitbanking@gmail.com)\n" +
+      "6. Edu / PJATK University (s37167@pjwstk.edu.pl)\n\n" +
+      "Инструкция:\n" +
+      "- Отвечай вежливо, кратко, четко, структурировано и по существу на русском языке.\n" +
+      "- Используй Markdown (жирный шрифт, списки, выделения).\n" +
+      "- Отвечай прямо на конкретный вопрос пользователя без лишних вступительных фраз.";
 
-У тебя есть доступ к базе данных студии:
-- Пользователей расширений: ${totalUsers}
-- Блокировок: ${activeMutes}
-- Последние фидбеки: ${JSON.stringify(pendingFeedback.map(f => ({ id: f.id, user: f.userId, type: f.type, msg: f.message, rating: f.rating })))}
-
-Входящие ящики Gmail:
-1. Personal 1 (nikitasodkij3@gmail.com)
-2. Personal 2 (nekitsolodkij@gmail.com)
-3. Work 1 (rifemotion.com@gmail.com)
-4. Work 2 / Aescripts (rifemotion.info@gmail.com)
-5. Banking (nekitbanking@gmail.com)
-6. Edu / PJATK University (s37167@pjwstk.edu.pl)
-
-Инструкция:
-- Отвечай красиво, структурировано, прямо и по существу на русском языке.
-- Используй Markdown (жирный шрифт, списки, выделения).
-- Если пользователь задает прямой вопрос, отвечай на него конкретно и без шаблонов.`;
-
-    // Map model names
     let targetModel = 'gemini-1.5-flash';
     if (model.includes('pro')) {
       targetModel = 'gemini-1.5-pro';
@@ -60,7 +64,14 @@ export async function POST(request) {
       targetModel = 'gemini-1.5-flash';
     }
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
+    if (!apiKey) {
+      return NextResponse.json({
+        ok: false,
+        reply: "⚠️ **Ключ Gemini API не найден.** Пожалуйста, проверьте файл APIs/GeminiAPI.json или вставьте ключ в настройки ассистента."
+      });
+    }
+
+    const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + targetModel + ":generateContent?key=" + apiKey;
 
     const contents = [];
     if (Array.isArray(history) && history.length > 0) {
@@ -106,7 +117,7 @@ export async function POST(request) {
       console.error("Gemini API Error:", res.status, errText);
       return NextResponse.json({
         ok: false,
-        reply: `⚠️ **Ошибка Gemini API (${res.status}):** ${errText.slice(0, 300)}\n\nПроверьте правильность вашего API ключа.`
+        reply: "⚠️ **Ошибка Gemini API (" + res.status + "):** " + errText.slice(0, 300)
       });
     }
 
@@ -122,7 +133,7 @@ export async function POST(request) {
     console.error("Gemini route error:", error);
     return NextResponse.json({
       ok: false,
-      reply: `⚠️ Ошибка выполнения запроса: ${error.message}`
+      reply: "⚠️ Ошибка выполнения запроса: " + error.message
     }, { status: 500 });
   }
 }
