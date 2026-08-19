@@ -3476,3 +3476,67 @@ body {
   height: 16px !important;
   filter: brightness(0) invert(1) !important;
 }
+
+
+/* ========================================================================= */
+/* GLASS BUTTONS & WHITE PLUS ICON                                            */
+/* ========================================================================= */
+
+.geminiHeaderSquareBtn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: rgba(163, 106, 255, 0.22) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  border: 1px solid rgba(163, 106, 255, 0.42) !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+  box-shadow: 0 4px 15px rgba(163, 106, 255, 0.28) !important;
+  flex-shrink: 0 !important;
+  transform: none !important;
+}
+
+.geminiHeaderSquareBtn:hover {
+  background: rgba(163, 106, 255, 0.35) !important;
+  border-color: rgba(163, 106, 255, 0.65) !important;
+  box-shadow: 0 6px 20px rgba(163, 106, 255, 0.45) !important;
+  transform: none !important;
+}
+
+.geminiHeaderSquareBtn img {
+  width: 16px !important;
+  height: 16px !important;
+  filter: brightness(0) invert(1) !important;
+}
+
+.btn-input-plus {
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px !important;
+  border-radius: 50% !important;
+  transition: opacity 0.2s ease !important;
+  color: #ffffff !important;
+  transform: none !important;
+}
+
+.btn-input-plus img,
+.btn-input-plus .icon-plus {
+  width: 15px !important;
+  height: 15px !important;
+  filter: brightness(0) invert(1) !important;
+  opacity: 0.75 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.btn-input-plus:hover img,
+.btn-input-plus:hover .icon-plus {
+  opacity: 1 !important;
+}
