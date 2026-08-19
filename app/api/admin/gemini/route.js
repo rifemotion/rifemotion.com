@@ -19,7 +19,7 @@ function getGeminiApiKey() {
       if (data && data.API) return data.API.trim();
     }
   } catch (e) {}
-  // Embedded fallback key for seamless deployment
+  // Embedded fallback key from user's APIs directory
   return Buffer.from("QVEuQWI4Uk42S2xHbjdycS11eW1Ycy10TUh0T0JHWTVJN2JlLWQ2bE1VLXRodk5GcEVuSXc=", "base64").toString("utf8");
 }
 
@@ -31,7 +31,7 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { prompt, model = 'gemini-1.5-flash', history = [], attachments = [], userApiKey } = body;
+    const { prompt, model = 'gemini-3.1-flash-lite', history = [], attachments = [], userApiKey } = body;
 
     const apiKey = (userApiKey && userApiKey.trim()) || getGeminiApiKey();
 
@@ -56,13 +56,18 @@ export async function POST(request) {
       "Инструкция:\n" +
       "- Отвечай вежливо, кратко, четко, структурировано и по существу на русском языке.\n" +
       "- Используй Markdown (жирный шрифт, списки, выделения).\n" +
-      "- Отвечай прямо на конкретный вопрос пользователя без лишних вступительных фраз.";
+      "- Отвечай прямо на конкретный вопрос пользователя без лишних шаблонов.";
 
-    let targetModel = 'gemini-1.5-flash';
-    if (model.includes('pro')) {
-      targetModel = 'gemini-1.5-pro';
+    // Map exact available model names supported by API
+    let targetModel = 'gemini-3.1-flash-lite';
+    if (model.includes('3.5')) {
+      targetModel = 'gemini-3.5-flash';
+    } else if (model.includes('3.6')) {
+      targetModel = 'gemini-3.6-flash';
+    } else if (model.includes('pro')) {
+      targetModel = 'gemini-3.1-pro-preview';
     } else if (model.includes('flash')) {
-      targetModel = 'gemini-1.5-flash';
+      targetModel = 'gemini-3.1-flash-lite';
     }
 
     const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + targetModel + ":generateContent?key=" + apiKey;
