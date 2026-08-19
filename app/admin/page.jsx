@@ -192,6 +192,9 @@ export default function AdminDashboardPage() {
   };
 
   const [messagesSearch, setMessagesSearch] = useState("");
+  const [selectedChannel, setSelectedChannel] = useState("all");
+  const [selectedGmailAccount, setSelectedGmailAccount] = useState("all");
+  const [selectedPriority, setSelectedPriority] = useState("all");
   const [selectedMessageId, setSelectedMessageId] = useState("msg-1");
   const [msgReplyText, setMsgReplyText] = useState("");
   const [replySuccessMessage, setReplySuccessMessage] = useState(null);
