@@ -394,13 +394,8 @@ export async function POST(request) {
       }
     }
 
-    // 3. Merge with existing messages in DB
-    const existing = db.messages || [];
-    const mergedMap = new Map();
-    existing.forEach(m => mergedMap.set(m.id, m));
-    allFetched.forEach(m => mergedMap.set(m.id, m));
-
-    const grouped = groupMessagesIntoThreads(Array.from(mergedMap.values()));
+    // 3. Wipe old messages completely and store ONLY fresh 5 messages per inbox
+    const grouped = groupMessagesIntoThreads(allFetched);
     db.messages = grouped;
     await saveDb(db);
 
