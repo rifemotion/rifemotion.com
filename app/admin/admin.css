@@ -3540,3 +3540,416 @@ body {
 .btn-input-plus:hover .icon-plus {
   opacity: 1 !important;
 }
+
+
+/* ========================================================================= */
+/* TO-DO LIST HUB & MOBILE CENTERING STYLES                                  */
+/* ========================================================================= */
+
+.todosHubContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.todosTopNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+}
+
+.quickAddTodoBtn {
+  background: #a36aff;
+  color: #fff;
+  border: none;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(163, 106, 255, 0.35);
+}
+
+.quickAddTodoBtn:hover {
+  background: #8b46ff;
+  box-shadow: 0 6px 16px rgba(163, 106, 255, 0.5);
+}
+
+.todosTabsRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.todoTabBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.todoTabBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.todoTabBtn.active {
+  background: rgba(163, 106, 255, 0.2);
+  border-color: rgba(163, 106, 255, 0.5);
+  color: #fff;
+}
+
+.todosGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.85rem;
+}
+
+.todoCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.todoCard:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.todoCard.completed {
+  opacity: 0.55;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.todoCard.completed .todoTitle {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.todoCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.todoCheckboxLabel {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.todoCheckboxLabel input {
+  display: none;
+}
+
+.todoCustomCheck {
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.todoCheckboxLabel input:checked + .todoCustomCheck {
+  background: #a36aff;
+  border-color: #a36aff;
+}
+
+.todoCheckboxLabel input:checked + .todoCustomCheck::after {
+  content: '✓';
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.todoBadgeTag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e0e0e0;
+}
+
+.todoTypeBadge {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.todoDeleteBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 2px 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.todoDeleteBtn:hover {
+  opacity: 1;
+  color: #ff5555;
+}
+
+.todoTitle {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.todoDetails {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+  line-height: 1.35;
+}
+
+.todoCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.todoTimeChip {
+  font-size: 0.68rem;
+  color: #bfa3ff;
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.todoReminderTag {
+  background: rgba(163, 106, 255, 0.18);
+  border: 1px solid rgba(163, 106, 255, 0.3);
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #d1b8ff;
+  font-size: 0.62rem;
+}
+
+.todosEmptyState {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+/* MODAL STYLES */
+.todoModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  padding: 1rem;
+}
+
+.todoModalContent {
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  width: 100%;
+  max-width: 440px;
+  padding: 1.25rem;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+}
+
+.todoModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.todoModalHeader h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.closeModalBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.todoForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.formGroup label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.formGroup input, .formGroup select, .formGroup textarea {
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 0.78rem;
+  padding: 6px 8px;
+  border-radius: 4px;
+  outline: none;
+}
+
+.formGroup input:focus, .formGroup select:focus, .formGroup textarea:focus {
+  border-color: #a36aff;
+}
+
+.formRow {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.timeModeBtn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  padding: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.timeModeBtn.active {
+  background: rgba(163, 106, 255, 0.2);
+  border-color: rgba(163, 106, 255, 0.5);
+  color: #fff;
+}
+
+.todoFormActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btnCancelModal {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btnSubmitModal {
+  background: #a36aff;
+  border: none;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* MIC VOICE RECORDING BUTTON */
+.btn-input-mic {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-input-mic:hover {
+  color: #a36aff;
+  background: rgba(163, 106, 255, 0.15);
+}
+
+.btn-input-mic.recording {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.2);
+  animation: pulseMic 1.2s infinite;
+}
+
+@keyframes pulseMic {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.4); }
+  70% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(255, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+}
+
+/* MOBILE CENTERING FOR GEMINI POPUP */
+@media (max-width: 768px) {
+  .geminiBackdropOverlay {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 99998 !important;
+  }
+
+  .gemini-glass-menu {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 92vw !important;
+    max-width: 390px !important;
+    max-height: 85vh !important;
+    z-index: 99999 !important;
+    border-radius: 8px !important;
+    right: auto !important;
+  }
+}

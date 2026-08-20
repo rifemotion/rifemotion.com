@@ -152,6 +152,144 @@ export default function AdminDashboardPage() {
 
   // Navigation tab: 'messages' | 'feedback' | 'dispatch' | 'status'
   const [activeTab, setActiveTab] = useState("messages");
+
+  // ==========================================
+  // TO-DO LIST STATE & HANDLERS
+  // ==========================================
+  const [todos, setTodos] = useState([]);
+  const [todoFilter, setTodoFilter] = useState("all"); // 'all', 'short', 'long', 'completed'
+  const [todoCategoryFilter, setTodoCategoryFilter] = useState("all");
+  const [showAddTodoModal, setShowAddTodoModal] = useState(false);
+  const [newTodoTitle, setNewTodoTitle] = useState("");
+  const [newTodoDetails, setNewTodoDetails] = useState("");
+  const [newTodoType, setNewTodoType] = useState("short"); // 'short' (daily) or 'long' (goals)
+  const [newTodoCategory, setNewTodoCategory] = useState("Client Edit");
+  const [newTodoTimeMode, setNewTodoTimeMode] = useState("deadline"); // 'deadline' or 'interval'
+  const [newTodoDeadline, setNewTodoDeadline] = useState("18:00");
+  const [newTodoReminder, setNewTodoReminder] = useState("30m");
+  const [newTodoTimeFrom, setNewTodoTimeFrom] = useState("14:00");
+  const [newTodoTimeTo, setNewTodoTimeTo] = useState("16:00");
+
+  // Fetch To-Dos on mount
+  useEffect(() => {
+    fetch('/api/admin/todos')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.todos) setTodos(data.todos);
+      })
+      .catch(err => console.error("Error loading todos:", err));
+  }, []);
+
+  const handleAddTodo = async (e) => {
+    if (e) e.preventDefault();
+    if (!newTodoTitle.trim()) return;
+
+    try {
+      const payload = {
+        title: newTodoTitle.trim(),
+        details: newTodoDetails.trim(),
+        type: newTodoType,
+        category: newTodoCategory,
+        timeMode: newTodoTimeMode,
+        deadline: newTodoDeadline,
+        reminder: newTodoReminder,
+        timeFrom: newTodoTimeFrom,
+        timeTo: newTodoTimeTo
+      };
+
+      const res = await fetch('/api/admin/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data && data.todo) {
+        setTodos(prev => [data.todo, ...prev]);
+        setNewTodoTitle("");
+        setNewTodoDetails("");
+        setShowAddTodoModal(false);
+      }
+    } catch (err) {
+      console.error("Error adding todo:", err);
+    }
+  };
+
+  const handleToggleTodo = async (id, currentStatus) => {
+    try {
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: !currentStatus } : t));
+      await fetch('/api/admin/todos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, completed: !currentStatus })
+      });
+    } catch(err) {
+      console.error("Error toggling todo:", err);
+    }
+  };
+
+  const handleDeleteTodo = async (id) => {
+    try {
+      setTodos(prev => prev.filter(t => t.id !== id));
+      await fetch(`/api/admin/todos?id=${id}`, { method: 'DELETE' });
+    } catch(err) {
+      console.error("Error deleting todo:", err);
+    }
+  };
+
+  // ==========================================
+  // SPEECH RECOGNITION (VOICE INPUT)
+  // ==========================================
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const recognitionRef = useRef(null);
+
+  const toggleVoiceRecording = () => {
+    if (isRecordingVoice) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsRecordingVoice(false);
+      return;
+    }
+
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      alert("Voice recognition is not supported in this browser. Please use Chrome, Safari or Edge.");
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRec();
+      recognition.lang = 'ru-RU'; // Automatically handles voice or fallback to en
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsRecordingVoice(true);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+        setGeminiInput(transcript);
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        setIsRecordingVoice(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecordingVoice(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch(err) {
+      console.error("Voice start error:", err);
+      setIsRecordingVoice(false);
+    }
+  };
   // ==========================================
   // GEMINI AI CHAT STATE & HANDLERS
   // ==========================================
@@ -218,7 +356,8 @@ export default function AdminDashboardPage() {
     const currentAtts = [...geminiAttachments];
     const userMessage = {
       sender: 'user',
-      text: textToSend + (currentAtts.length > 0 ? ` [📎 ${currentAtts.length} file(s)]` : '')
+      text: textToSend,
+      attachments: currentAtts
     };
 
     const nextHistory = [...geminiHistory, userMessage];
@@ -245,6 +384,9 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (data && data.reply) {
         setGeminiHistory((prev) => [...prev, { sender: 'ai', text: data.reply }]);
+        if (data.createdTodo) {
+          setTodos((prev) => [data.createdTodo, ...prev]);
+        }
       } else {
         setGeminiHistory((prev) => [...prev, { sender: 'ai', text: "Сообщения и база проверены. Все системы в норме." }]);
       }
@@ -1016,6 +1158,19 @@ export default function AdminDashboardPage() {
             </button>
             <button
               type="button"
+              className={`navButton ${activeTab === "todos" ? "navButtonActive" : ""}`}
+              onClick={() => setActiveTab("todos")}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "0.1rem", opacity: 0.8 }}><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+              <span>To-Do List</span>
+              {todos.filter(t => !t.completed).length > 0 && (
+                <span className="badgePill new" style={{ marginLeft: "auto", fontSize: "0.6rem", padding: "0.1rem 0.35rem" }}>
+                  {todos.filter(t => !t.completed).length}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
               className={`navButton ${activeTab === "feedback" ? "navButtonActive" : ""}`}
               onClick={() => setActiveTab("feedback")}
             >
@@ -1076,6 +1231,7 @@ export default function AdminDashboardPage() {
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <h1 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--text-pure)", letterSpacing: "-0.01em", margin: 0 }}>
               {activeTab === "messages" && "Messages & Social Hub"}
+              {activeTab === "todos" && "Tasks & Project To-Do Hub"}
               {activeTab === "feedback" && "User Database & Telemetry"}
               {activeTab === "dispatch" && "Broadcast & Notifications"}
               {activeTab === "status" && "System Health & Telemetry"}
@@ -1098,7 +1254,9 @@ export default function AdminDashboardPage() {
               </button>
 
                             {geminiOpen && (
-                <div className="gemini-glass-menu" onClick={(e) => e.stopPropagation()}>
+                <>
+                  <div className="geminiBackdropOverlay" onClick={() => setGeminiOpen(false)} />
+                  <div className="gemini-glass-menu" onClick={(e) => e.stopPropagation()}>
                   {/* Header Icon & Greeting */}
                   <div className="gemini-chat-header">
                     <div className="gemini-header-left">
@@ -1202,6 +1360,17 @@ export default function AdminDashboardPage() {
                     <div className="gemini-chat-history">
                       {geminiHistory.map((item, idx) => (
                         <div key={idx} className={`chat-msg ${item.sender}`}>
+                          {item.attachments && item.attachments.length > 0 && (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "6px" }}>
+                              {item.attachments.map((att, aIdx) => (
+                                att.isImage ? (
+                                  <img key={aIdx} src={att.base64} alt={att.name} style={{ width: "48px", height: "48px", objectFit: "cover", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.2)" }} />
+                                ) : (
+                                  <div key={aIdx} style={{ fontSize: "9px", background: "rgba(255,255,255,0.15)", padding: "2px 5px", borderRadius: "3px" }}>📎 {att.name}</div>
+                                )
+                              ))}
+                            </div>
+                          )}
                           {item.sender === "ai" ? renderFormattedMessage(item.text) : <div style={{ whiteSpace: "pre-wrap" }}>{item.text}</div>}
                         </div>
                       ))}
@@ -1286,12 +1455,21 @@ export default function AdminDashboardPage() {
                           else if (!e.target.value.startsWith('/')) setGeminiSlashOpen(false);
                         }}
                       />
+                      <button
+                        type="button"
+                        className={`btn-input-mic ${isRecordingVoice ? 'recording' : ''}`}
+                        onClick={toggleVoiceRecording}
+                        title={isRecordingVoice ? "Listening... click to stop" : "Voice input (Speech-to-text)"}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                      </button>
                       <button type="submit" className="btn-input-send" title="Send message">
                         <img src="/icons/MaterialSymbolsArrowUpwardAlt.svg" alt="Send" className="icon-send" />
                       </button>
                     </form>
                   </div>
                 </div>
+                </>
               )}
             </div>
 
