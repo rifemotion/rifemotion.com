@@ -508,6 +508,39 @@ export default function AdminDashboardPage() {
   const [userApiKey, setUserApiKey] = useState("");
   const [isSyncingMessages, setIsSyncingMessages] = useState(false);
   const [syncErrorMessage, setSyncErrorMessage] = useState(null);
+  const [connectedGmailAccounts, setConnectedGmailAccounts] = useState([]);
+
+  const fetchConnectedAccounts = async () => {
+    try {
+      const res = await fetch('/api/admin/gmail/accounts');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.accounts)) {
+          setConnectedGmailAccounts(data.accounts);
+        }
+      }
+    } catch(e) {
+      console.error("Error fetching connected accounts:", e);
+    }
+  };
+
+  const handleDisconnectAccount = async (emailToDisconnect) => {
+    if (!confirm(`Disconnect ${emailToDisconnect} from Gmail sync?`)) return;
+    try {
+      const res = await fetch('/api/admin/gmail/accounts', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailToDisconnect })
+      });
+      if (res.ok) {
+        setConnectedGmailAccounts(prev => prev.filter(a => a.email.toLowerCase() !== emailToDisconnect.toLowerCase()));
+        setContextSaveMsg(`Disconnected ${emailToDisconnect}`);
+        setTimeout(() => setContextSaveMsg(null), 2500);
+      }
+    } catch(e) {
+      console.error("Error disconnecting account:", e);
+    }
+  };
 
   const fetchMessagesFromApi = async () => {
     try {
@@ -3415,6 +3448,66 @@ export default function AdminDashboardPage() {
                 </span>
               </div>
             )}
+
+            {/* CONNECTED GMAIL INBOXES PANEL */}
+            <div style={{ background: "var(--bg-panel, #131316)", border: "1px solid var(--border-subtle, rgba(255,255,255,0.08))", borderRadius: "6px", padding: "1.2rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle, rgba(255,255,255,0.08))", paddingBottom: "0.75rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <img src="/icons/SelfhstGmail.svg" alt="Gmail" style={{ width: "15px", height: "15px" }} />
+                  <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-pure, #ffffff)", letterSpacing: "-0.01em" }}>
+                    Connected Gmail Inboxes ({connectedGmailAccounts.length > 0 ? connectedGmailAccounts.length : (session?.user?.email ? 1 : 0)})
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  className="actionBtn"
+                  onClick={() => window.location.href = '/api/admin/gmail/auth'}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.72rem", padding: "4px 10px", background: "rgba(255,255,255,0.06)" }}
+                >
+                  <img src="/icons/SelfhstGmail.svg" alt="Add" style={{ width: "12px", height: "12px" }} />
+                  <span>+ Connect New Account</span>
+                </button>
+              </div>
+
+              {/* Accounts List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {connectedGmailAccounts.length === 0 && session?.user?.email ? (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0e0e11", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "4px", padding: "0.6rem 0.85rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
+                      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#ffffff" }}>{session.user.email}</span>
+                      <span style={{ fontSize: "0.65rem", background: "rgba(74, 222, 128, 0.12)", color: "#4ade80", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>Primary</span>
+                    </div>
+                  </div>
+                ) : (
+                  connectedGmailAccounts.map(acc => {
+                    const isPrimary = session?.user?.email && session.user.email.toLowerCase() === acc.email.toLowerCase();
+                    return (
+                      <div key={acc.email} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0e0e11", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "4px", padding: "0.6rem 0.85rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
+                          <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#ffffff" }}>{acc.email}</span>
+                          {isPrimary && (
+                            <span style={{ fontSize: "0.65rem", background: "rgba(74, 222, 128, 0.12)", color: "#4ade80", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>Primary</span>
+                          )}
+                        </div>
+
+                        {!isPrimary && (
+                          <button
+                            type="button"
+                            onClick={() => handleDisconnectAccount(acc.email)}
+                            style={{ background: "none", border: "none", color: "#ef4444", fontSize: "0.7rem", cursor: "pointer", opacity: 0.8 }}
+                          >
+                            Disconnect
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
 
             {/* AI ASSISTANT SETTINGS PANEL */}
             <div style={{ background: "var(--bg-panel, #131316)", border: "1px solid var(--border-subtle, rgba(255,255,255,0.08))", borderRadius: "6px", padding: "1.2rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
