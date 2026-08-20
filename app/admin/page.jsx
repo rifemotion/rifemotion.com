@@ -1755,6 +1755,272 @@ export default function AdminDashboardPage() {
             })()}
           </div>
         )}
+        
+        {/* ========================================================================= */}
+        {/* VIEW: TO-DO LIST & PROJECT GOALS HUB                                       */}
+        {/* ========================================================================= */}
+        {activeTab === "todos" && (
+          <div className="todosHubContainer">
+            {/* 1. TOP TOOLBAR & QUICK STATS */}
+            <div className="todosTopNav">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <h1 className="viewTitle" style={{ margin: 0 }}>Studio Tasks & Goals</h1>
+                  <span className="countChip">{todos.filter(t => !t.completed).length} active · {todos.filter(t => t.completed).length} done</span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <button
+                    type="button"
+                    className="quickAddTodoBtn"
+                    onClick={() => setShowAddTodoModal(true)}
+                  >
+                    + Create Task
+                  </button>
+                </div>
+              </div>
+
+              {/* TABS & CATEGORIES ROW */}
+              <div className="todosTabsRow">
+                <button
+                  type="button"
+                  className={`todoTabBtn ${todoFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setTodoFilter('all')}
+                >
+                  All Tasks ({todos.length})
+                </button>
+                <button
+                  type="button"
+                  className={`todoTabBtn ${todoFilter === 'short' ? 'active' : ''}`}
+                  onClick={() => setTodoFilter('short')}
+                >
+                  ⚡ Short-Term & Daily ({todos.filter(t => t.type === 'short' && !t.completed).length})
+                </button>
+                <button
+                  type="button"
+                  className={`todoTabBtn ${todoFilter === 'long' ? 'active' : ''}`}
+                  onClick={() => setTodoFilter('long')}
+                >
+                  🎯 Long-Term & Goals ({todos.filter(t => t.type === 'long' && !t.completed).length})
+                </button>
+                <button
+                  type="button"
+                  className={`todoTabBtn ${todoFilter === 'completed' ? 'active' : ''}`}
+                  onClick={() => setTodoFilter('completed')}
+                >
+                  ✓ Completed ({todos.filter(t => t.completed).length})
+                </button>
+              </div>
+            </div>
+
+            {/* 2. TO-DO CARDS GRID */}
+            <div className="todosGrid">
+              {todos
+                .filter(t => {
+                  if (todoFilter === 'completed') return t.completed;
+                  if (todoFilter === 'short') return t.type === 'short' && !t.completed;
+                  if (todoFilter === 'long') return t.type === 'long' && !t.completed;
+                  return !t.completed;
+                })
+                .map(item => (
+                  <div key={item.id} className={`todoCard ${item.completed ? 'completed' : ''}`}>
+                    <div className="todoCardHeader">
+                      <label className="todoCheckboxLabel">
+                        <input
+                          type="checkbox"
+                          checked={item.completed}
+                          onChange={() => handleToggleTodo(item.id, item.completed)}
+                        />
+                        <span className="todoCustomCheck" />
+                      </label>
+                      <span className={`todoBadgeTag ${(item.category || 'General').toLowerCase().replace(/[^a-z]/g, '')}`}>
+                        {item.category || 'General'}
+                      </span>
+                      <span className="todoTypeBadge">
+                        {item.type === 'long' ? '🎯 Goal' : '⚡ Daily'}
+                      </span>
+                      <button
+                        type="button"
+                        className="todoDeleteBtn"
+                        onClick={() => handleDeleteTodo(item.id)}
+                        title="Delete task"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="todoCardBody">
+                      <div className="todoTitle">{item.title}</div>
+                      {item.details && <div className="todoDetails">{item.details}</div>}
+                    </div>
+
+                    <div className="todoCardFooter">
+                      {item.timeMode === 'interval' ? (
+                        <div className="todoTimeChip">
+                          <span>⏳ {item.timeFrom || '14:00'} — {item.timeTo || '16:00'}</span>
+                        </div>
+                      ) : (
+                        <div className="todoTimeChip">
+                          <span>⏰ By {item.deadline || 'Today'}</span>
+                          {item.reminder && item.reminder !== 'none' && (
+                            <span className="todoReminderTag">🔔 -{item.reminder}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+              {todos.filter(t => {
+                if (todoFilter === 'completed') return t.completed;
+                if (todoFilter === 'short') return t.type === 'short' && !t.completed;
+                if (todoFilter === 'long') return t.type === 'long' && !t.completed;
+                return !t.completed;
+              }).length === 0 && (
+                <div className="todosEmptyState">
+                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📋</div>
+                  <div style={{ fontWeight: 600, color: "#fff", marginBottom: "0.25rem" }}>No tasks in this view</div>
+                  <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                    Add a new task using the button above or tell Gemini in chat!
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 3. MODAL: CREATE TO-DO */}
+            {showAddTodoModal && (
+              <div className="todoModalOverlay" onClick={() => setShowAddTodoModal(false)}>
+                <div className="todoModalContent" onClick={e => e.stopPropagation()}>
+                  <div className="todoModalHeader">
+                    <h3>New Task / Project Plan</h3>
+                    <button type="button" className="closeModalBtn" onClick={() => setShowAddTodoModal(false)}>✕</button>
+                  </div>
+
+                  <form onSubmit={handleAddTodo} className="todoForm">
+                    <div className="formGroup">
+                      <label>Task Title / Action <span style={{ color: "#a36aff" }}>*</span></label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Render scene #4 client edit or visit bank"
+                        value={newTodoTitle}
+                        onChange={e => setNewTodoTitle(e.target.value)}
+                        required
+                        autoFocus
+                      />
+                    </div>
+
+                    <div className="formRow">
+                      <div className="formGroup" style={{ flex: 1 }}>
+                        <label>Scope / Type</label>
+                        <select value={newTodoType} onChange={e => setNewTodoType(e.target.value)}>
+                          <option value="short">⚡ Short-term & Daily</option>
+                          <option value="long">🎯 Long-term & Project</option>
+                        </select>
+                      </div>
+
+                      <div className="formGroup" style={{ flex: 1 }}>
+                        <label>Category</label>
+                        <select value={newTodoCategory} onChange={e => setNewTodoCategory(e.target.value)}>
+                          <option value="Client Edit">Client Edit</option>
+                          <option value="Banking / Admin">Banking / Admin</option>
+                          <option value="Motion Project">Motion Project</option>
+                          <option value="Personal">Personal</option>
+                          <option value="General">General</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="formGroup">
+                      <label>Schedule Mode</label>
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        <button
+                          type="button"
+                          className={`timeModeBtn ${newTodoTimeMode === 'deadline' ? 'active' : ''}`}
+                          onClick={() => setNewTodoTimeMode('deadline')}
+                        >
+                          ⏰ Exact Deadline
+                        </button>
+                        <button
+                          type="button"
+                          className={`timeModeBtn ${newTodoTimeMode === 'interval' ? 'active' : ''}`}
+                          onClick={() => setNewTodoTimeMode('interval')}
+                        >
+                          ⏳ Time Range (From / To)
+                        </button>
+                      </div>
+                    </div>
+
+                    {newTodoTimeMode === 'deadline' ? (
+                      <div className="formRow">
+                        <div className="formGroup" style={{ flex: 1 }}>
+                          <label>Deadline Time</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 15:00 or 19:00"
+                            value={newTodoDeadline}
+                            onChange={e => setNewTodoDeadline(e.target.value)}
+                          />
+                        </div>
+                        <div className="formGroup" style={{ flex: 1 }}>
+                          <label>Reminder Ahead</label>
+                          <select value={newTodoReminder} onChange={e => setNewTodoReminder(e.target.value)}>
+                            <option value="15m">15 minutes before</option>
+                            <option value="30m">30 minutes before</option>
+                            <option value="1h">1 hour before</option>
+                            <option value="2h">2 hours before</option>
+                            <option value="1d">1 day before</option>
+                            <option value="none">No reminder</option>
+                          </select>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="formRow">
+                        <div className="formGroup" style={{ flex: 1 }}>
+                          <label>Time From</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 14:00"
+                            value={newTodoTimeFrom}
+                            onChange={e => setNewTodoTimeFrom(e.target.value)}
+                          />
+                        </div>
+                        <div className="formGroup" style={{ flex: 1 }}>
+                          <label>Time To</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 16:30"
+                            value={newTodoTimeTo}
+                            onChange={e => setNewTodoTimeTo(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="formGroup">
+                      <label>Notes / Details (Optional)</label>
+                      <textarea
+                        rows={2}
+                        placeholder="Additional context, client requirements, checklist..."
+                        value={newTodoDetails}
+                        onChange={e => setNewTodoDetails(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="todoFormActions">
+                      <button type="button" className="btnCancelModal" onClick={() => setShowAddTodoModal(false)}>
+                        Cancel
+                      </button>
+                      <button type="submit" className="btnSubmitModal">
+                        Create Task
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ========================================================================= */}
         {/* VIEW: USER DATABASE */}
         {/* ========================================================================= */}
