@@ -455,110 +455,120 @@ export default function AdminDashboardPage() {
     {
       id: 'msg-1',
       platform: 'gmail',
-      account: 'Work (Aescripts)',
-      accountEmail: 'rifemotion.info@gmail.com',
-      sender: 'Lloyd (Aescripts)',
-      senderEmail: 'lloyd@aescripts.com',
-      subject: 'URGENT: Timing adjustment for Scene #4 (Render by 19:00)',
-      body: 'Hey! Client requested a 2-second timing adjustment for Scene #4 before final render. Please review as soon as possible.',
-      urgency: 'red',
+      account: 'PJATK University',
+      accountEmail: 's37167@pjwstk.edu.pl',
+      sender: 'PJATK Dziekanat',
+      senderEmail: 'dziekanat@pjwstk.edu.pl',
+      shortTitle: 'Math Exam Grade Results',
+      subject: 'Wyniki egzaminu z Analizy Matematycznej i Grafiki 3D',
+      body: 'Cześć Mykyta! Informujemy, że oceny z egzaminu z Analizy Matematycznej oraz projektu końcowego z Grafiki Komputerowej zostały wpisane do systemu Edukacja. Prosimy o weryfikację wpisów w indeksie elektronicznym.',
+      urgency: 'yellow',
       read: false,
-      date: '18.08.2026 19:15',
+      date: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
       url: 'https://mail.google.com'
     },
     {
       id: 'msg-2',
       platform: 'gmail',
-      account: 'Motion Studio',
-      accountEmail: 'rifemotion.com@gmail.com',
-      sender: 'Aescripts Sales',
-      senderEmail: 'sales@aescripts.com',
-      subject: 'Commercial license for Motion Tools v3 renewed',
-      body: 'Hello! Confirming the successful renewal of your commercial license for Motion Tools v3. Receipt attached.',
-      urgency: 'yellow',
+      account: 'Work (Aescripts)',
+      accountEmail: 'rifemotion.info@gmail.com',
+      sender: 'Lloyd Alvarez (Aescripts)',
+      senderEmail: 'lloyd@aescripts.com',
+      shortTitle: 'Urgent Scene 4 Timing',
+      subject: 'URGENT: Timing adjustment for Scene #4 (Render by 19:00)',
+      body: 'Hey Mykyta! Client requested a 2-second timing adjustment for Scene #4 before final 4K master render. Please review the updated timing curve and send a new render preview as soon as possible.',
+      urgency: 'red',
       read: false,
-      date: '18.08.2026 16:40',
+      date: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
       url: 'https://mail.google.com'
     },
     {
       id: 'msg-3',
-      platform: 'telegram',
-      account: '@rifemotion',
-      sender: 'Motion Designer Hub',
-      senderEmail: '@motion_chat',
-      subject: 'Inquiry regarding LaPath 1.2.0 script',
-      body: 'Hey! Amazing update for LaPath! Is direct corner export to Lottie planned in the next release?',
-      urgency: 'green',
+      platform: 'gmail',
+      account: 'Motion Studio',
+      accountEmail: 'rifemotion.com@gmail.com',
+      sender: 'Vertex Motion Agency',
+      senderEmail: 'contact@vertex-motion.com',
+      shortTitle: 'Commercial Collaboration Offer',
+      subject: 'Proposal for 3D Kinetic Typography Commercial',
+      body: 'Hello Mykyta! We would love to hire you as lead motion designer for our upcoming Nike 30s broadcast commercial. Are you available starting next Monday? Please let us know your day rate.',
+      urgency: 'red',
       read: false,
-      date: '18.08.2026 18:22',
-      url: 'https://t.me'
+      date: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
+      url: 'https://mail.google.com'
     },
     {
       id: 'msg-4',
-      platform: 'youtube',
-      account: 'rifemotion YouTube',
-      sender: 'AnimFan2026',
-      senderEmail: 'YouTube Comment',
-      subject: '2D Character Motion Keyframing Masterclass',
-      body: 'Best curve acceleration tutorial ever! What easing plugin are you using?',
-      urgency: 'green',
+      platform: 'gmail',
+      account: 'Banking & Finance',
+      accountEmail: 'nekitbanking@gmail.com',
+      sender: 'Santander Bank Polska',
+      senderEmail: 'powiadomienia@santander.pl',
+      shortTitle: 'Monthly VAT Tax Statement',
+      subject: 'Twój miesięczny wyciąg firmowy i zestawienie VAT',
+      body: 'Dzień dobry, informujemy, że zestawienie operacji bankowych oraz wyciąg VAT za ubiegły okres rozliczeniowy są gotowe do pobrania w bankowości elektronicznej Santander24.',
+      urgency: 'grey',
       read: true,
-      date: '18.08.2026 14:10',
-      url: 'https://youtube.com'
+      date: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+      url: 'https://mail.google.com'
     },
     {
       id: 'msg-5',
       platform: 'gmail',
-      account: 'PJATK University',
-      accountEmail: 's37167@pjwstk.edu.pl',
-      sender: 'PJWSTK Deanery',
-      senderEmail: 'deanery@pjwstk.edu.pl',
-      subject: 'Schedule update for 3D Computer Graphics semester project',
-      body: 'Dear Student, please be informed that the deadline for submitting your 3D animation assignment has been updated on the student portal.',
-      urgency: 'yellow',
+      account: 'Personal 1',
+      accountEmail: 'nikitasolodkij3@gmail.com',
+      sender: 'Google Cloud Billing',
+      senderEmail: 'cloud-billing@google.com',
+      shortTitle: 'API Tier Usage Invoice',
+      subject: 'Your Google Cloud & Gemini API invoice is ready',
+      body: 'Your monthly invoice for Google Cloud Platform and Gemini Flash API endpoints has been automatically settled via your registered card ending in 8143.',
+      urgency: 'green',
       read: true,
-      date: '18.08.2026 11:30',
+      date: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
       url: 'https://mail.google.com'
     },
     {
       id: 'msg-6',
       platform: 'gmail',
-      account: 'Banking & Finance',
-      accountEmail: 'nekitbanking@gmail.com',
-      sender: 'Bank Notification',
-      senderEmail: 'no-reply@bank.com',
-      subject: 'Monthly business bank statement available',
-      body: 'Dear client, your monthly financial account summary is ready for download.',
-      urgency: 'grey',
+      account: 'Personal 2',
+      accountEmail: 'nekitsolodkij@gmail.com',
+      sender: 'Adobe Creative Cloud',
+      senderEmail: 'exchange-support@adobe.com',
+      shortTitle: 'CEP Extension Store Approved',
+      subject: 'LaPath 1.2.0 is now live on Adobe Exchange',
+      body: 'Congratulations! Your update for LaPath (v1.2.0) has passed automated security validation and is now available to worldwide Adobe After Effects users on the Adobe Exchange portal.',
+      urgency: 'green',
       read: true,
-      date: '17.08.2026 09:00',
+      date: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
       url: 'https://mail.google.com'
     },
     {
       id: 'msg-7',
-      platform: 'instagram',
+      platform: 'telegram',
       account: '@rifemotion',
-      sender: 'Studio Vertex',
-      senderEmail: '@studio_vertex',
-      subject: 'Direct Message: Collaboration Proposal',
-      body: 'Hi Mykyta! We love your kinetic typography reels. Would you be open to collaborating on a 30s broadcast commercial next month?',
-      urgency: 'red',
+      sender: 'Motion Designer Community',
+      senderEmail: '@motion_chat',
+      shortTitle: 'Lottie Corner Curvature Export',
+      subject: 'Question regarding LaPath corner curvature algorithms',
+      body: 'Hey! Does the new LaPath smoothing engine support spline interpolation before exporting directly to web Lottie JSON format?',
+      urgency: 'green',
       read: false,
-      date: '18.08.2026 17:05',
-      url: 'https://instagram.com'
+      date: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+      url: 'https://t.me'
     },
     {
       id: 'msg-8',
-      platform: 'reddit',
-      account: 'u/rifemotion',
-      sender: 'r/AfterEffects Moderator',
-      senderEmail: 'reddit_bot',
-      subject: 'Your post was featured in weekly top motion scripts',
-      body: 'Congratulations! Your showcase of corner rounding mathematics was pinned in the r/AfterEffects weekly developer spotlight.',
-      urgency: 'grey',
-      read: true,
-      date: '16.08.2026 21:00',
-      url: 'https://reddit.com'
+      platform: 'instagram',
+      account: '@rifemotion',
+      sender: 'Studio Nomad (Tokyo)',
+      senderEmail: '@studio_nomad_jp',
+      shortTitle: 'Tokyo Brand Rebranding Pitch',
+      subject: 'Collaboration inquiry for Tokyo tech brand rebranding',
+      body: 'Hi Mykyta! We loved your recent After Effects easing reels on Instagram. We would like to invite you to animate the new visual identity for a Tokyo AI robotics startup.',
+      urgency: 'red',
+      read: false,
+      date: new Date(Date.now() - 18 * 3600 * 1000).toISOString(),
+      url: 'https://instagram.com'
     }
   ]);
 
@@ -1548,7 +1558,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'all' ? 'active' : ''}`}
                   onClick={() => { setSelectedChannel('all'); setSelectedGmailAccount('all'); }}
                 >
-                  <img src="/icons/favicon.svg" alt="All" style={{ width: "13px", height: "13px" }} />
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
                   <span>All Inboxes ({socialMessages.length})</span>
                 </button>
 
@@ -1685,16 +1695,21 @@ export default function AdminDashboardPage() {
                               }
                             }}
                           >
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "0.5rem" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "7px", overflow: "hidden" }}>
-                                <span className={`priorityDot ${msg.urgency || 'grey'}`} style={{ flexShrink: 0 }} />
-                                <span className="msgCardSender" style={{ fontSize: "0.76rem", fontWeight: msg.read ? 500 : 700, color: msg.read ? "var(--text-secondary)" : "var(--text-pure)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                  {msg.sender}
+                            <div style={{ display: "flex", flexDirection: "column", gap: "3px", width: "100%" }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "0.5rem" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "7px", overflow: "hidden" }}>
+                                  <span className={`priorityDot ${msg.urgency || 'grey'}`} style={{ flexShrink: 0 }} />
+                                  <span className="msgCardSender" style={{ fontSize: "0.76rem", fontWeight: msg.read ? 500 : 700, color: msg.read ? "var(--text-secondary)" : "var(--text-pure)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                    {msg.sender}
+                                  </span>
+                                </div>
+                                <span className="msgCardDate" style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)", flexShrink: 0 }}>
+                                  {formatRelativeMessageDate(msg.date)}
                                 </span>
                               </div>
-                              <span className="msgCardDate" style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)", flexShrink: 0 }}>
-                                {formatRelativeMessageDate(msg.date)}
-                              </span>
+                              <div style={{ fontSize: "0.72rem", color: msg.read ? "var(--text-muted)" : "var(--text-pure)", fontWeight: msg.read ? 400 : 600, paddingLeft: "15px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {msg.shortTitle || msg.subject}
+                              </div>
                             </div>
                           </div>
                         );
