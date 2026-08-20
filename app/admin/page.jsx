@@ -1708,34 +1708,129 @@ export default function AdminDashboardPage() {
               </div>
             )}
             {/* 1. TOP NAV & CHANNELS FILTER */}
-            <div className="messagesTopNav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", padding: "0.4rem 0", marginBottom: "0.75rem", borderBottom: "1px solid var(--border-subtle)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span className="countChip">{socialMessages.length} Messages</span>
+            <div className="messagesTopNav" style={{ display: "flex", flexDirection: "column", gap: "0.6rem", paddingBottom: "0.65rem", marginBottom: "0.75rem", borderBottom: "1px solid var(--border-subtle)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <span className="countChip">{socialMessages.length} Messages</span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "1 1 auto", justifyContent: "flex-end" }}>
+                  <button
+                    type="button"
+                    className="actionBtn"
+                    onClick={handleSyncMessages}
+                    disabled={isSyncingMessages}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.72rem", padding: "5px 12px", opacity: isSyncingMessages ? 0.7 : 1 }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isSyncingMessages ? "spin 1s linear infinite" : "none" }}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    <span>{isSyncingMessages ? "Syncing with Gemini..." : "Sync Inboxes"}</span>
+                  </button>
+
+                  <div style={{ position: "relative", minWidth: "240px" }}>
+                    <input
+                      type="text"
+                      className="denseSearchInput"
+                      placeholder="Search messages, senders, subjects..."
+                      value={messagesSearch}
+                      onChange={(e) => setMessagesSearch(e.target.value)}
+                      style={{ width: "100%", paddingLeft: "1.6rem" }}
+                    />
+                    <img src="/icons_admin/search.svg" alt="Search" style={{ position: "absolute", left: "8px", top: "50%", transform: "translateY(-50%)", width: "11px", height: "11px", opacity: 0.5 }} />
+                  </div>
+                </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "1 1 auto", justifyContent: "flex-end" }}>
+              {/* SOCIAL MEDIA / CHANNELS FILTER ROW (WITH RESPONSIVE OVERFLOW & ACCORDION EXPANSION) */}
+              <div className="channelsFilterRow" style={{ display: "flex", alignItems: "center", gap: "4px", overflowX: "auto", paddingBottom: "2px", scrollbarWidth: "none" }}>
                 <button
                   type="button"
-                  className="actionBtn"
-                  onClick={handleSyncMessages}
-                  disabled={isSyncingMessages}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.72rem", padding: "5px 12px", opacity: isSyncingMessages ? 0.7 : 1 }}
+                  className={`channelPillBtn ${selectedChannel === 'all' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('all')}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isSyncingMessages ? "spin 1s linear infinite" : "none" }}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                  <span>{isSyncingMessages ? "Syncing with Gemini..." : "Sync Inboxes"}</span>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
+                  <span>All Inboxes</span>
                 </button>
 
-                <div style={{ position: "relative", minWidth: "260px" }}>
-                  <input
-                    type="text"
-                    className="denseSearchInput"
-                    placeholder="Search messages, senders, subjects..."
-                    value={messagesSearch}
-                    onChange={(e) => setMessagesSearch(e.target.value)}
-                    style={{ width: "100%", paddingLeft: "1.6rem" }}
-                  />
-                  <img src="/icons_admin/search.svg" alt="Search" style={{ position: "absolute", left: "8px", top: "50%", transform: "translateY(-50%)", width: "11px", height: "11px", opacity: 0.5 }} />
-                </div>
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'gmail' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('gmail')}
+                >
+                  <img src="/icons/SelfhstGmail.svg" alt="Gmail" style={{ width: "13px", height: "13px" }} />
+                  <span>Gmail</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'telegram' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('telegram')}
+                >
+                  <img src="/icons/LogosTelegram.svg" alt="Telegram" style={{ width: "13px", height: "13px" }} />
+                  <span>Telegram</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'youtube' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('youtube')}
+                >
+                  <img src="/icons/SelfhstYoutube.svg" alt="YouTube" style={{ width: "13px", height: "13px" }} />
+                  <span>YouTube</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'instagram' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('instagram')}
+                >
+                  <img src="/icons/SelfhstInstagram.svg" alt="Instagram" style={{ width: "13px", height: "13px" }} />
+                  <span>Instagram</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'reddit' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('reddit')}
+                >
+                  <img src="/icons/SelfhstReddit.svg" alt="Reddit" style={{ width: "13px", height: "13px" }} />
+                  <span>Reddit</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'discord' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('discord')}
+                >
+                  <img src="/icons/SelfhstDiscord.svg" alt="Discord" style={{ width: "13px", height: "13px" }} />
+                  <span>Discord</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'twitter' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('twitter')}
+                >
+                  <img src="/icons/DeviconTwitter.svg" alt="Twitter" style={{ width: "10px", height: "10px", opacity: 0.85 }} />
+                  <span>Twitter / X</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'behance' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('behance')}
+                >
+                  <img src="/icons/DeviconBehance.svg" alt="Behance" style={{ width: "13px", height: "13px" }} />
+                  <span>Behance</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`channelPillBtn ${selectedChannel === 'threads' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('threads')}
+                >
+                  <img src="/icons/SelfhstThreads.svg" alt="Threads" style={{ width: "13px", height: "13px" }} />
+                  <span>Threads</span>
+                </button>
               </div>
             </div>
 
@@ -2880,19 +2975,7 @@ export default function AdminDashboardPage() {
         {/* ========================================================================= */}
         {activeTab === "dispatch" && (
           <div>
-            <div className="viewHeader">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                <h1 className="viewTitle">Broadcast & Notification Center</h1>
-                <button
-                  type="button"
-                  className="mobileMenuToggleBtn"
-                  onClick={() => setMobileMenuOpen(true)}
-                  aria-label="Open Navigation Menu"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                </button>
-              </div>
-            </div>
+            
 
             <div className="dispatchSplitLayout">
               {/* LEFT: COMPACT DISPATCH FORM */}
@@ -3220,19 +3303,7 @@ export default function AdminDashboardPage() {
         {/* ========================================================================= */}
         {activeTab === "status" && (
           <div>
-            <div className="viewHeader">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                <h1 className="viewTitle">System Telemetry</h1>
-                <button
-                  type="button"
-                  className="mobileMenuToggleBtn"
-                  onClick={() => setMobileMenuOpen(true)}
-                  aria-label="Open Navigation Menu"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                </button>
-              </div>
-            </div>
+            
 
             <div className="metricsGrid">
               <div className="metricCard">
@@ -3260,392 +3331,6 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-
-
-        {/* ========================================================================= */}
-        {/* VIEW: DISPATCH NOTIFICATION & SENT HISTORY */}
-        {/* ========================================================================= */}
-        {activeTab === "dispatch" && (
-          <div>
-            <div className="viewHeader">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                <h1 className="viewTitle">Broadcast & Notification Center</h1>
-                <button
-                  type="button"
-                  className="mobileMenuToggleBtn"
-                  onClick={() => setMobileMenuOpen(true)}
-                  aria-label="Open Navigation Menu"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="dispatchSplitLayout">
-              {/* LEFT: COMPACT DISPATCH FORM */}
-              <div className="dispatchCardCompact">
-                <div className="dispatchTopControls">
-                  {/* PRODUCT SWITCHER */}
-                  <div className="productSegment">
-                    {[
-                      { id: "all", label: "All" },
-                      { id: "lapath", label: "LaPath" },
-                      { id: "kliner", label: "KLiner" },
-                    ].map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        className={`productSegmentBtn ${dispatchForm.product === p.id ? "active" : ""}`}
-                        onClick={() => setDispatchForm({ ...dispatchForm, product: p.id })}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* DELIVERY CHANNELS */}
-                  <div className="channelCheckboxes">
-                    <label className="channelCheckLabel">
-                      <input
-                        type="checkbox"
-                        checked={dispatchForm.channelInApp}
-                        onChange={(e) => setDispatchForm({ ...dispatchForm, channelInApp: e.target.checked })}
-                      />
-                      <span>Extension</span>
-                    </label>
-
-                    <label className="channelCheckLabel">
-                      <input
-                        type="checkbox"
-                        checked={dispatchForm.channelEmail}
-                        onChange={(e) => setDispatchForm({ ...dispatchForm, channelEmail: e.target.checked })}
-                      />
-                      <span>Email</span>
-                    </label>
-                  </div>
-                </div>
-
-                {dispatchSuccess && (
-                  <div style={{
-                    padding: "0.5rem 0.75rem",
-                    backgroundColor: "var(--acc-green-bg)",
-                    border: "1px solid var(--acc-green-border)",
-                    borderRadius: "var(--r-sm)",
-                    color: "var(--acc-green)",
-                    fontSize: "0.74rem",
-                    fontWeight: 600,
-                    marginBottom: "0.75rem"
-                  }}>
-                    ✓ Dispatched successfully
-                  </div>
-                )}
-
-                <form onSubmit={handleSendNotification}>
-                  {/* 2-COLUMN SELECT CONTROLS */}
-                  <div className="dispatchGridTwoCol">
-                    <div className="formGroup" style={{ margin: 0 }}>
-                      <label className="formLabel">Target</label>
-                      <CustomSelect
-                        options={[
-                          { label: "All Users", value: "all" },
-                          { label: "Single User", value: "single" }
-                        ]}
-                        value={dispatchForm.targetType}
-                        onChange={(val) => setDispatchForm({ ...dispatchForm, targetType: val })}
-                      />
-                    </div>
-
-                    <div className="formGroup" style={{ margin: 0 }}>
-                      <label className="formLabel">Category</label>
-                      <CustomSelect
-                        options={[
-                          { label: "Announcement", value: "Announcement" },
-                          { label: "System Notice", value: "System Notice" },
-                          { label: "Personal Reply", value: "Personal Reply" },
-                        ]}
-                        value={dispatchForm.category}
-                        onChange={(val) => setDispatchForm({ ...dispatchForm, category: val })}
-                      />
-                    </div>
-                  </div>
-
-                  {dispatchForm.targetType === "single" && (
-                    <div className="formGroup" style={{ marginTop: "0.6rem" }}>
-                      <label className="formLabel">User ID</label>
-                      <input
-                        type="text"
-                        className="techInput"
-                        placeholder="da3be79b-d6a7-..."
-                        value={dispatchForm.userId}
-                        onChange={(e) => setDispatchForm({ ...dispatchForm, userId: e.target.value })}
-                        required
-                      />
-                    </div>
-                  )}
-
-                  <div className="formGroup" style={{ marginTop: "0.6rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
-                      <label className="formLabel" style={{ margin: 0 }}>Title</label>
-                      <span style={{ fontSize: "0.68rem", color: dispatchForm.title.length >= 30 ? "#ef4444" : "var(--text-muted)" }}>
-                        {dispatchForm.title.length}/30
-                      </span>
-                    </div>
-
-                    {/* FULL CLEAR TITLE PRESETS */}
-                    <div className="presetPillRow">
-                      {[
-                        "Your suggestion was approved",
-                        "Bug report fixed in new update",
-                        "New extension update available",
-                        "Response to your feedback",
-                        "Important system maintenance"
-                      ].map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          className="presetPillBtn"
-                          onClick={() => setDispatchForm((prev) => ({ ...prev, title: preset.substring(0, 30) }))}
-                        >
-                          {preset}
-                        </button>
-                      ))}
-                    </div>
-
-                    <input
-                      type="text"
-                      className="techInput"
-                      placeholder="Title (max 30 chars)..."
-                      maxLength={30}
-                      value={dispatchForm.title}
-                      onChange={(e) => setDispatchForm({ ...dispatchForm, title: e.target.value.substring(0, 30) })}
-                      required
-                    />
-                  </div>
-
-                  <div className="formGroup" style={{ marginTop: "0.6rem" }}>
-                    <label className="formLabel">Message</label>
-                    <textarea
-                      className="techTextarea"
-                      placeholder="Enter message..."
-                      rows={3}
-                      value={dispatchForm.message}
-                      onChange={(e) => setDispatchForm({ ...dispatchForm, message: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  {/* OPTIONAL ACTION BUTTON WITH PRESETS */}
-                  <div style={{ marginTop: "0.6rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
-                      <label className="formLabel" style={{ margin: 0 }}>Action / Button Preset</label>
-                    </div>
-
-                    <div className="presetPillRow">
-                      {[
-                        { label: "Subscribe (Email)", text: "Subscribe to Updates", url: "action:subscribe" },
-                        { label: "Poll (Agree/Decline 1/0)", text: "Participate in Poll", url: "action:yes_no" },
-                        { label: "Website Link", text: "Visit Website", url: "https://rifemotion.com" },
-                        { label: "Clear Action", text: "", url: "" }
-                      ].map((item) => (
-                        <button
-                          key={item.label}
-                          type="button"
-                          className="presetPillBtn"
-                          onClick={() => setDispatchForm((prev) => ({
-                            ...prev,
-                            buttonText: item.text,
-                            buttonUrl: item.url
-                          }))}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "0.4rem" }}>
-                    <div className="formGroup" style={{ margin: 0 }}>
-                      <label className="formLabel">Button Label</label>
-                      <input
-                        type="text"
-                        className="techInput"
-                        placeholder="e.g. Subscribe to Updates"
-                        value={dispatchForm.buttonText || ""}
-                        onChange={(e) => setDispatchForm({ ...dispatchForm, buttonText: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="formGroup" style={{ margin: 0 }}>
-                      <label className="formLabel">Action / Link URL</label>
-                      <input
-                        type="text"
-                        className="techInput"
-                        placeholder="action:subscribe / action:yes_no / https://..."
-                        value={dispatchForm.buttonUrl || ""}
-                        onChange={(e) => setDispatchForm({ ...dispatchForm, buttonUrl: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.75rem" }}>
-                    <button
-                      type="submit"
-                      className="submitBtn"
-                      disabled={isSending}
-                      style={{ opacity: isSending ? 0.65 : 1, cursor: isSending ? "not-allowed" : "pointer", padding: "0.45rem 1rem", fontSize: "0.75rem" }}
-                    >
-                      {isSending ? "Sending..." : "Send →"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              {/* RIGHT: SENT NOTIFICATIONS & BROADCAST HISTORY */}
-              <div style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-md)", padding: "1.25rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.85rem" }}>
-                  <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-pure)" }}>
-                    Broadcast & Message History ({replies.length})
-                  </div>
-                  <span className="countChip">{replies.length} Sent</span>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem", maxHeight: "480px", overflowY: "auto" }}>
-                  {replies.length === 0 ? (
-                    <div style={{ padding: "1.5rem", textAlign: "center", color: "var(--text-muted)", fontSize: "0.74rem" }}>
-                      No notifications dispatched yet.
-                    </div>
-                  ) : (
-                    replies.map((r) => (
-                      <div key={r.id} className="responseItem">
-                        <div className="responseItemHead">
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap", fontSize: "0.72rem" }}>
-                            <span className="badgePill active" title={r.userId}>
-                              {r.userId === 'all' ? 'All' : `Usr: ${r.userId.substring(0, 5)}`}
-                            </span>
-                            <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
-                            <span className="badgePill" style={{ background: "rgba(255, 255, 255, 0.08)", fontSize: "0.62rem" }}>
-                              {cleanCategoryName(r.category)}
-                            </span>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.68rem" }}>
-                            <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
-                            <span className="responseDate">{formatAdminDate(r.date)}</span>
-                            <span style={{ color: "var(--border-medium)", opacity: 0.6 }}>\</span>
-                            <button
-                              type="button"
-                              className="delReplyBtn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteReply(r.id);
-                              }}
-                              title="Delete notification"
-                            >
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            </button>
-                          </div>
-                        </div>
-                        {r.title && (
-                          <div style={{ fontWeight: 600, color: "var(--text-pure)", fontSize: "0.74rem", marginTop: "0.25rem" }}>
-                            {r.title}
-                          </div>
-                        )}
-                        <p className="responseText" style={{ marginTop: "0.2rem" }}>{r.message}</p>
-                        {r.buttonText && (
-                          <div style={{ marginTop: "0.4rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                            {r.buttonUrl && r.buttonUrl.startsWith("http") ? (
-                              <Link
-                                href={r.buttonUrl}
-                                target="_blank"
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "0.3rem",
-                                  padding: "0.2rem 0.55rem",
-                                  borderRadius: "var(--r-sm)",
-                                  background: "var(--bg-inset)",
-                                  border: "1px solid #FF3B00",
-                                  color: "var(--text-pure)",
-                                  fontSize: "0.7rem",
-                                  fontWeight: 600,
-                                  textDecoration: "none"
-                                }}
-                              >
-                                <span>{r.buttonText}</span>
-                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-                              </Link>
-                            ) : (
-                              <span
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "0.3rem",
-                                  padding: "0.2rem 0.55rem",
-                                  borderRadius: "var(--r-sm)",
-                                  background: "var(--bg-inset)",
-                                  border: "1px solid #FF3B00",
-                                  color: "var(--text-pure)",
-                                  fontSize: "0.7rem",
-                                  fontWeight: 600
-                                }}
-                              >
-                                {r.buttonText}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* VIEW: SYSTEM STATUS */}
-        {/* ========================================================================= */}
-        {activeTab === "status" && (
-          <div>
-            <div className="viewHeader">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                <h1 className="viewTitle">System Telemetry</h1>
-                <button
-                  type="button"
-                  className="mobileMenuToggleBtn"
-                  onClick={() => setMobileMenuOpen(true)}
-                  aria-label="Open Navigation Menu"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="metricsGrid">
-              <div className="metricCard">
-                <div className="metricCardLabel">Registered Users</div>
-                <div className="metricCardValue">
-                  <span>{userProfilesList.length}</span>
-                  <span className="metricCardNote">In Database</span>
-                </div>
-              </div>
-              <div className="metricCard">
-                <div className="metricCardLabel">Edge Latency</div>
-                <div className="metricCardValue">
-                  <span>12ms</span>
-                  <span className="metricCardNote">Optimal</span>
-                </div>
-              </div>
-              <div className="metricCard">
-                <div className="metricCardLabel">System Health</div>
-                <div className="metricCardValue">
-                  <span>100%</span>
-                  <span className="metricCardNote">Nominal</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
 
         {/* ========================================================================= */}
