@@ -4244,3 +4244,56 @@ select.techSelect option {
   color: #ffffff !important;
   padding: 8px !important;
 }
+
+
+/* ========================================================================= */
+/* STRICT 1-ROW MESSAGE FEED CARDS                                           */
+/* ========================================================================= */
+
+.messagesLayoutGrid {
+  display: grid !important;
+  grid-template-columns: 460px 1fr !important;
+  gap: 0.85rem !important;
+  align-items: flex-start !important;
+}
+
+@media (max-width: 1024px) {
+  .messagesLayoutGrid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.msgCardItem,
+div.msgCardItem {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  padding: 0 0.75rem !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  background-color: var(--bg-panel) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--r-sm, 4px) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.msgCardItem:hover {
+  background-color: var(--bg-row-hover, #1e1e24) !important;
+  border-color: var(--border-medium, rgba(255, 255, 255, 0.2)) !important;
+}
+
+.msgCardItem.selected {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  background-color: var(--bg-row-selected, #22222a) !important;
+}
+
+.msgCardItem.unread {
+  border-left: 3px solid #10b981 !important;
+}
