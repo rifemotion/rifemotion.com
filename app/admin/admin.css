@@ -4344,3 +4344,39 @@ textarea.gemini-input {
   white-space: pre-wrap !important;
   word-break: break-word !important;
 }
+
+
+/* ========================================================================= */
+/* GEMINI WINDOW PRECISE PADDING ALIGNMENT                                    */
+/* ========================================================================= */
+
+.gemini-glass-menu {
+  padding: 1rem !important;
+  box-sizing: border-box !important;
+}
+
+.gemini-chat-header {
+  padding: 0 0 0.75rem 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.gemini-chat-history {
+  padding: 0.6rem 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.gemini-input-wrapper {
+  padding: 0.5rem 0 0 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.gemini-input-bar {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}

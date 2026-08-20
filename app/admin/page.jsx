@@ -1332,25 +1332,18 @@ export default function AdminDashboardPage() {
                           </div>
                         )}
 
-                        <button
-                          type="button"
-                          onClick={() => setGeminiOpen(false)}
-                          style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "14px", padding: "2px 4px", display: "flex", alignItems: "center" }}
-                          title="Close Gemini"
-                        >
-                          ✕
-                        </button>
+                        
                       </div>
                     </div>
                   ) : (
                     /* COMPACT TOP BAR DURING CHAT */
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.55rem 0.85rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 0 0.65rem 0", borderBottom: "1px solid rgba(255, 255, 255, 0.08)", width: "100%" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <img src="/icons/SelfhstColorGoogleGemini.svg" alt="Gemini" style={{ width: "16px", height: "16px" }} />
-                        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#ffffff", letterSpacing: "0.02em" }}>Gemini</span>
+                        <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#ffffff", letterSpacing: "0.01em" }}>Gemini</span>
                       </div>
 
-                      <div className="active-model-badge-wrapper" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <div className="active-model-badge-wrapper">
                         <div
                           className="active-model-badge"
                           onClick={() => setGeminiMenuOpen(!geminiMenuOpen)}
@@ -1359,7 +1352,7 @@ export default function AdminDashboardPage() {
                         </div>
 
                         {geminiMenuOpen && (
-                          <div className="slash-popup" style={{ width: "200px", top: "calc(100% + 6px)", right: 0, bottom: "auto", left: "auto" }}>
+                          <div className="slash-popup" style={{ width: "190px", top: "calc(100% + 6px)", right: 0, bottom: "auto", left: "auto" }}>
                             <div
                               className="slash-item"
                               onClick={() => { handleSetDefaultModel("gemini-3.1-flash-lite"); setGeminiMenuOpen(false); }}
@@ -1386,15 +1379,6 @@ export default function AdminDashboardPage() {
                             </div>
                           </div>
                         )}
-
-                        <button
-                          type="button"
-                          onClick={() => setGeminiOpen(false)}
-                          style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "14px", padding: "2px 4px", display: "flex", alignItems: "center" }}
-                          title="Close Gemini"
-                        >
-                          ✕
-                        </button>
                       </div>
                     </div>
                   )}
