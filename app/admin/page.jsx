@@ -1699,6 +1699,12 @@ export default function AdminDashboardPage() {
         {/* ========================================================================= */}
         {activeTab === "messages" && (
           <div className="messagesHubContainer">
+            {syncErrorMessage && (
+              <div style={{ background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "4px", padding: "0.55rem 0.85rem", color: "#f87171", fontSize: "0.74rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>⚠️ {syncErrorMessage}</span>
+                <button type="button" onClick={() => setSyncErrorMessage(null)} style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "12px" }}>✕</button>
+              </div>
+            )}
             {/* 1. TOP NAV & CHANNELS FILTER */}
             <div className="messagesTopNav">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
