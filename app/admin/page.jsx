@@ -539,126 +539,7 @@ export default function AdminDashboardPage() {
     { name: 'PJATK University', email: 's37167@pjwstk.edu.pl', desc: 'Edu, Professors & Deanery' },
   ];
 
-  const [socialMessages, setSocialMessages] = useState([
-    {
-      id: 'msg-1',
-      platform: 'gmail',
-      account: 'PJATK University',
-      accountEmail: 's37167@pjwstk.edu.pl',
-      sender: 'PJATK Dziekanat',
-      senderEmail: 'dziekanat@pjwstk.edu.pl',
-      shortTitle: 'Math Exam Grade Results',
-      subject: 'Wyniki egzaminu z Analizy Matematycznej i Grafiki 3D',
-      body: 'Cześć Mykyta! Informujemy, że oceny z egzaminu z Analizy Matematycznej oraz projektu końcowego z Grafiki Komputerowej zostały wpisane do systemu Edukacja. Prosimy o weryfikację wpisów w indeksie elektronicznym.',
-      urgency: 'yellow',
-      read: false,
-      date: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-      url: 'https://mail.google.com'
-    },
-    {
-      id: 'msg-2',
-      platform: 'gmail',
-      account: 'Work (Aescripts)',
-      accountEmail: 'rifemotion.info@gmail.com',
-      sender: 'Lloyd Alvarez (Aescripts)',
-      senderEmail: 'lloyd@aescripts.com',
-      shortTitle: 'Urgent Scene 4 Timing',
-      subject: 'URGENT: Timing adjustment for Scene #4 (Render by 19:00)',
-      body: 'Hey Mykyta! Client requested a 2-second timing adjustment for Scene #4 before final 4K master render. Please review the updated timing curve and send a new render preview as soon as possible.',
-      urgency: 'red',
-      read: false,
-      date: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
-      url: 'https://mail.google.com'
-    },
-    {
-      id: 'msg-3',
-      platform: 'gmail',
-      account: 'Motion Studio',
-      accountEmail: 'rifemotion.com@gmail.com',
-      sender: 'Vertex Motion Agency',
-      senderEmail: 'contact@vertex-motion.com',
-      shortTitle: 'Commercial Collaboration Offer',
-      subject: 'Proposal for 3D Kinetic Typography Commercial',
-      body: 'Hello Mykyta! We would love to hire you as lead motion designer for our upcoming Nike 30s broadcast commercial. Are you available starting next Monday? Please let us know your day rate.',
-      urgency: 'red',
-      read: false,
-      date: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
-      url: 'https://mail.google.com'
-    },
-    {
-      id: 'msg-4',
-      platform: 'gmail',
-      account: 'Banking & Finance',
-      accountEmail: 'nekitbanking@gmail.com',
-      sender: 'Santander Bank Polska',
-      senderEmail: 'powiadomienia@santander.pl',
-      shortTitle: 'Monthly VAT Tax Statement',
-      subject: 'Twój miesięczny wyciąg firmowy i zestawienie VAT',
-      body: 'Dzień dobry, informujemy, że zestawienie operacji bankowych oraz wyciąg VAT za ubiegły okres rozliczeniowy są gotowe do pobrania w bankowości elektronicznej Santander24.',
-      urgency: 'grey',
-      read: true,
-      date: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-      url: 'https://mail.google.com'
-    },
-    {
-      id: 'msg-5',
-      platform: 'gmail',
-      account: 'Personal 1',
-      accountEmail: 'nikitasolodkij3@gmail.com',
-      sender: 'Google Cloud Billing',
-      senderEmail: 'cloud-billing@google.com',
-      shortTitle: 'API Tier Usage Invoice',
-      subject: 'Your Google Cloud & Gemini API invoice is ready',
-      body: 'Your monthly invoice for Google Cloud Platform and Gemini Flash API endpoints has been automatically settled via your registered card ending in 8143.',
-      urgency: 'green',
-      read: true,
-      date: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-      url: 'https://mail.google.com'
-    },
-    {
-      id: 'msg-6',
-      platform: 'gmail',
-      account: 'Personal 2',
-      accountEmail: 'nekitsolodkij@gmail.com',
-      sender: 'Adobe Creative Cloud',
-      senderEmail: 'exchange-support@adobe.com',
-      shortTitle: 'CEP Extension Store Approved',
-      subject: 'LaPath 1.2.0 is now live on Adobe Exchange',
-      body: 'Congratulations! Your update for LaPath (v1.2.0) has passed automated security validation and is now available to worldwide Adobe After Effects users on the Adobe Exchange portal.',
-      urgency: 'green',
-      read: true,
-      date: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
-      url: 'https://mail.google.com'
-    },
-    {
-      id: 'msg-7',
-      platform: 'telegram',
-      account: '@rifemotion',
-      sender: 'Motion Designer Community',
-      senderEmail: '@motion_chat',
-      shortTitle: 'Lottie Corner Curvature Export',
-      subject: 'Question regarding LaPath corner curvature algorithms',
-      body: 'Hey! Does the new LaPath smoothing engine support spline interpolation before exporting directly to web Lottie JSON format?',
-      urgency: 'green',
-      read: false,
-      date: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-      url: 'https://t.me'
-    },
-    {
-      id: 'msg-8',
-      platform: 'instagram',
-      account: '@rifemotion',
-      sender: 'Studio Nomad (Tokyo)',
-      senderEmail: '@studio_nomad_jp',
-      shortTitle: 'Tokyo Brand Rebranding Pitch',
-      subject: 'Collaboration inquiry for Tokyo tech brand rebranding',
-      body: 'Hi Mykyta! We loved your recent After Effects easing reels on Instagram. We would like to invite you to animate the new visual identity for a Tokyo AI robotics startup.',
-      urgency: 'red',
-      read: false,
-      date: new Date(Date.now() - 18 * 3600 * 1000).toISOString(),
-      url: 'https://instagram.com'
-    }
-  ]);
+  const [socialMessages, setSocialMessages] = useState([]);
 
 
   // Database State
@@ -1720,7 +1601,7 @@ export default function AdminDashboardPage() {
             <div className="messagesTopNav">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <span className="countChip">{socialMessages.length} total inboxes</span>
+                  
                 </div>
 
                 {/* Search Bar */}
@@ -1745,7 +1626,7 @@ export default function AdminDashboardPage() {
                   onClick={() => { setSelectedChannel('all'); setSelectedGmailAccount('all'); }}
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
-                  <span>All Inboxes ({socialMessages.length})</span>
+                  <span>All Inboxes</span>
                 </button>
 
                 <button
@@ -1754,7 +1635,7 @@ export default function AdminDashboardPage() {
                   onClick={() => setSelectedChannel('gmail')}
                 >
                   <img src="/icons/SelfhstGmail.svg" alt="Gmail" style={{ width: "13px", height: "13px" }} />
-                  <span>Gmail (6 Accounts)</span>
+                  <span>Gmail</span>
                 </button>
 
                 <button
