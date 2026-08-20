@@ -2081,16 +2081,14 @@ export default function AdminDashboardPage() {
                     <div style={{ display: "flex", gap: "0.5rem" }}>
                       <button
                         type="button"
-                        className={`denseTabBtn ${newTodoTimeMode === 'deadline' ? 'denseTabBtnActive' : ''}`}
-                        style={{ flex: 1, justifyContent: "center" }}
+                        className={`timeModeBtn ${newTodoTimeMode === 'deadline' ? 'active' : ''}`}
                         onClick={() => setNewTodoTimeMode('deadline')}
                       >
                         Exact Deadline
                       </button>
                       <button
                         type="button"
-                        className={`denseTabBtn ${newTodoTimeMode === 'interval' ? 'denseTabBtnActive' : ''}`}
-                        style={{ flex: 1, justifyContent: "center" }}
+                        className={`timeModeBtn ${newTodoTimeMode === 'interval' ? 'active' : ''}`}
                         onClick={() => setNewTodoTimeMode('interval')}
                       >
                         Time Interval
@@ -2162,10 +2160,10 @@ export default function AdminDashboardPage() {
                     </div>
 
                     <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "0.5rem" }}>
-                      <button type="button" className="actionBtn" onClick={() => setShowAddTodoModal(false)}>
+                      <button type="button" className="modalCancelBtn" onClick={() => setShowAddTodoModal(false)}>
                         Cancel
                       </button>
-                      <button type="submit" className="actionBtn" style={{ background: "var(--bg-row-selected)", borderColor: "var(--border-medium)", color: "var(--text-pure)" }}>
+                      <button type="submit" className="modalSubmitBtn">
                         Create Task
                       </button>
                     </div>
