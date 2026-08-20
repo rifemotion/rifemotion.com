@@ -1922,78 +1922,114 @@ export default function AdminDashboardPage() {
 
                   {/* RIGHT: DETAILED MESSAGE READER & INSTANT ACTION PANEL */}
                   <div>
-                    {activeMessage ? (
-                      <div className="messageDetailPane" style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1rem", paddingRight: "0.4rem" }}>
-                        <div className="msgDetailHeader">
-                          <div>
-                            <div className="msgDetailSubject">{activeMessage.shortTitle || activeMessage.subject}</div>
-                            <div className="msgDetailMeta">
-                              <span><strong>From:</strong> {activeMessage.sender} ({activeMessage.senderEmail})</span>
-                              <span>&bull;</span>
-                              <span><strong>Account:</strong> {activeMessage.account || activeMessage.platform}</span>
-                              <span>&bull;</span>
-                              <span><strong>Date:</strong> {formatAdminDate(activeMessage.date)}</span>
+                    {activeMessage ? (() => {
+                      const isAutomated = activeMessage.requiresReply === false ||
+                        /no-?reply|notifications?|alerts?|billing|news|support@|digest|updates@|vercel|manychat|google|namecheap|mailer-daemon/i.test(
+                          `${activeMessage.senderEmail || ''} ${activeMessage.sender || ''} ${activeMessage.from || ''}`
+                        );
+
+                      return (
+                        <div className="messageDetailPane" style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1rem", paddingRight: "0.4rem" }}>
+                          <div className="msgDetailHeader">
+                            <div>
+                              <div className="msgDetailSubject">{activeMessage.shortTitle || activeMessage.subject}</div>
+                              <div className="msgDetailMeta">
+                                <span><strong>From:</strong> {activeMessage.sender} ({activeMessage.senderEmail})</span>
+                                <span>&bull;</span>
+                                <span style={{ color: "var(--text-muted)" }}><strong>To:</strong> {activeMessage.to || activeMessage.accountEmail || activeMessage.account}</span>
+                                <span>&bull;</span>
+                                <span style={{ fontFamily: "var(--font-mono)" }}><strong>Date:</strong> {formatAdminDate(activeMessage.date)}</span>
+                              </div>
+                            </div>
+
+                            <div style={{ display: "flex", gap: "0.4rem", flexShrink: 0 }}>
+                              {activeMessage.url && (
+                                <Link
+                                  href={activeMessage.url}
+                                  target="_blank"
+                                  className="channelPillBtn active"
+                                  style={{ fontSize: "0.7rem", padding: "0.25rem 0.6rem" }}
+                                >
+                                  <span>Open in GMAIL</span> ↗
+                                </Link>
+                              )}
                             </div>
                           </div>
 
-                          <div style={{ display: "flex", gap: "0.4rem", flexShrink: 0 }}>
-                            {activeMessage.url && (
-                              <Link
-                                href={activeMessage.url}
-                                target="_blank"
-                                className="channelPillBtn active"
-                                style={{ fontSize: "0.7rem", padding: "0.25rem 0.6rem" }}
-                              >
-                                <span>Open in {activeMessage.platform.toUpperCase()}</span> ↗
-                              </Link>
-                            )}
-                          </div>
-                        </div>
+                          {/* 1-LINE THREAD HISTORY BAR (ABOVE BODY) */}
+                          {activeMessage.threadItems && activeMessage.threadItems.length > 1 && (
+                            <details style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", padding: "0.45rem 0.75rem" }}>
+                              <summary style={{ cursor: "pointer", fontSize: "0.74rem", color: "var(--text-secondary)", fontWeight: 600, display: "flex", justifyContent: "space-between", alignItems: "center", userSelect: "none" }}>
+                                <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                  <span>История цепочки ({activeMessage.threadItems.length} сообщ.)</span>
+                                </span>
+                                <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>Показать предыдущие ▾</span>
+                              </summary>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginTop: "0.6rem", paddingTop: "0.6rem", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                                {activeMessage.threadItems.slice(1).map((item, idx) => (
+                                  <div key={item.id || idx} style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "4px", padding: "0.6rem" }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem", fontSize: "0.68rem", color: "var(--text-muted)" }}>
+                                      <span style={{ fontWeight: 600, color: "var(--text-pure)" }}>{item.subject || 'Предыдущее сообщение'}</span>
+                                      <span style={{ fontFamily: "var(--font-mono)" }}>{formatAdminDate(item.date)}</span>
+                                    </div>
+                                    <div
+                                      style={{ fontSize: "0.74rem", color: "#d1d5db", lineHeight: "1.5" }}
+                                      dangerouslySetInnerHTML={{ __html: item.formattedHtml || formatLinksAsPills(item.body) }}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </details>
+                          )}
 
-                        {/* Message Content */}
-                        <div
-                          className="msgDetailBody msgBodyContent"
-                          style={{ fontSize: "0.78rem", color: "#e5e5e5", lineHeight: "1.65", overflowWrap: "break-word" }}
-                          dangerouslySetInnerHTML={{ __html: activeMessage.formattedHtml || formatLinksAsPills(activeMessage.body) }}
-                        />
-
-                        {/* Quick Reply & Action Box */}
-                        <div className="msgReplyBox">
-                          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--text-pure)" }}>
-                            Quick Reply to {activeMessage.sender}:
-                          </span>
-
-                          <textarea
-                            className="techTextarea"
-                            placeholder="Write your direct response..."
-                            style={{ minHeight: "65px", fontSize: "0.75rem" }}
-                            value={msgReplyText}
-                            onChange={(e) => setMsgReplyText(e.target.value)}
+                          {/* Message Content */}
+                          <div
+                            className="msgDetailBody msgBodyContent"
+                            style={{ fontSize: "0.78rem", color: "#e5e5e5", lineHeight: "1.65", overflowWrap: "break-word" }}
+                            dangerouslySetInnerHTML={{ __html: activeMessage.formattedHtml || formatLinksAsPills(activeMessage.body) }}
                           />
 
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            {replySuccessMessage && (
-                              <span style={{ fontSize: "0.72rem", color: "var(--acc-green)", fontWeight: 600 }}>
-                                {replySuccessMessage}
+                          {/* Quick Reply Box: STRICTLY HIDDEN FOR AUTOMATED / NOREPLY EMAILS */}
+                          {!isAutomated && (
+                            <div className="msgReplyBox">
+                              <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--text-pure)" }}>
+                                Quick Reply to {activeMessage.sender}:
                               </span>
-                            )}
-                            <button
-                              type="button"
-                              className="submitBtn"
-                              style={{ marginLeft: "auto", fontSize: "0.72rem", padding: "0.35rem 0.85rem" }}
-                              onClick={() => {
-                                if (!msgReplyText.trim()) return;
-                                setReplySuccessMessage("✓ Reply queued and dispatched successfully.");
-                                setMsgReplyText("");
-                                setTimeout(() => setReplySuccessMessage(null), 3000);
-                              }}
-                            >
-                              Send Reply ↗
-                            </button>
-                          </div>
+
+                              <textarea
+                                className="techTextarea"
+                                placeholder="Write your direct response..."
+                                style={{ minHeight: "65px", fontSize: "0.75rem" }}
+                                value={msgReplyText}
+                                onChange={(e) => setMsgReplyText(e.target.value)}
+                              />
+
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                {replySuccessMessage && (
+                                  <span style={{ fontSize: "0.72rem", color: "var(--acc-green)", fontWeight: 600 }}>
+                                    {replySuccessMessage}
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  className="submitBtn"
+                                  style={{ marginLeft: "auto", fontSize: "0.72rem", padding: "0.35rem 0.85rem" }}
+                                  onClick={() => {
+                                    if (!msgReplyText.trim()) return;
+                                    setReplySuccessMessage("✓ Reply queued and dispatched successfully.");
+                                    setMsgReplyText("");
+                                    setTimeout(() => setReplySuccessMessage(null), 3000);
+                                  }}
+                                >
+                                  Send Reply ↗
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ) : (
+                      );
+                    })() : (
                       <div className="messageDetailPane" style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
                         Select a message from the feed to view full conversation and details.
                       </div>
