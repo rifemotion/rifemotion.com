@@ -4380,3 +4380,34 @@ textarea.gemini-input {
   width: 100% !important;
   box-sizing: border-box !important;
 }
+
+/* ========================================================================= */
+/* EMAIL LINK PILL & FORMATTING                                              */
+/* ========================================================================= */
+
+.emailLinkPill {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #93c5fd;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+  margin: 0 3px;
+  transition: all 0.15s ease;
+  vertical-align: middle;
+}
+
+.emailLinkPill:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #60a5fa;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.25);
+}
+
+.msgBodyContent {
+  font-family: inherit;
+}

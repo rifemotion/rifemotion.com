@@ -1708,157 +1708,35 @@ export default function AdminDashboardPage() {
               </div>
             )}
             {/* 1. TOP NAV & CHANNELS FILTER */}
-            <div className="messagesTopNav">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  
-                </div>
-
-                {/* Search Bar */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "1 1 auto", justifyContent: "flex-end" }}>
-                  <button
-                    type="button"
-                    className="actionBtn"
-                    onClick={handleSyncMessages}
-                    disabled={isSyncingMessages}
-                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.72rem", padding: "4px 10px", opacity: isSyncingMessages ? 0.7 : 1 }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isSyncingMessages ? "spin 1s linear infinite" : "none" }}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                    <span>{isSyncingMessages ? "Syncing..." : "Sync Inboxes"}</span>
-                  </button>
-
-                  <div style={{ position: "relative", minWidth: "240px" }}>
-                    <input
-                      type="text"
-                      className="denseSearchInput"
-                      placeholder="Search messages, senders, subjects..."
-                      value={messagesSearch}
-                      onChange={(e) => setMessagesSearch(e.target.value)}
-                      style={{ width: "100%", paddingLeft: "1.6rem" }}
-                    />
-                    <img src="/icons_admin/search.svg" alt="Search" style={{ position: "absolute", left: "8px", top: "50%", transform: "translateY(-50%)", width: "11px", height: "11px", opacity: 0.5 }} />
-                  </div>
-                </div>
+            <div className="messagesTopNav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", padding: "0.4rem 0", marginBottom: "0.75rem", borderBottom: "1px solid var(--border-subtle)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <span className="countChip">{socialMessages.length} Messages</span>
               </div>
 
-              {/* Channels Row with Logos */}
-              <div className="channelsFilterRow">
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "1 1 auto", justifyContent: "flex-end" }}>
                 <button
                   type="button"
-                  className={`channelPillBtn ${selectedChannel === 'all' ? 'active' : ''}`}
-                  onClick={() => { setSelectedChannel('all'); setSelectedGmailAccount('all'); }}
+                  className="actionBtn"
+                  onClick={handleSyncMessages}
+                  disabled={isSyncingMessages}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.72rem", padding: "5px 12px", opacity: isSyncingMessages ? 0.7 : 1 }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
-                  <span>All Inboxes</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isSyncingMessages ? "spin 1s linear infinite" : "none" }}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                  <span>{isSyncingMessages ? "Syncing with Gemini..." : "Sync Inboxes"}</span>
                 </button>
 
-                <button
-                  type="button"
-                  className={`channelPillBtn ${selectedChannel === 'gmail' ? 'active' : ''}`}
-                  onClick={() => setSelectedChannel('gmail')}
-                >
-                  <img src="/icons/SelfhstGmail.svg" alt="Gmail" style={{ width: "13px", height: "13px" }} />
-                  <span>Gmail</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`channelPillBtn ${selectedChannel === 'telegram' ? 'active' : ''}`}
-                  onClick={() => { setSelectedChannel('telegram'); setSelectedGmailAccount('all'); }}
-                >
-                  <img src="/icons/LogosTelegram.svg" alt="Telegram" style={{ width: "13px", height: "13px" }} />
-                  <span>Telegram</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`channelPillBtn ${selectedChannel === 'youtube' ? 'active' : ''}`}
-                  onClick={() => { setSelectedChannel('youtube'); setSelectedGmailAccount('all'); }}
-                >
-                  <img src="/icons/SelfhstYoutube.svg" alt="YouTube" style={{ width: "13px", height: "13px" }} />
-                  <span>YouTube</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`channelPillBtn ${selectedChannel === 'instagram' ? 'active' : ''}`}
-                  onClick={() => { setSelectedChannel('instagram'); setSelectedGmailAccount('all'); }}
-                >
-                  <img src="/icons/SelfhstInstagram.svg" alt="Instagram" style={{ width: "13px", height: "13px" }} />
-                  <span>Instagram</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`channelPillBtn ${selectedChannel === 'reddit' ? 'active' : ''}`}
-                  onClick={() => { setSelectedChannel('reddit'); setSelectedGmailAccount('all'); }}
-                >
-                  <img src="/icons/SelfhstReddit.svg" alt="Reddit" style={{ width: "13px", height: "13px" }} />
-                  <span>Reddit</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`channelPillBtn ${selectedChannel === 'discord' ? 'active' : ''}`}
-                  onClick={() => { setSelectedChannel('discord'); setSelectedGmailAccount('all'); }}
-                >
-                  <img src="/icons/SelfhstDiscord.svg" alt="Discord" style={{ width: "13px", height: "13px" }} />
-                  <span>Discord</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`channelPillBtn ${selectedChannel === 'twitter' ? 'active' : ''}`}
-                  onClick={() => { setSelectedChannel('twitter'); setSelectedGmailAccount('all'); }}
-                >
-                  <img src="/icons/DeviconTwitter.svg" alt="Twitter" style={{ width: "10px", height: "10px", opacity: 0.85 }} />
-                  <span>Twitter / X</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`channelPillBtn ${selectedChannel === 'behance' ? 'active' : ''}`}
-                  onClick={() => { setSelectedChannel('behance'); setSelectedGmailAccount('all'); }}
-                >
-                  <img src="/icons/DeviconBehance.svg" alt="Behance" style={{ width: "13px", height: "13px" }} />
-                  <span>Behance</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`channelPillBtn ${selectedChannel === 'threads' ? 'active' : ''}`}
-                  onClick={() => { setSelectedChannel('threads'); setSelectedGmailAccount('all'); }}
-                >
-                  <img src="/icons/SelfhstThreads.svg" alt="Threads" style={{ width: "13px", height: "13px" }} />
-                  <span>Threads</span>
-                </button>
-              </div>
-
-              {/* GMAIL SUB-ACCOUNTS ROW */}
-              {(selectedChannel === 'gmail' || selectedChannel === 'all') && (
-                <div className="channelsFilterRow" style={{ marginTop: "0.45rem", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "0.45rem" }}>
-                  <button
-                    type="button"
-                    className={`channelPillBtn ${selectedGmailAccount === 'all' ? 'active' : ''}`}
-                    onClick={() => setSelectedGmailAccount('all')}
-                  >
-                    <span>All Accounts</span>
-                  </button>
-                  {gmailAccountsList.map(acc => (
-                    <button
-                      key={acc.email}
-                      type="button"
-                      className={`channelPillBtn ${selectedGmailAccount === acc.email ? 'active' : ''}`}
-                      onClick={() => { setSelectedChannel('gmail'); setSelectedGmailAccount(acc.email); }}
-                      title={acc.email}
-                    >
-                      <span>{acc.name}</span>
-                    </button>
-                  ))}
+                <div style={{ position: "relative", minWidth: "260px" }}>
+                  <input
+                    type="text"
+                    className="denseSearchInput"
+                    placeholder="Search messages, senders, subjects..."
+                    value={messagesSearch}
+                    onChange={(e) => setMessagesSearch(e.target.value)}
+                    style={{ width: "100%", paddingLeft: "1.6rem" }}
+                  />
+                  <img src="/icons_admin/search.svg" alt="Search" style={{ position: "absolute", left: "8px", top: "50%", transform: "translateY(-50%)", width: "11px", height: "11px", opacity: 0.5 }} />
                 </div>
-              )}
-
-
+              </div>
             </div>
 
             {/* 2. MASTER-DETAIL TWO COLUMN MESSAGES FEED */}
