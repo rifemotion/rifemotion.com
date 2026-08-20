@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getDb, saveDb } from '@/lib/db';
 import { getGeminiKey } from '@/lib/gemini-config';
-import { fetchEmailsForAccount, groupMessagesIntoThreads } from '../route';
+import { fetchEmailsForAccount, groupMessagesIntoThreads } from '@/lib/gmail-service';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
