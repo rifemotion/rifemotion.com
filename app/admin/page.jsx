@@ -1,5 +1,91 @@
 "use client";
 
+function formatTaskDeadline(deadlineStr, timeMode, timeFrom, timeTo) {
+  if (timeMode === 'interval') {
+    return `${timeFrom || '14:00'} — ${timeTo || '16:00'}`;
+  }
+  if (!deadlineStr) return "Без срока";
+
+  try {
+    const now = new Date();
+    let targetDate = null;
+    const clean = deadlineStr.trim();
+
+    if (clean.includes('-') || clean.includes('.')) {
+      const parts = clean.replace(/\./g, '-').split(' ');
+      const dParts = parts[0].split('-');
+      let y = parseInt(dParts[0], 10);
+      let m = parseInt(dParts[1], 10) - 1;
+      let d = parseInt(dParts[2], 10);
+      if (dParts[0].length <= 2 && dParts[2].length === 4) {
+        d = parseInt(dParts[0], 10);
+        m = parseInt(dParts[1], 10) - 1;
+        y = parseInt(dParts[2], 10);
+      }
+      let hr = 18, min = 0;
+      if (parts[1] && parts[1].includes(':')) {
+        const tParts = parts[1].split(':');
+        hr = parseInt(tParts[0], 10);
+        min = parseInt(tParts[1], 10);
+      }
+      targetDate = new Date(y, m, d, hr, min);
+    } else if (clean.includes(':')) {
+      const [hr, min] = clean.split(':').map(Number);
+      targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hr || 0, min || 0);
+      if (targetDate.getTime() < now.getTime()) {
+        targetDate.setDate(targetDate.getDate() + 1);
+      }
+    }
+
+    if (!targetDate || isNaN(targetDate.getTime())) {
+      return clean;
+    }
+
+    const diffMs = targetDate.getTime() - now.getTime();
+    const diffHrs = Math.max(1, Math.round(diffMs / (1000 * 60 * 60)));
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    const diffWeeks = Math.max(1, Math.round(diffDays / 7));
+    const diffMonths = Math.max(1, Math.round(diffDays / 30));
+
+    let relText = "";
+    if (diffMs < 0) {
+      relText = "просрочено";
+    } else if (diffHrs < 24) {
+      if (diffHrs === 1 || diffHrs === 21) relText = `через ${diffHrs} час`;
+      else if ((diffHrs >= 2 && diffHrs <= 4) || (diffHrs >= 22 && diffHrs <= 24)) relText = `через ${diffHrs} часа`;
+      else relText = `через ${diffHrs} часов`;
+    } else if (diffDays <= 6) {
+      if (diffDays === 1) relText = "через 1 день";
+      else if (diffDays >= 2 && diffDays <= 4) relText = `через ${diffDays} дня`;
+      else relText = `через ${diffDays} дней`;
+    } else if (diffDays <= 30) {
+      if (diffWeeks === 1) relText = "через 1 неделю";
+      else if (diffWeeks >= 2 && diffWeeks <= 4) relText = `через ${diffWeeks} недели`;
+      else relText = `через ${diffWeeks} недель`;
+    } else {
+      if (diffMonths === 1) relText = "через 1 месяц";
+      else if (diffMonths >= 2 && diffMonths <= 4) relText = `через ${diffMonths} месяца`;
+      else relText = `через ${diffMonths} месяцев`;
+    }
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const dayStr = pad(targetDate.getDate());
+    const monthStr = pad(targetDate.getMonth() + 1);
+    const timeStr = `${pad(targetDate.getHours())}:${pad(targetDate.getMinutes())}`;
+    const isCurrentYear = targetDate.getFullYear() === now.getFullYear();
+
+    let formatted = `${dayStr}.${monthStr}`;
+    if (!isCurrentYear) formatted += `.${targetDate.getFullYear()}`;
+    if (clean.includes(':')) formatted += ` ${timeStr}`;
+
+    return `${formatted} (${relText})`;
+  } catch(e) {
+    return deadlineStr;
+  }
+}
+
+
+
 function cleanAuthorName(sender) {
   if (!sender) return '';
   let cleaned = sender.replace(/\s*\([^)]*\)/g, '').trim();
@@ -1910,10 +1996,24 @@ export default function AdminDashboardPage() {
                   if (todoFilter === 'completed') return t.completed;
                   if (todoFilter === 'short') return t.type === 'short' && !t.completed;
                   if (todoFilter === 'long') return t.type === 'long' && !t.completed;
-                  return !t.completed;
+                  return true;
                 })
                 .map(item => (
-                  <div key={item.id} className={`todoCard ${item.completed ? 'completed' : ''}`} style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", padding: "0.75rem 0.85rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <div
+                    key={item.id}
+                    className={`todoCard ${item.completed ? 'completed' : ''}`}
+                    style={{
+                      background: item.completed ? "rgba(255, 255, 255, 0.02)" : "var(--bg-panel)",
+                      border: item.completed ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid var(--border-subtle)",
+                      borderRadius: "var(--r-sm)",
+                      padding: "0.75rem 0.85rem",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.5rem",
+                      opacity: item.completed ? 0.75 : 1,
+                      transition: "all 0.15s ease"
+                    }}
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <input
                         type="checkbox"
@@ -1927,6 +2027,13 @@ export default function AdminDashboardPage() {
                       <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
                         {item.type === 'long' ? '[GOAL]' : '[DAILY]'}
                       </span>
+
+                      {item.completed && (
+                        <span style={{ fontSize: "0.62rem", background: "rgba(16, 185, 129, 0.15)", border: "1px solid rgba(16, 185, 129, 0.3)", color: "#10b981", padding: "1px 6px", borderRadius: "3px", fontWeight: 700 }}>
+                          ✓ Done
+                        </span>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => handleDeleteTodo(item.id)}
@@ -1937,7 +2044,7 @@ export default function AdminDashboardPage() {
                       </button>
                     </div>
 
-                    <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-pure)", lineHeight: "1.35" }}>
+                    <div style={{ fontSize: "0.8rem", fontWeight: 600, color: item.completed ? "var(--text-muted)" : "var(--text-pure)", textDecoration: item.completed ? "line-through" : "none", lineHeight: "1.35" }}>
                       {item.title}
                     </div>
 
@@ -1948,11 +2055,9 @@ export default function AdminDashboardPage() {
                     )}
 
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "4px", borderTop: "1px solid var(--border-dim)", fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
-                      {item.timeMode === 'interval' ? (
-                        <span>Interval: {item.timeFrom || '14:00'} — {item.timeTo || '16:00'}</span>
-                      ) : (
-                        <span>Deadline: {item.deadline || 'Today'} {item.reminder && item.reminder !== 'none' ? `(- ${item.reminder})` : ''}</span>
-                      )}
+                      <span>
+                        {formatTaskDeadline(item.deadline, item.timeMode, item.timeFrom, item.timeTo)}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -1961,7 +2066,7 @@ export default function AdminDashboardPage() {
                 if (todoFilter === 'completed') return t.completed;
                 if (todoFilter === 'short') return t.type === 'short' && !t.completed;
                 if (todoFilter === 'long') return t.type === 'long' && !t.completed;
-                return !t.completed;
+                return true;
               }).length === 0 && (
                 <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "3rem 1rem", color: "var(--text-muted)", fontSize: "0.78rem" }}>
                   No tasks recorded in this view.
