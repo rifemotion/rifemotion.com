@@ -1364,6 +1364,15 @@ export default function AdminDashboardPage() {
         {/* GLOBAL ADMIN TOP HEADER BAR */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", paddingBottom: "0.65rem", borderBottom: "1px solid var(--border-subtle)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <button
+              type="button"
+              className="mobileMenuToggleBtn"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open Navigation Menu"
+              style={{ display: "none" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
             <h1 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--text-pure)", letterSpacing: "-0.01em", margin: 0 }}>
               {activeTab === "messages" && "Messages"}
               {activeTab === "todos" && "To-Do List"}
@@ -3889,78 +3898,118 @@ export default function AdminDashboardPage() {
         )}
             </main>
 
-      {/* MOBILE SLIDE-OUT DRAWER */}
+      {/* MOBILE SLIDE-OUT DRAWER (MATCHES PC SIDEBAR 1:1) */}
       {mobileMenuOpen && (
         <div className="mobileDrawerBackdrop" onClick={() => setMobileMenuOpen(false)}>
           <div className="mobileDrawerContent" onClick={(e) => e.stopPropagation()}>
             <div className="mobileDrawerHeader">
-              <div className="brandLabel">
-                <span className="brandIndicator"></span>
-                <span>rifemotion</span>
+              {/* User Profile Card */}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.55rem", flex: 1, minWidth: 0 }}>
+                <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: "linear-gradient(135deg, #2563eb, #7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <img src="/icons/MingcuteGoogleGeminiFill.svg" alt="Avatar" style={{ width: "13px", height: "13px" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-pure)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    Mykyta Solodkyi
+                  </span>
+                  <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    rifemotion.info@gmail.com
+                  </span>
+                </div>
               </div>
+
               <button
                 type="button"
                 className="mobileDrawerCloseBtn"
                 onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close Navigation Menu"
               >
                 ✕
               </button>
             </div>
 
-            <div className="mobileDrawerSection">
-              <div className="navGroupLabel">Navigation</div>
-              <div className="navList">
-                <button
-                  type="button"
-                  className={`navButton ${activeTab === "feedback" ? "navButtonActive" : ""}`}
-                  onClick={() => { setActiveTab("feedback"); setMobileMenuOpen(false); }}
-                >
-                  <img src="/icons_admin/chat.svg" alt="Database" className="iconImg" />
-                  <span>User Database</span>
-                </button>
-                <button
-                  type="button"
-                  className={`navButton ${activeTab === "dispatch" ? "navButtonActive" : ""}`}
-                  onClick={() => { setActiveTab("dispatch"); setMobileMenuOpen(false); }}
-                >
-                  <img src="/icons_admin/mail.svg" alt="Broadcast" className="iconImg" />
-                  <span>Broadcast Notice</span>
-                </button>
-                <button
-                  type="button"
-                  className={`navButton ${activeTab === "status" ? "navButtonActive" : ""}`}
-                  onClick={() => { setActiveTab("status"); setMobileMenuOpen(false); }}
-                >
-                  <img src="/icons_admin/dashboard.svg" alt="Status" className="iconImg" />
-                  <span>System Telemetry</span>
-                </button>
+            {/* Search Box */}
+            <div className="searchBox" style={{ margin: "0.2rem 0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", width: "100%" }}>
+                <img src="/icons_admin/search.svg" alt="Search" className="iconImg" style={{ width: "11px", height: "11px" }} />
+                <input type="text" className="searchInput" placeholder="Search..." />
               </div>
+              <span className="searchKbd">⌘K</span>
             </div>
 
-            {activeTab === "feedback" && (
-              <div className="mobileDrawerSection">
-                <div className="navGroupLabel">Search Database</div>
-                <input
-                  type="text"
-                  className="denseSearchInput"
-                  style={{ width: "100%" }}
-                  placeholder="Search ID, email, specs..."
-                  value={feedbackSearchQuery}
-                  onChange={(e) => setFeedbackSearchQuery(e.target.value)}
-                  autoComplete="off"
-                />
-                <button
-                  type="button"
-                  className="markAllReadBtn"
-                  style={{ marginTop: "0.4rem", justifyContent: "center" }}
-                  onClick={() => { handleMarkAllRead(); setMobileMenuOpen(false); }}
-                >
-                  ✓ Mark All as Read
-                </button>
-              </div>
-            )}
+            {/* Database Navigation Group */}
+            <div className="navGroupLabel">Database</div>
+            <div className="navList">
+              <button
+                type="button"
+                className={`navButton ${activeTab === "messages" ? "navButtonActive" : ""}`}
+                onClick={() => { setActiveTab("messages"); setMobileMenuOpen(false); }}
+              >
+                <img src="/icons/SelfhstGmail.svg" alt="Messages" className="iconImg" style={{ width: "13px", height: "13px" }} />
+                <span>Messages</span>
+                <span className="badgePill new" style={{ marginLeft: "auto", fontSize: "0.6rem", padding: "0.1rem 0.35rem" }}>
+                  {socialMessages.filter(m => !m.read).length} NEW
+                </span>
+              </button>
 
-            <div className="mobileDrawerSection" style={{ marginTop: "auto" }}>
+              <button
+                type="button"
+                className={`navButton ${activeTab === "todos" ? "navButtonActive" : ""}`}
+                onClick={() => { setActiveTab("todos"); setMobileMenuOpen(false); }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "0.1rem", opacity: 0.8 }}><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                <span>To-Do List</span>
+                {todos.filter(t => !t.completed).length > 0 && (
+                  <span className="badgePill new" style={{ marginLeft: "auto", fontSize: "0.6rem", padding: "0.1rem 0.35rem" }}>
+                    {todos.filter(t => !t.completed).length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                className={`navButton ${activeTab === "feedback" ? "navButtonActive" : ""}`}
+                onClick={() => { setActiveTab("feedback"); setMobileMenuOpen(false); }}
+              >
+                <img src="/icons_admin/message.svg" alt="Users" className="iconImg" />
+                <span>User Database</span>
+              </button>
+
+              <button
+                type="button"
+                className={`navButton ${activeTab === "dispatch" ? "navButtonActive" : ""}`}
+                onClick={() => { setActiveTab("dispatch"); setMobileMenuOpen(false); }}
+              >
+                <img src="/icons_admin/broadcast.svg" alt="Dispatch" className="iconImg" />
+                <span>Broadcast Notice</span>
+              </button>
+
+              <button
+                type="button"
+                className={`navButton ${activeTab === "status" ? "navButtonActive" : ""}`}
+                onClick={() => { setActiveTab("status"); setMobileMenuOpen(false); }}
+              >
+                <img src="/icons_admin/dashboard.svg" alt="Status" className="iconImg" />
+                <span>System Telemetry</span>
+              </button>
+
+              <button
+                type="button"
+                className={`navButton ${activeTab === "settings" ? "navButtonActive" : ""}`}
+                onClick={() => { setActiveTab("settings"); setMobileMenuOpen(false); }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Settings</span>
+              </button>
+            </div>
+
+            {/* External Links Group */}
+            <div className="navGroupLabel" style={{ marginTop: "0.5rem" }}>External</div>
+            <div className="navList">
+              <Link href="/" target="_blank" className="navButton" onClick={() => setMobileMenuOpen(false)}>
+                <img src="/icons_admin/link.svg" alt="Website" className="iconImg" />
+                <span>rifemotion.com ↗</span>
+              </Link>
               <button
                 type="button"
                 className="navButton"
@@ -3969,6 +4018,17 @@ export default function AdminDashboardPage() {
                 <img src="/icons_admin/logout.svg" alt="Sign Out" className="iconImg" />
                 <span>Sign out</span>
               </button>
+            </div>
+
+            {/* Bottom Brand */}
+            <div className="sidebarBottom" style={{ marginTop: "auto", borderTop: "1px solid var(--border-subtle)", paddingTop: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div className="brandLabel">
+                <span className="brandIndicator"></span>
+                <span>rifemotion</span>
+              </div>
+              <span style={{ fontSize: "0.64rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                v4.5.0
+              </span>
             </div>
           </div>
         </div>
