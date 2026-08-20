@@ -634,15 +634,17 @@ export default function AdminDashboardPage() {
     setIsSyncingMessages(true);
     setSyncErrorMessage(null);
     try {
-      const key = userApiKey || (typeof window !== 'undefined' ? localStorage.getItem('rifemotion_gemini_api_key') : '');
-      const res = await fetch('/api/admin/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: key })
-      });
+      const res = await fetch('/api/admin/messages/poll');
       const data = await res.json();
-      if (data.ok && Array.isArray(data.messages)) {
-        setSocialMessages(data.messages);
+      if (data.ok) {
+        if (data.hasNew && Array.isArray(data.messages)) {
+          setSocialMessages(data.messages);
+          setContextSaveMsg(`✓ ${data.newCount || 1} new message(s) analyzed by Gemini`);
+          setTimeout(() => setContextSaveMsg(null), 3500);
+        } else {
+          setContextSaveMsg("✓ All inboxes are up to date");
+          setTimeout(() => setContextSaveMsg(null), 2500);
+        }
       } else if (data.error) {
         setSyncErrorMessage(data.error);
       }
@@ -1831,23 +1833,16 @@ export default function AdminDashboardPage() {
                   <button
                     type="button"
                     className="actionBtn"
-                    onClick={() => window.location.href = '/api/admin/gmail/auth'}
-                    title="Connect another Gmail account to this unified dashboard"
-                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.72rem", padding: "5px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
-                  >
-                    <img src="/icons/SelfhstGmail.svg" alt="Add" style={{ width: "12px", height: "12px" }} />
-                    <span>+ Connect Account</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="actionBtn active"
                     onClick={handleSyncMessages}
                     disabled={isSyncingMessages}
-                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.72rem", padding: "5px 12px", opacity: isSyncingMessages ? 0.7 : 1 }}
+                    title="Check for new messages"
+                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "28px", height: "28px", padding: 0, borderRadius: "4px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#ffffff", opacity: isSyncingMessages ? 0.7 : 1 }}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isSyncingMessages ? "spin 1s linear infinite" : "none" }}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                    <span>{isSyncingMessages ? "Syncing with Gemini..." : "Check for New Messages"}</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isSyncingMessages ? "spin 1s linear infinite" : "none" }}>
+                      <polyline points="23 4 23 10 17 10"></polyline>
+                      <polyline points="1 20 1 14 7 14"></polyline>
+                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
                   </button>
 
                   <div style={{ position: "relative", minWidth: "240px" }}>
