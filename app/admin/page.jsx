@@ -1330,6 +1330,14 @@ export default function AdminDashboardPage() {
               <img src="/icons_admin/dashboard.svg" alt="Status" className="iconImg" />
               <span>System Telemetry</span>
             </button>
+            <button
+              type="button"
+              className={`navButton ${activeTab === "settings" ? "navButtonActive" : ""}`}
+              onClick={() => setActiveTab("settings")}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <span>Settings</span>
+            </button>
           </div>
 
           <div className="navGroupLabel">External</div>
@@ -1631,8 +1639,7 @@ export default function AdminDashboardPage() {
             <div className="messagesTopNav">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <h1 className="viewTitle" style={{ margin: 0 }}>Social & Email Messages</h1>
-                  <span className="countChip">{socialMessages.length} total messages</span>
+                  <span className="countChip">{socialMessages.length} total inboxes</span>
                 </div>
 
                 {/* Search Bar */}
@@ -1792,23 +1799,19 @@ export default function AdminDashboardPage() {
                                 setSocialMessages((prev) => prev.map(m => m.id === msg.id ? { ...m, read: true } : m));
                               }
                             }}
+                            style={{ display: "flex", alignItems: "center", width: "100%", gap: "8px", padding: "0.55rem 0.75rem", cursor: "pointer" }}
                           >
-                            <div style={{ display: "flex", flexDirection: "column", gap: "3px", width: "100%" }}>
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "0.5rem" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "7px", overflow: "hidden" }}>
-                                  <span className={`priorityDot ${msg.urgency || 'grey'}`} style={{ flexShrink: 0 }} />
-                                  <span className="msgCardSender" style={{ fontSize: "0.76rem", fontWeight: msg.read ? 500 : 700, color: msg.read ? "var(--text-secondary)" : "var(--text-pure)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                    {msg.sender}
-                                  </span>
-                                </div>
-                                <span className="msgCardDate" style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)", flexShrink: 0 }}>
-                                  {formatRelativeMessageDate(msg.date)}
-                                </span>
-                              </div>
-                              <div style={{ fontSize: "0.72rem", color: msg.read ? "var(--text-muted)" : "var(--text-pure)", fontWeight: msg.read ? 400 : 600, paddingLeft: "15px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                {msg.shortTitle || msg.subject}
-                              </div>
-                            </div>
+                            <img src={platformIcon} alt={msg.platform} style={{ width: "12px", height: "12px", flexShrink: 0 }} />
+                            <span style={{ color: "#ffffff", fontWeight: msg.read ? 400 : 600, fontSize: "0.74rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexShrink: 1, minWidth: "90px" }}>
+                              {msg.shortTitle || msg.subject}
+                            </span>
+                            <span style={{ color: "var(--text-muted)", fontWeight: 300, fontSize: "0.70rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexShrink: 2 }}>
+                              {cleanAuthorName(msg.sender)}
+                            </span>
+                            <span style={{ fontSize: "0.67rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)", flexShrink: 0, marginLeft: "auto" }}>
+                              {formatRelativeMessageDate(msg.date)}
+                            </span>
+                            <span className={`priorityDot ${msg.urgency || 'grey'}`} style={{ flexShrink: 0, marginLeft: "2px" }} />
                           </div>
                         );
                       })
