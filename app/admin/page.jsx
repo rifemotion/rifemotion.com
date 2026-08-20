@@ -1836,12 +1836,10 @@ export default function AdminDashboardPage() {
                     onClick={handleSyncMessages}
                     disabled={isSyncingMessages}
                     title="Check for new messages"
-                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "28px", height: "28px", padding: 0, borderRadius: "4px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#ffffff", opacity: isSyncingMessages ? 0.7 : 1 }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", minWidth: "32px", padding: 0, borderRadius: "5px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#ffffff", cursor: "pointer" }}
                   >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isSyncingMessages ? "spin 1s linear infinite" : "none" }}>
-                      <polyline points="23 4 23 10 17 10"></polyline>
-                      <polyline points="1 20 1 14 7 14"></polyline>
-                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isSyncingMessages ? "spin 0.8s linear infinite" : "none", display: "block" }}>
+                      <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
                     </svg>
                   </button>
 
