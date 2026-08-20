@@ -1921,7 +1921,7 @@ export default function AdminDashboardPage() {
                       <div className="messageDetailPane">
                         <div className="msgDetailHeader">
                           <div>
-                            <div className="msgDetailSubject">{activeMessage.subject}</div>
+                            <div className="msgDetailSubject">{activeMessage.shortTitle || activeMessage.subject}</div>
                             <div className="msgDetailMeta">
                               <span><strong>From:</strong> {activeMessage.sender} ({activeMessage.senderEmail})</span>
                               <span>&bull;</span>
@@ -1946,9 +1946,11 @@ export default function AdminDashboardPage() {
                         </div>
 
                         {/* Message Content */}
-                        <div className="msgDetailBody">
-                          {activeMessage.body}
-                        </div>
+                        <div
+                          className="msgDetailBody msgBodyContent"
+                          style={{ fontSize: "0.78rem", color: "#e5e5e5", lineHeight: "1.65", overflowWrap: "break-word" }}
+                          dangerouslySetInnerHTML={{ __html: activeMessage.formattedHtml || formatLinksAsPills(activeMessage.body) }}
+                        />
 
                         {/* Quick Reply & Action Box */}
                         <div className="msgReplyBox">
