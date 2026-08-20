@@ -1,5 +1,13 @@
 "use client";
 
+function cleanAuthorName(sender) {
+  if (!sender) return '';
+  let cleaned = sender.replace(/\s*\([^)]*\)/g, '').trim();
+  const words = cleaned.split(/\s+/);
+  return words.slice(0, 2).join(' ');
+}
+
+
 function formatRelativeMessageDate(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
@@ -1962,7 +1970,7 @@ export default function AdminDashboardPage() {
                     <div style={{ display: "flex", gap: "0.5rem" }}>
                       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
                         <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-secondary)" }}>Type</label>
-                        <select className="denseSearchInput" style={{ width: "100%" }} value={newTodoType} onChange={e => setNewTodoType(e.target.value)}>
+                        <select className="techSelect" style={{ width: "100%" }} value={newTodoType} onChange={e => setNewTodoType(e.target.value)}>
                           <option value="short">Daily / Short-Term</option>
                           <option value="long">Goal / Project</option>
                         </select>
@@ -1970,7 +1978,7 @@ export default function AdminDashboardPage() {
 
                       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
                         <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-secondary)" }}>Category</label>
-                        <select className="denseSearchInput" style={{ width: "100%" }} value={newTodoCategory} onChange={e => setNewTodoCategory(e.target.value)}>
+                        <select className="techSelect" style={{ width: "100%" }} value={newTodoCategory} onChange={e => setNewTodoCategory(e.target.value)}>
                           <option value="Client Edit">Client Edit</option>
                           <option value="Banking / Admin">Banking / Admin</option>
                           <option value="Motion Project">Motion Project</option>
@@ -2014,7 +2022,7 @@ export default function AdminDashboardPage() {
                         </div>
                         <div style={{ flex: 1 }}>
                           <label style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Reminder</label>
-                          <select className="denseSearchInput" style={{ width: "100%", marginTop: "3px" }} value={newTodoReminder} onChange={e => setNewTodoReminder(e.target.value)}>
+                          <select className="techSelect" style={{ width: "100%", marginTop: "3px" }} value={newTodoReminder} onChange={e => setNewTodoReminder(e.target.value)}>
                             <option value="15m">15m before</option>
                             <option value="30m">30m before</option>
                             <option value="1h">1h before</option>

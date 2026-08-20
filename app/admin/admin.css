@@ -4056,3 +4056,42 @@ body {
   background-color: var(--bg-row-selected) !important;
   border-left: 2px solid var(--border-focus) !important;
 }
+
+
+/* ========================================================================= */
+/* SLEEK TECHNICAL SELECT DROPDOWNS & BUTTON TRANSITIONS                     */
+/* ========================================================================= */
+
+.techSelect {
+  background-color: var(--bg-inset) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--r-sm) !important;
+  color: var(--text-pure) !important;
+  font-size: 0.73rem !important;
+  padding: 0.35rem 1.6rem 0.35rem 0.6rem !important;
+  outline: none !important;
+  cursor: pointer !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+  background-size: 11px !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.techSelect:hover {
+  border-color: var(--border-medium) !important;
+  background-color: var(--bg-row) !important;
+}
+
+.techSelect:focus {
+  border-color: var(--border-focus) !important;
+  box-shadow: 0 0 0 1px var(--border-focus) !important;
+}
+
+.techSelect option {
+  background: #181818 !important;
+  color: #fff !important;
+  padding: 6px !important;
+}
