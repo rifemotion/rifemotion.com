@@ -9,29 +9,17 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 function getUserContext(db) {
-  if (db && db.userContext) return db.userContext;
+  if (db && db.userContext && Array.isArray(db.userContext.items)) {
+    return db.userContext;
+  }
   try {
     const contextPath = path.join(process.cwd(), 'data', 'user_context.json');
     if (fs.existsSync(contextPath)) {
-      return JSON.parse(fs.readFileSync(contextPath, 'utf8'));
+      const data = JSON.parse(fs.readFileSync(contextPath, 'utf8'));
+      if (data && Array.isArray(data.items)) return data;
     }
   } catch (e) {}
-  return {
-    profile: {
-      name: "Mykyta Solodkyi (Никита)",
-      role: "Founder & Motion Designer at rifemotion",
-      location: "Warsaw, Poland",
-      education: "PJATK University",
-      projects: ["rifemotion.com", "LaPath", "KLiner"]
-    },
-    principles_and_preferences: [
-      "Strict UI cleanliness: dark technical aesthetic, 4px rectangular corners, no bright purple outside Gemini window.",
-      "Hover animations must never scale or shift position, only color/border/glow/opacity.",
-      "Hates corporate fluff; values directness and concise answers for quick questions.",
-      "Speaks English by default, Russian when addressed in Russian."
-    ],
-    dynamic_notes: []
-  };
+  return { items: [] };
 }
 
 async function saveUserContext(context, db) {
