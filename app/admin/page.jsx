@@ -416,6 +416,38 @@ export default function AdminDashboardPage() {
   // SPEECH RECOGNITION (VOICE INPUT)
   // ==========================================
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [isSyncingMessages, setIsSyncingMessages] = useState(false);
+
+  const fetchMessagesFromApi = async () => {
+    try {
+      const res = await fetch('/api/admin/messages');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.messages)) {
+          setSocialMessages(data.messages);
+        }
+      }
+    } catch(e) {
+      console.error("Error fetching messages:", e);
+    }
+  };
+
+  const handleSyncMessages = async () => {
+    setIsSyncingMessages(true);
+    try {
+      const res = await fetch('/api/admin/messages', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.messages)) {
+          setSocialMessages(data.messages);
+        }
+      }
+    } catch(e) {
+      console.error("Error syncing messages:", e);
+    } finally {
+      setIsSyncingMessages(false);
+    }
+  };
   const recognitionRef = useRef(null);
 
   const toggleVoiceRecording = () => {
@@ -1675,16 +1707,29 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Search Bar */}
-                <div style={{ position: "relative", minWidth: "240px" }}>
-                  <input
-                    type="text"
-                    className="denseSearchInput"
-                    placeholder="Search messages, senders, subjects..."
-                    value={messagesSearch}
-                    onChange={(e) => setMessagesSearch(e.target.value)}
-                    style={{ width: "100%", paddingLeft: "1.6rem" }}
-                  />
-                  <img src="/icons_admin/search.svg" alt="Search" style={{ position: "absolute", left: "8px", top: "50%", transform: "translateY(-50%)", width: "11px", height: "11px", opacity: 0.5 }} />
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "1 1 auto", justifyContent: "flex-end" }}>
+                  <button
+                    type="button"
+                    className="actionBtn"
+                    onClick={handleSyncMessages}
+                    disabled={isSyncingMessages}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.72rem", padding: "4px 10px", opacity: isSyncingMessages ? 0.7 : 1 }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isSyncingMessages ? "spin 1s linear infinite" : "none" }}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    <span>{isSyncingMessages ? "Syncing..." : "Sync Inboxes"}</span>
+                  </button>
+
+                  <div style={{ position: "relative", minWidth: "240px" }}>
+                    <input
+                      type="text"
+                      className="denseSearchInput"
+                      placeholder="Search messages, senders, subjects..."
+                      value={messagesSearch}
+                      onChange={(e) => setMessagesSearch(e.target.value)}
+                      style={{ width: "100%", paddingLeft: "1.6rem" }}
+                    />
+                    <img src="/icons_admin/search.svg" alt="Search" style={{ position: "absolute", left: "8px", top: "50%", transform: "translateY(-50%)", width: "11px", height: "11px", opacity: 0.5 }} />
+                  </div>
                 </div>
               </div>
 

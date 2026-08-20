@@ -97,6 +97,10 @@ COMMUNICATION, TONE & TOPIC VERSATILITY:
 USER'S ACCUMULATED PERSONAL CONTEXT & KNOWLEDGE:
 ${userContext.items.length > 0 ? JSON.stringify(userContext.items, null, 2) : "No custom user facts recorded yet."}
 
+EXISTING ACTIVE TO-DO / REMINDER LIST (NEVER DUPLICATE ENTRIES):
+${(db.todos || []).filter(t => !t.completed).map(t => `- ${t.title} [Deadline: ${t.deadline || 'None'}]`).join('\n') || "No active tasks."}
+RULE: If the user refers to or updates a reminder/task that is already on the list, DO NOT create a duplicate task. Just update or confirm it.
+
 DYNAMIC MEMORY MANAGEMENT (PARAPHRASED & OBJECTIVE):
 - When recording personal facts, biographical details, preferences, or habits, NEVER quote the user verbatim.
 - ALWAYS paraphrase into a clean, concise, clear, and objective statement in Russian (e.g. 'Любит пить матчу по утрам', 'Учится на 3D графике в PJATK', 'Планирует переезд к 23 августа').
@@ -174,28 +178,59 @@ TASK AUTOMATION & TITLES (STRICT RULES):
     const data = await res.json();
     let candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Empty response from model.";
 
-    // 1. Process [CREATE_TODO: ...]
+    // 1. Process [CREATE_TODO: ...] (WITH STRICT DEDUPLICATION AND UPDATING)
     let createdTodo = null;
     const todoMatch = candidateText.match(/\[CREATE_TODO:\s*({[\s\S]*?})\]/);
     if (todoMatch && todoMatch[1]) {
       try {
         const parsedTodo = JSON.parse(todoMatch[1]);
         if (!db.todos) db.todos = [];
-        createdTodo = {
-          id: 'todo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-          title: parsedTodo.title || 'New Task',
-          details: parsedTodo.details || '',
-          type: parsedTodo.type === 'long' ? 'long' : 'short',
-          category: parsedTodo.category || 'General',
-          timeMode: parsedTodo.timeMode || 'deadline',
-          deadline: parsedTodo.deadline || '',
-          reminder: parsedTodo.reminder || '30m',
-          timeFrom: parsedTodo.timeFrom || '',
-          timeTo: parsedTodo.timeTo || '',
-          completed: false,
-          createdAt: new Date().toISOString()
-        };
-        db.todos.unshift(createdTodo);
+
+        const newCleanTitle = (parsedTodo.title || '').trim().toLowerCase().replace(/[^a-zа-я0-9]/gi, '');
+        
+        // Find existing similar task
+        const existingIdx = db.todos.findIndex(t => {
+          const existingClean = (t.title || '').trim().toLowerCase().replace(/[^a-zа-я0-9]/gi, '');
+          if (existingClean === newCleanTitle) return true;
+          if (newCleanTitle.length > 5 && (existingClean.includes(newCleanTitle) || newCleanTitle.includes(existingClean))) return true;
+          return false;
+        });
+
+        if (existingIdx !== -1) {
+          // Update / overwrite existing task instead of duplicating!
+          db.todos[existingIdx] = {
+            ...db.todos[existingIdx],
+            title: parsedTodo.title || db.todos[existingIdx].title,
+            details: parsedTodo.details || db.todos[existingIdx].details,
+            type: parsedTodo.type === 'long' ? 'long' : 'short',
+            category: parsedTodo.category || db.todos[existingIdx].category,
+            timeMode: parsedTodo.timeMode || db.todos[existingIdx].timeMode,
+            deadline: parsedTodo.deadline || db.todos[existingIdx].deadline,
+            reminder: parsedTodo.reminder || db.todos[existingIdx].reminder,
+            timeFrom: parsedTodo.timeFrom || db.todos[existingIdx].timeFrom,
+            timeTo: parsedTodo.timeTo || db.todos[existingIdx].timeTo,
+            updatedAt: new Date().toISOString()
+          };
+          createdTodo = db.todos[existingIdx];
+        } else {
+          // Create new task
+          createdTodo = {
+            id: 'todo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            title: parsedTodo.title || 'New Task',
+            details: parsedTodo.details || '',
+            type: parsedTodo.type === 'long' ? 'long' : 'short',
+            category: parsedTodo.category || 'General',
+            timeMode: parsedTodo.timeMode || 'deadline',
+            deadline: parsedTodo.deadline || '',
+            reminder: parsedTodo.reminder || '30m',
+            timeFrom: parsedTodo.timeFrom || '',
+            timeTo: parsedTodo.timeTo || '',
+            completed: false,
+            createdAt: new Date().toISOString()
+          };
+          db.todos.unshift(createdTodo);
+        }
+
         await saveDb(db);
         candidateText = candidateText.replace(/\[CREATE_TODO:[\s\S]*?\]/, '').trim();
       } catch (err) {
