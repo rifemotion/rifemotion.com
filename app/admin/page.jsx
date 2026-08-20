@@ -1760,61 +1760,73 @@ export default function AdminDashboardPage() {
         {/* VIEW: TO-DO LIST & PROJECT GOALS HUB                                       */}
         {/* ========================================================================= */}
         {activeTab === "todos" && (
-          <div className="todosHubContainer">
-            {/* 1. TOP TOOLBAR & QUICK STATS */}
-            <div className="todosTopNav">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                  <h1 className="viewTitle" style={{ margin: 0 }}>Studio Tasks & Goals</h1>
-                  <span className="countChip">{todos.filter(t => !t.completed).length} active · {todos.filter(t => t.completed).length} done</span>
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <button
-                    type="button"
-                    className="quickAddTodoBtn"
-                    onClick={() => setShowAddTodoModal(true)}
-                  >
-                    + Create Task
-                  </button>
-                </div>
-              </div>
-
-              {/* TABS & CATEGORIES ROW */}
-              <div className="todosTabsRow">
+          <div>
+            <div className="viewHeader">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                <h1 className="viewTitle">Studio Tasks & Goals</h1>
                 <button
                   type="button"
-                  className={`todoTabBtn ${todoFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setTodoFilter('all')}
+                  className="mobileMenuToggleBtn"
+                  onClick={() => setMobileMenuOpen(true)}
+                  aria-label="Open Navigation Menu"
                 >
-                  All Tasks ({todos.length})
-                </button>
-                <button
-                  type="button"
-                  className={`todoTabBtn ${todoFilter === 'short' ? 'active' : ''}`}
-                  onClick={() => setTodoFilter('short')}
-                >
-                  ⚡ Short-Term & Daily ({todos.filter(t => t.type === 'short' && !t.completed).length})
-                </button>
-                <button
-                  type="button"
-                  className={`todoTabBtn ${todoFilter === 'long' ? 'active' : ''}`}
-                  onClick={() => setTodoFilter('long')}
-                >
-                  🎯 Long-Term & Goals ({todos.filter(t => t.type === 'long' && !t.completed).length})
-                </button>
-                <button
-                  type="button"
-                  className={`todoTabBtn ${todoFilter === 'completed' ? 'active' : ''}`}
-                  onClick={() => setTodoFilter('completed')}
-                >
-                  ✓ Completed ({todos.filter(t => t.completed).length})
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
               </div>
             </div>
 
-            {/* 2. TO-DO CARDS GRID */}
-            <div className="todosGrid">
+            {/* DENSE TOP TOOLBAR (MATCHES USER DATABASE STYLE) */}
+            <div className="denseToolbar">
+              <div className="toolbarLeft">
+                <button
+                  type="button"
+                  className={`denseTabBtn ${todoFilter === 'all' ? 'denseTabBtnActive' : ''}`}
+                  onClick={() => setTodoFilter('all')}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                  <span>All Tasks ({todos.length})</span>
+                </button>
+                <button
+                  type="button"
+                  className={`denseTabBtn ${todoFilter === 'short' ? 'denseTabBtnActive' : ''}`}
+                  onClick={() => setTodoFilter('short')}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                  <span>Daily & Short-Term ({todos.filter(t => t.type === 'short' && !t.completed).length})</span>
+                </button>
+                <button
+                  type="button"
+                  className={`denseTabBtn ${todoFilter === 'long' ? 'denseTabBtnActive' : ''}`}
+                  onClick={() => setTodoFilter('long')}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                  <span>Goals & Projects ({todos.filter(t => t.type === 'long' && !t.completed).length})</span>
+                </button>
+                <button
+                  type="button"
+                  className={`denseTabBtn ${todoFilter === 'completed' ? 'denseTabBtnActive' : ''}`}
+                  onClick={() => setTodoFilter('completed')}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Completed ({todos.filter(t => t.completed).length})</span>
+                </button>
+              </div>
+
+              <div className="toolbarRight">
+                <button
+                  type="button"
+                  className="actionBtn"
+                  onClick={() => setShowAddTodoModal(true)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "0.32rem 0.65rem", fontSize: "0.72rem" }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>New Task</span>
+                </button>
+              </div>
+            </div>
+
+            {/* TO-DO CARDS GRID (DARK DENSE TECHNICAL THEME) */}
+            <div className="todosGrid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "0.65rem" }}>
               {todos
                 .filter(t => {
                   if (todoFilter === 'completed') return t.completed;
@@ -1823,49 +1835,45 @@ export default function AdminDashboardPage() {
                   return !t.completed;
                 })
                 .map(item => (
-                  <div key={item.id} className={`todoCard ${item.completed ? 'completed' : ''}`}>
-                    <div className="todoCardHeader">
-                      <label className="todoCheckboxLabel">
-                        <input
-                          type="checkbox"
-                          checked={item.completed}
-                          onChange={() => handleToggleTodo(item.id, item.completed)}
-                        />
-                        <span className="todoCustomCheck" />
-                      </label>
-                      <span className={`todoBadgeTag ${(item.category || 'General').toLowerCase().replace(/[^a-z]/g, '')}`}>
+                  <div key={item.id} className={`todoCard ${item.completed ? 'completed' : ''}`} style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", padding: "0.75rem 0.85rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <input
+                        type="checkbox"
+                        checked={item.completed}
+                        onChange={() => handleToggleTodo(item.id, item.completed)}
+                        style={{ width: "14px", height: "14px", accentColor: "#a36aff", cursor: "pointer" }}
+                      />
+                      <span style={{ fontSize: "0.65rem", fontFamily: "var(--font-mono)", background: "var(--bg-row)", border: "1px solid var(--border-dim)", padding: "2px 6px", borderRadius: "3px", color: "var(--text-secondary)" }}>
                         {item.category || 'General'}
                       </span>
-                      <span className="todoTypeBadge">
-                        {item.type === 'long' ? '🎯 Goal' : '⚡ Daily'}
+                      <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                        {item.type === 'long' ? '[GOAL]' : '[DAILY]'}
                       </span>
                       <button
                         type="button"
-                        className="todoDeleteBtn"
                         onClick={() => handleDeleteTodo(item.id)}
-                        title="Delete task"
+                        style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "11px" }}
+                        title="Delete"
                       >
                         ✕
                       </button>
                     </div>
 
-                    <div className="todoCardBody">
-                      <div className="todoTitle">{item.title}</div>
-                      {item.details && <div className="todoDetails">{item.details}</div>}
+                    <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-pure)", lineHeight: "1.35" }}>
+                      {item.title}
                     </div>
 
-                    <div className="todoCardFooter">
+                    {item.details && (
+                      <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", lineHeight: "1.35" }}>
+                        {item.details}
+                      </div>
+                    )}
+
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "4px", borderTop: "1px solid var(--border-dim)", fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
                       {item.timeMode === 'interval' ? (
-                        <div className="todoTimeChip">
-                          <span>⏳ {item.timeFrom || '14:00'} — {item.timeTo || '16:00'}</span>
-                        </div>
+                        <span>Interval: {item.timeFrom || '14:00'} — {item.timeTo || '16:00'}</span>
                       ) : (
-                        <div className="todoTimeChip">
-                          <span>⏰ By {item.deadline || 'Today'}</span>
-                          {item.reminder && item.reminder !== 'none' && (
-                            <span className="todoReminderTag">🔔 -{item.reminder}</span>
-                          )}
-                        </div>
+                        <span>Deadline: {item.deadline || 'Today'} {item.reminder && item.reminder !== 'none' ? `(- ${item.reminder})` : ''}</span>
                       )}
                     </div>
                   </div>
@@ -1877,30 +1885,28 @@ export default function AdminDashboardPage() {
                 if (todoFilter === 'long') return t.type === 'long' && !t.completed;
                 return !t.completed;
               }).length === 0 && (
-                <div className="todosEmptyState">
-                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📋</div>
-                  <div style={{ fontWeight: 600, color: "#fff", marginBottom: "0.25rem" }}>No tasks in this view</div>
-                  <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                    Add a new task using the button above or tell Gemini in chat!
-                  </div>
+                <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "3rem 1rem", color: "var(--text-muted)", fontSize: "0.78rem" }}>
+                  No tasks recorded in this view.
                 </div>
               )}
             </div>
 
-            {/* 3. MODAL: CREATE TO-DO */}
+            {/* MODAL: CREATE TO-DO (DARK MONOCHROME TECHNICAL STYLE) */}
             {showAddTodoModal && (
-              <div className="todoModalOverlay" onClick={() => setShowAddTodoModal(false)}>
-                <div className="todoModalContent" onClick={e => e.stopPropagation()}>
-                  <div className="todoModalHeader">
-                    <h3>New Task / Project Plan</h3>
-                    <button type="button" className="closeModalBtn" onClick={() => setShowAddTodoModal(false)}>✕</button>
+              <div className="todoModalOverlay" onClick={() => setShowAddTodoModal(false)} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999 }}>
+                <div className="todoModalContent" onClick={e => e.stopPropagation()} style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-md)", width: "100%", maxWidth: "420px", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h3 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 700, color: "var(--text-pure)" }}>New Task / Project Plan</h3>
+                    <button type="button" onClick={() => setShowAddTodoModal(false)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}>✕</button>
                   </div>
 
-                  <form onSubmit={handleAddTodo} className="todoForm">
-                    <div className="formGroup">
-                      <label>Task Title / Action <span style={{ color: "#a36aff" }}>*</span></label>
+                  <form onSubmit={handleAddTodo} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-secondary)" }}>Task Title</label>
                       <input
                         type="text"
+                        className="denseSearchInput"
+                        style={{ width: "100%" }}
                         placeholder="e.g. Render scene #4 client edit or visit bank"
                         value={newTodoTitle}
                         onChange={e => setNewTodoTitle(e.target.value)}
@@ -1909,18 +1915,18 @@ export default function AdminDashboardPage() {
                       />
                     </div>
 
-                    <div className="formRow">
-                      <div className="formGroup" style={{ flex: 1 }}>
-                        <label>Scope / Type</label>
-                        <select value={newTodoType} onChange={e => setNewTodoType(e.target.value)}>
-                          <option value="short">⚡ Short-term & Daily</option>
-                          <option value="long">🎯 Long-term & Project</option>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-secondary)" }}>Type</label>
+                        <select className="denseSearchInput" style={{ width: "100%" }} value={newTodoType} onChange={e => setNewTodoType(e.target.value)}>
+                          <option value="short">Daily / Short-Term</option>
+                          <option value="long">Goal / Project</option>
                         </select>
                       </div>
 
-                      <div className="formGroup" style={{ flex: 1 }}>
-                        <label>Category</label>
-                        <select value={newTodoCategory} onChange={e => setNewTodoCategory(e.target.value)}>
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-secondary)" }}>Category</label>
+                        <select className="denseSearchInput" style={{ width: "100%" }} value={newTodoCategory} onChange={e => setNewTodoCategory(e.target.value)}>
                           <option value="Client Edit">Client Edit</option>
                           <option value="Banking / Admin">Banking / Admin</option>
                           <option value="Motion Project">Motion Project</option>
@@ -1930,65 +1936,70 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    <div className="formGroup">
-                      <label>Schedule Mode</label>
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <button
-                          type="button"
-                          className={`timeModeBtn ${newTodoTimeMode === 'deadline' ? 'active' : ''}`}
-                          onClick={() => setNewTodoTimeMode('deadline')}
-                        >
-                          ⏰ Exact Deadline
-                        </button>
-                        <button
-                          type="button"
-                          className={`timeModeBtn ${newTodoTimeMode === 'interval' ? 'active' : ''}`}
-                          onClick={() => setNewTodoTimeMode('interval')}
-                        >
-                          ⏳ Time Range (From / To)
-                        </button>
-                      </div>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <button
+                        type="button"
+                        className={`denseTabBtn ${newTodoTimeMode === 'deadline' ? 'denseTabBtnActive' : ''}`}
+                        style={{ flex: 1, justifyContent: "center" }}
+                        onClick={() => setNewTodoTimeMode('deadline')}
+                      >
+                        Exact Deadline
+                      </button>
+                      <button
+                        type="button"
+                        className={`denseTabBtn ${newTodoTimeMode === 'interval' ? 'denseTabBtnActive' : ''}`}
+                        style={{ flex: 1, justifyContent: "center" }}
+                        onClick={() => setNewTodoTimeMode('interval')}
+                      >
+                        Time Interval
+                      </button>
                     </div>
 
                     {newTodoTimeMode === 'deadline' ? (
-                      <div className="formRow">
-                        <div className="formGroup" style={{ flex: 1 }}>
-                          <label>Deadline Time</label>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Deadline Time</label>
                           <input
                             type="text"
+                            className="denseSearchInput"
+                            style={{ width: "100%", marginTop: "3px" }}
                             placeholder="e.g. 15:00 or 19:00"
                             value={newTodoDeadline}
                             onChange={e => setNewTodoDeadline(e.target.value)}
                           />
                         </div>
-                        <div className="formGroup" style={{ flex: 1 }}>
-                          <label>Reminder Ahead</label>
-                          <select value={newTodoReminder} onChange={e => setNewTodoReminder(e.target.value)}>
-                            <option value="15m">15 minutes before</option>
-                            <option value="30m">30 minutes before</option>
-                            <option value="1h">1 hour before</option>
-                            <option value="2h">2 hours before</option>
-                            <option value="1d">1 day before</option>
-                            <option value="none">No reminder</option>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Reminder</label>
+                          <select className="denseSearchInput" style={{ width: "100%", marginTop: "3px" }} value={newTodoReminder} onChange={e => setNewTodoReminder(e.target.value)}>
+                            <option value="15m">15m before</option>
+                            <option value="30m">30m before</option>
+                            <option value="1h">1h before</option>
+                            <option value="2h">2h before</option>
+                            <option value="1d">1d before</option>
+                            <option value="none">None</option>
                           </select>
                         </div>
                       </div>
                     ) : (
-                      <div className="formRow">
-                        <div className="formGroup" style={{ flex: 1 }}>
-                          <label>Time From</label>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>From</label>
                           <input
                             type="text"
-                            placeholder="e.g. 14:00"
+                            className="denseSearchInput"
+                            style={{ width: "100%", marginTop: "3px" }}
+                            placeholder="14:00"
                             value={newTodoTimeFrom}
                             onChange={e => setNewTodoTimeFrom(e.target.value)}
                           />
                         </div>
-                        <div className="formGroup" style={{ flex: 1 }}>
-                          <label>Time To</label>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>To</label>
                           <input
                             type="text"
-                            placeholder="e.g. 16:30"
+                            className="denseSearchInput"
+                            style={{ width: "100%", marginTop: "3px" }}
+                            placeholder="16:30"
                             value={newTodoTimeTo}
                             onChange={e => setNewTodoTimeTo(e.target.value)}
                           />
@@ -1996,21 +2007,23 @@ export default function AdminDashboardPage() {
                       </div>
                     )}
 
-                    <div className="formGroup">
-                      <label>Notes / Details (Optional)</label>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <label style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Details (Optional)</label>
                       <textarea
+                        className="techTextarea"
                         rows={2}
-                        placeholder="Additional context, client requirements, checklist..."
+                        placeholder="Notes, client info..."
                         value={newTodoDetails}
                         onChange={e => setNewTodoDetails(e.target.value)}
+                        style={{ minHeight: "50px", fontSize: "0.75rem" }}
                       />
                     </div>
 
-                    <div className="todoFormActions">
-                      <button type="button" className="btnCancelModal" onClick={() => setShowAddTodoModal(false)}>
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "0.5rem" }}>
+                      <button type="button" className="actionBtn" onClick={() => setShowAddTodoModal(false)}>
                         Cancel
                       </button>
-                      <button type="submit" className="btnSubmitModal">
+                      <button type="submit" className="actionBtn" style={{ background: "var(--bg-row-selected)", borderColor: "var(--border-medium)", color: "var(--text-pure)" }}>
                         Create Task
                       </button>
                     </div>
@@ -2020,7 +2033,6 @@ export default function AdminDashboardPage() {
             )}
           </div>
         )}
-
         {/* ========================================================================= */}
         {/* VIEW: USER DATABASE */}
         {/* ========================================================================= */}

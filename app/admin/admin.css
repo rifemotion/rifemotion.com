@@ -3953,3 +3953,27 @@ body {
     right: auto !important;
   }
 }
+
+
+/* ENFORCE EXACT DATABASE RECTANGULAR 4px STYLE ACROSS ALL VIEWS */
+.channelPillBtn {
+  border-radius: var(--r-sm) !important;
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--text-secondary) !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  padding: 0.35rem 0.65rem !important;
+}
+
+.channelPillBtn:hover {
+  color: var(--text-pure) !important;
+  background-color: var(--bg-row) !important;
+  border-color: transparent !important;
+}
+
+.channelPillBtn.active {
+  background-color: var(--bg-row-selected) !important;
+  color: var(--text-pure) !important;
+  border-color: var(--border-medium) !important;
+}
