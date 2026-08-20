@@ -574,6 +574,61 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const [isCreatingTodoFromEmail, setIsCreatingTodoFromEmail] = useState(false);
+
+  // 5-Second Background Polling for New Emails
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/admin/messages/poll');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && data.hasNew && Array.isArray(data.messages)) {
+            setSocialMessages(data.messages);
+            setContextSaveMsg(`✓ ${data.newCount || 1} new message(s) analyzed by Gemini`);
+            setTimeout(() => setContextSaveMsg(null), 4000);
+          }
+        }
+      } catch(e) {}
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [status]);
+
+  const handleCreateTodoFromEmail = async (msg) => {
+    if (!msg) return;
+    setIsCreatingTodoFromEmail(true);
+    try {
+      const res = await fetch('/api/admin/todos/from-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailId: msg.id,
+          subject: msg.originalSubject || msg.subject,
+          body: msg.body,
+          sender: msg.sender
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        if (data.todos) setTodos(data.todos);
+        else if (data.task) setTodos(prev => [data.task, ...prev.filter(t => t.id !== data.task.id)]);
+        
+        if (data.alreadyExisted) {
+          setContextSaveMsg(`✓ Task is already in To-Do List: "${data.task.text}"`);
+        } else {
+          setContextSaveMsg(`✓ Task added to To-Do: "${data.task.text}"`);
+        }
+        setTimeout(() => setContextSaveMsg(null), 4000);
+      }
+    } catch(err) {
+      console.error("Error creating todo from email:", err);
+    } finally {
+      setIsCreatingTodoFromEmail(false);
+    }
+  };
+
   const handleSyncMessages = async () => {
     setIsSyncingMessages(true);
     setSyncErrorMessage(null);
@@ -1790,7 +1845,7 @@ export default function AdminDashboardPage() {
                     style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.72rem", padding: "5px 12px", opacity: isSyncingMessages ? 0.7 : 1 }}
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isSyncingMessages ? "spin 1s linear infinite" : "none" }}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                    <span>{isSyncingMessages ? "Syncing with Gemini..." : "Sync All Inboxes"}</span>
+                    <span>{isSyncingMessages ? "Syncing with Gemini..." : "Check for New Messages"}</span>
                   </button>
 
                   <div style={{ position: "relative", minWidth: "240px" }}>

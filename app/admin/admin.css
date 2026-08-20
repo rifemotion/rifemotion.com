@@ -4419,3 +4419,31 @@ textarea.gemini-input {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
 }
+
+
+/* Mobile Accordion vs Desktop Reading Pane */
+.mobileInlineDetail {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .messagesLayout {
+    grid-template-columns: 1fr !important;
+  }
+  .desktopMessageDetailPane {
+    display: none !important;
+  }
+  .mobileInlineDetail {
+    display: flex !important;
+  }
+  .messageFeedCard.active {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+}
+
+/* Ensure all SVG action icons are white/monochrome */
+.actionBtn svg, .submitBtn svg, .channelPillBtn svg {
+  stroke: currentColor;
+  fill: none;
+}
