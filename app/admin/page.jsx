@@ -771,6 +771,7 @@ export default function AdminDashboardPage() {
   ];
 
   const [socialMessages, setSocialMessages] = useState([]);
+  const [emailFolder, setEmailFolder] = useState('inbox'); // 'inbox' | 'sent'
 
 
   // Database State
@@ -2087,7 +2088,10 @@ export default function AdminDashboardPage() {
                                 {activeMessage.threadItems.slice(1).map((item, idx) => (
                                   <div key={item.id || idx} style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "4px", padding: "0.6rem" }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem", fontSize: "0.68rem", color: "var(--text-muted)" }}>
-                                      <span style={{ fontWeight: 600, color: "var(--text-pure)" }}>{item.subject || 'Предыдущее сообщение'}</span>
+                                      <span style={{ fontWeight: 600, color: item.isSent ? "#60a5fa" : "var(--text-pure)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                        {item.isSent && <span style={{ background: "rgba(96, 165, 250, 0.15)", color: "#60a5fa", padding: "1px 5px", borderRadius: "3px", fontSize: "0.60rem", fontWeight: 700 }}>You (Sent)</span>}
+                                        <span>{item.subject || 'Предыдущее сообщение'}</span>
+                                      </span>
                                       <span style={{ fontFamily: "var(--font-mono)" }}>{formatAdminDate(item.date)}</span>
                                     </div>
                                     <div
