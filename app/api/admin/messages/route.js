@@ -6,51 +6,78 @@ import { getDb, saveDb } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const DEFAULT_GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GEMINI_KEY || "";
+function decodeHtmlEntities(str) {
+  if (!str) return '';
+  return str
+    .replace(/&#xA0;/gi, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#039;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, "/")
+    .replace(/&#39;/g, "'");
+}
 
 function stripHtmlJunk(html) {
   if (!html) return '';
-  return html
+  let cleaned = html
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<head[\s\S]*?<\/head>/gi, '')
     .replace(/<!DOCTYPE[\s\S]*?>/gi, '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&quot;/gi, '"')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
+    .replace(/<[^>]+>/g, ' ');
+  return decodeHtmlEntities(cleaned).replace(/\s{2,}/g, ' ').trim();
 }
 
 function formatLinksAsPills(text) {
   if (!text) return '';
+  // Clean surrounding angle brackets like <https://...>
+  let cleanText = text.replace(/<((?:https?:\/\/)[^>]+)>/gi, '$1');
   const urlRegex = /(https?:\/\/[^\s<>"']+)/gi;
-  return text.replace(urlRegex, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="emailLinkPill" title="${url}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px; vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Link</a>`;
+  return cleanText.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="emailLinkPill" title="${url}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; vertical-align:-1px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Link</a>`;
   });
 }
 
 // Process email with Gemini to extract clean body, title, author, urgency, and threadTopic
 async function processEmailWithGemini(subject, sender, rawBody, apiKey) {
-  const effectiveKey = apiKey || DEFAULT_GEMINI_KEY;
+  if (!apiKey) {
+    let fallbackUrgency = 'grey';
+    const low = (subject + ' ' + rawBody).toLowerCase();
+    if (low.includes('cancel') || low.includes('fail') || low.includes('error') || low.includes('отмена') || low.includes('сбой') || low.includes('security') || low.includes('alert')) {
+      fallbackUrgency = 'red';
+    } else if (low.includes('warn') || low.includes('update') || low.includes('notice') || low.includes('outage')) {
+      fallbackUrgency = 'yellow';
+    } else if (low.includes('success') || low.includes('verified') || low.includes('restored') || low.includes('включена')) {
+      fallbackUrgency = 'green';
+    }
+
+    return {
+      author: sender.split(' ')[0] || sender,
+      geminiTitle: subject,
+      cleanBody: decodeHtmlEntities(rawBody).replace(/View in browser/gi, '').slice(0, 1500),
+      urgency: fallbackUrgency,
+      threadTopic: subject.toLowerCase().slice(0, 30)
+    };
+  }
 
   try {
-    const prompt = `Analyze this email and return STRICT JSON with fields:
-- "author": clean short name of sender or service (e.g. "Manychat", "Vercel", "Google", "Santander", "Lloyd"). Max 2 words.
-- "geminiTitle": concise, clear and informative Russian title of the email (e.g. "Отмена подписки Manychat Pro", "Сбой деплоя Vercel", "Код подтверждения почты"). Max 6 words.
-- "cleanBody": the core meaningful message text in clean readable form. STRIP ALL marketing boilerplate footers, unsubscribe links, tracking codes, and copyright addresses (like "Copyright 2026 Vercel Inc. 440 N Barranca Ave...").
-- "urgency": one of "red" (urgent action/error/payment problem), "yellow" (notice/warning/update), "green" (success/verified/settled), "grey" (routine/info).
-- "threadTopic": short normalized identifier for grouping emails from same sender on same topic (e.g. "manychat_pro", "vercel_deployment").
+    const prompt = `You are an executive email parser. Analyze this email and return STRICT JSON with fields:
+- "author": clean short name of sender company/person (e.g. "Manychat", "Vercel", "Google", "Namecheap", "Lloyd"). Max 2 words.
+- "geminiTitle": concise, informative title IN RUSSIAN (e.g. "Отмена подписки Manychat Pro", "Восстановление сервисов Namecheap", "Сбой сборки Vercel", "Код подтверждения почты"). Max 6 words.
+- "cleanBody": clear meaningful body text. REMOVE 'View in browser', duplicate subject headers, unsubscribe links, tracking pixels, and copyright footer addresses (e.g. 'Copyright 2026 Vercel Inc...'). Keep all important URLs clean.
+- "urgency": one of "red" (cancellation/error/urgent alert), "yellow" (warning/notice/maintenance), "green" (verified/restored/payment success), "grey" (routine/newsletter).
+- "threadTopic": short normalized slug for grouping (e.g. "manychat_cancellation", "namecheap_outage").
 
 Email Subject: ${subject}
 Email Sender: ${sender}
 Email Content:
 ${rawBody.slice(0, 3000)}`;
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${effectiveKey}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -68,7 +95,7 @@ ${rawBody.slice(0, 3000)}`;
         return {
           author: parsed.author || sender.split(' ')[0] || sender,
           geminiTitle: parsed.geminiTitle || subject,
-          cleanBody: parsed.cleanBody || rawBody,
+          cleanBody: decodeHtmlEntities(parsed.cleanBody || rawBody),
           urgency: ['red', 'yellow', 'green', 'grey'].includes(parsed.urgency) ? parsed.urgency : 'grey',
           threadTopic: parsed.threadTopic || subject
         };
@@ -78,28 +105,27 @@ ${rawBody.slice(0, 3000)}`;
     console.error("Gemini email processing error:", e);
   }
 
-  // Fallback if Gemini request fails
   let fallbackUrgency = 'grey';
-  const lowSub = (subject + ' ' + rawBody).toLowerCase();
-  if (lowSub.includes('fail') || lowSub.includes('error') || lowSub.includes('cancel') || lowSub.includes('urgent') || lowSub.includes('отмена')) {
+  const low = (subject + ' ' + rawBody).toLowerCase();
+  if (low.includes('cancel') || low.includes('fail') || low.includes('error') || low.includes('отмена') || low.includes('сбой') || low.includes('security') || low.includes('alert')) {
     fallbackUrgency = 'red';
-  } else if (lowSub.includes('warn') || lowSub.includes('update') || lowSub.includes('missing') || lowSub.includes('notice')) {
+  } else if (low.includes('warn') || low.includes('update') || low.includes('notice') || low.includes('outage')) {
     fallbackUrgency = 'yellow';
-  } else if (lowSub.includes('success') || lowSub.includes('verified') || lowSub.includes('enabled') || lowSub.includes('включена')) {
+  } else if (low.includes('success') || low.includes('verified') || low.includes('restored') || low.includes('включена')) {
     fallbackUrgency = 'green';
   }
 
   return {
     author: sender.split(' ')[0] || sender,
     geminiTitle: subject,
-    cleanBody: rawBody.slice(0, 1500),
+    cleanBody: decodeHtmlEntities(rawBody).replace(/View in browser/gi, '').slice(0, 1500),
     urgency: fallbackUrgency,
     threadTopic: subject.toLowerCase().slice(0, 30)
   };
 }
 
 // FETCH REAL GMAIL EMAILS AND PROCESS THEM WITH GEMINI
-async function fetchAndProcessGmailMessages(accessToken, userEmail) {
+async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) {
   if (!accessToken) {
     throw new Error("No Google Access Token found. Please sign in with Google.");
   }
@@ -118,7 +144,7 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail) {
   const messagesList = listData.messages || [];
   if (messagesList.length === 0) return [];
 
-  const apiKey = DEFAULT_GEMINI_KEY;
+  const apiKey = userApiKey || process.env.GEMINI_API_KEY || process.env.GEMINI_KEY || "";
 
   // 2. Fetch full metadata & body for each message
   const detailPromises = messagesList.map(async (item) => {
@@ -165,6 +191,8 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail) {
         rawText = stripHtmlJunk(rawText || msg.snippet || '');
       }
 
+      rawText = decodeHtmlEntities(rawText);
+
       // Process with Gemini to extract clean human text and clean Russian title
       const processed = await processEmailWithGemini(subjectHeader, senderName, rawText, apiKey);
 
@@ -186,9 +214,9 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail) {
         platform: 'gmail',
         from: fromHeader,
         to: toHeader,
-        sender: senderName,
+        sender: processed.author || senderName,
         senderEmail: senderEmail,
-        author: processed.author,
+        author: processed.author || senderName,
         account: toHeader || userEmail,
         accountEmail: userEmail,
         shortTitle: processed.geminiTitle,
@@ -245,7 +273,13 @@ export async function POST(request) {
   }
 
   try {
-    const realMessages = await fetchAndProcessGmailMessages(session.accessToken, session.user.email);
+    let reqApiKey = "";
+    try {
+      const body = await request.json();
+      if (body && body.apiKey) reqApiKey = body.apiKey;
+    } catch(e) {}
+
+    const realMessages = await fetchAndProcessGmailMessages(session.accessToken, session.user.email, reqApiKey);
 
     const db = await getDb();
     db.messages = realMessages;

@@ -527,7 +527,12 @@ export default function AdminDashboardPage() {
     setIsSyncingMessages(true);
     setSyncErrorMessage(null);
     try {
-      const res = await fetch('/api/admin/messages', { method: 'POST' });
+      const key = userApiKey || (typeof window !== 'undefined' ? localStorage.getItem('rifemotion_gemini_api_key') : '');
+      const res = await fetch('/api/admin/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: key })
+      });
       const data = await res.json();
       if (data.ok && Array.isArray(data.messages)) {
         setSocialMessages(data.messages);
@@ -1836,17 +1841,28 @@ export default function AdminDashboardPage() {
 
             {/* 2. MASTER-DETAIL TWO COLUMN MESSAGES FEED */}
             {(() => {
-              const filteredList = socialMessages.filter((msg) => {
-                const matchChannel = selectedChannel === 'all' || msg.platform === selectedChannel;
-                const matchAccount = selectedGmailAccount === 'all' || msg.accountEmail === selectedGmailAccount || msg.account === selectedGmailAccount;
-                const matchSearch = !messagesSearch.trim() ||
-                  (msg.subject && msg.subject.toLowerCase().includes(messagesSearch.toLowerCase())) ||
-                  (msg.sender && msg.sender.toLowerCase().includes(messagesSearch.toLowerCase())) ||
-                  (msg.body && msg.body.toLowerCase().includes(messagesSearch.toLowerCase())) ||
-                  (msg.account && msg.account.toLowerCase().includes(messagesSearch.toLowerCase()));
+              const urgencyRank = { red: 1, yellow: 2, green: 3, grey: 4 };
 
-                return matchChannel && matchAccount && matchSearch;
-              });
+              const filteredList = socialMessages
+                .filter((msg) => {
+                  const matchChannel = selectedChannel === 'all' || msg.platform === selectedChannel;
+                  const matchAccount = selectedGmailAccount === 'all' || msg.accountEmail === selectedGmailAccount || msg.account === selectedGmailAccount;
+                  const matchSearch = !messagesSearch.trim() ||
+                    (msg.subject && msg.subject.toLowerCase().includes(messagesSearch.toLowerCase())) ||
+                    (msg.shortTitle && msg.shortTitle.toLowerCase().includes(messagesSearch.toLowerCase())) ||
+                    (msg.author && msg.author.toLowerCase().includes(messagesSearch.toLowerCase())) ||
+                    (msg.sender && msg.sender.toLowerCase().includes(messagesSearch.toLowerCase())) ||
+                    (msg.body && msg.body.toLowerCase().includes(messagesSearch.toLowerCase())) ||
+                    (msg.account && msg.account.toLowerCase().includes(messagesSearch.toLowerCase()));
+
+                  return matchChannel && matchAccount && matchSearch;
+                })
+                .sort((a, b) => {
+                  const rankA = urgencyRank[a.urgency] || 4;
+                  const rankB = urgencyRank[b.urgency] || 4;
+                  if (rankA !== rankB) return rankA - rankB; // Urgent on top!
+                  return new Date(b.date) - new Date(a.date);
+                });
 
               const activeMessage = socialMessages.find(m => m.id === selectedMessageId) || filteredList[0] || null;
 
@@ -1887,7 +1903,7 @@ export default function AdminDashboardPage() {
                               {msg.shortTitle || msg.subject}
                             </span>
                             <span style={{ color: "var(--text-muted)", fontWeight: 300, fontSize: "0.70rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexShrink: 2 }}>
-                              {cleanAuthorName(msg.sender)}
+                              {msg.author || cleanAuthorName(msg.sender)}
                             </span>
                             <span style={{ fontSize: "0.67rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)", flexShrink: 0, marginLeft: "auto" }}>
                               {formatRelativeMessageDate(msg.date)}
