@@ -97,15 +97,21 @@ COMMUNICATION, TONE & TOPIC VERSATILITY:
 USER'S ACCUMULATED PERSONAL CONTEXT & KNOWLEDGE:
 ${userContext.items.length > 0 ? JSON.stringify(userContext.items, null, 2) : "No custom user facts recorded yet."}
 
-DYNAMIC MEMORY MANAGEMENT:
-- If the user mentions new personal facts, habits, or biographical details, append:
-  [MEMORY_ADD: "Brief statement of fact"]
+DYNAMIC MEMORY MANAGEMENT (PARAPHRASED & OBJECTIVE):
+- When recording personal facts, biographical details, preferences, or habits, NEVER quote the user verbatim.
+- ALWAYS paraphrase into a clean, concise, clear, and objective statement in Russian (e.g. 'Любит пить матчу по утрам', 'Учится на 3D графике в PJATK', 'Планирует переезд к 23 августа').
+- Append: [MEMORY_ADD: "Четко сформулированный факт на русском"]
 - If the user says they were joking ("пошутил"), made a mistake, or cancelled a previous detail, append:
-  [MEMORY_REMOVE: "Keyword to remove"]
+  [MEMORY_REMOVE: "Ключевое слово для удаления"]
 
-TASK AUTOMATION:
-If explicitly asked to schedule or create a task, append:
-[CREATE_TODO: {"title": "...", "details": "...", "type": "short"|"long", "category": "Client"|"Banking"|"Motion"|"Personal"|"General", "timeMode": "deadline"|"interval", "deadline": "15:00", "reminder": "30m", "timeFrom": "14:00", "timeTo": "16:30"}]`;
+TASK AUTOMATION & TITLES (STRICT RULES):
+- TASK TITLE FORMAT:
+  * ALWAYS in Russian (на русском языке).
+  * STRICTLY NO colons (двоеточия ':') and NO ampersands ('&').
+  * For action tasks: Clear, direct imperative guidance (e.g. 'Помыть посуду', 'Забрать выписку в банке Santander', 'Отрендерить правки сцены 4 для клиента').
+  * For meetings & reminders: Clear event description with person, location, and time (e.g. 'Встреча в кафе Green Caffe Nero в 15:00 с клиентом', 'Позвонить в деканат PJATK').
+- If explicitly asked to schedule, remind, or create a task, append:
+[CREATE_TODO: {"title": "Четкое название задачи на русском без двоеточий", "details": "Подробности или пусто", "type": "short"|"long", "category": "Client"|"Banking"|"Motion"|"Personal"|"General", "timeMode": "deadline"|"interval", "deadline": "15:00", "reminder": "30m", "timeFrom": "14:00", "timeTo": "16:30"}]`;
 
     let targetModel = 'gemini-3.1-flash-lite';
     if (model.includes('3.5')) {
