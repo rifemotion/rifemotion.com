@@ -192,6 +192,95 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState("messages");
 
   // ==========================================
+  // CONTEXT & SETTINGS STATE
+  // ==========================================
+  const [userContextData, setUserContextData] = useState({
+    profile: {
+      name: "Mykyta Solodkyi (Никита)",
+      role: "Founder & Motion Designer at rifemotion",
+      location: "Warsaw, Poland (Europe/Warsaw)",
+      education: "PJATK University",
+      projects: ["rifemotion.com", "LaPath (v1.2.0)", "KLiner"]
+    },
+    principles_and_preferences: [
+      "Strict UI cleanliness: dark technical aesthetic, 4px rectangular corners, no bright purple outside Gemini window.",
+      "Hover animations must never scale or shift position, only color/border/glow/opacity.",
+      "Hates corporate fluff; values directness and concise answers for quick questions.",
+      "Speaks English by default, Russian when addressed in Russian."
+    ],
+    dynamic_notes: []
+  });
+  const [contextExpanded, setContextExpanded] = useState(true);
+  const [newPrincipleText, setNewPrincipleText] = useState("");
+  const [newNoteText, setNewNoteText] = useState("");
+  const [contextSaveMsg, setContextSaveMsg] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/admin/context')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.context) setUserContextData(data.context);
+      })
+      .catch(err => console.error("Error loading context:", err));
+  }, []);
+
+  const saveContextToApi = async (updated) => {
+    try {
+      setUserContextData(updated);
+      const res = await fetch('/api/admin/context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: updated })
+      });
+      const data = await res.json();
+      if (data && data.ok) {
+        setContextSaveMsg("Context saved successfully!");
+        setTimeout(() => setContextSaveMsg(null), 3000);
+      }
+    } catch(err) {
+      console.error("Error saving context:", err);
+    }
+  };
+
+  const handleAddPrinciple = (e) => {
+    if (e) e.preventDefault();
+    if (!newPrincipleText.trim()) return;
+    const updated = {
+      ...userContextData,
+      principles_and_preferences: [...(userContextData.principles_and_preferences || []), newPrincipleText.trim()]
+    };
+    saveContextToApi(updated);
+    setNewPrincipleText("");
+  };
+
+  const handleDeletePrinciple = (idx) => {
+    const updated = {
+      ...userContextData,
+      principles_and_preferences: (userContextData.principles_and_preferences || []).filter((_, i) => i !== idx)
+    };
+    saveContextToApi(updated);
+  };
+
+  const handleAddNote = (e) => {
+    if (e) e.preventDefault();
+    if (!newNoteText.trim()) return;
+    const updated = {
+      ...userContextData,
+      dynamic_notes: [...(userContextData.dynamic_notes || []), newNoteText.trim()]
+    };
+    saveContextToApi(updated);
+    setNewNoteText("");
+  };
+
+  const handleDeleteNote = (idx) => {
+    const updated = {
+      ...userContextData,
+      dynamic_notes: (userContextData.dynamic_notes || []).filter((_, i) => i !== idx)
+    };
+    saveContextToApi(updated);
+  };
+
+  // ==========================================
   // TO-DO LIST STATE & HANDLERS
   // ==========================================
   const [todos, setTodos] = useState([]);
@@ -1283,6 +1372,7 @@ export default function AdminDashboardPage() {
               {activeTab === "feedback" && "User Database & Telemetry"}
               {activeTab === "dispatch" && "Broadcast & Notifications"}
               {activeTab === "status" && "System Health & Telemetry"}
+              {activeTab === "settings" && "Studio Settings & AI Knowledge Base"}
             </h1>
           </div>
 
@@ -3185,6 +3275,226 @@ export default function AdminDashboardPage() {
                   <span>100%</span>
                   <span className="metricCardNote">Nominal</span>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+
+        {/* ========================================================================= */}
+        {/* VIEW: DASHBOARD SETTINGS & AI CONTEXT KNOWLEDGE BASE                      */}
+        {/* ========================================================================= */}
+        {activeTab === "settings" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div className="viewHeader">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                <h1 className="viewTitle">Studio Settings & AI Knowledge Base</h1>
+                {contextSaveMsg && (
+                  <span style={{ fontSize: "0.74rem", color: "#4ade80", background: "rgba(74, 222, 128, 0.1)", border: "1px solid rgba(74, 222, 128, 0.3)", padding: "3px 8px", borderRadius: "4px" }}>
+                    ✓ {contextSaveMsg}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* SECTION 1: AI ASSISTANT & CONTEXT MEMORY */}
+            <div className="denseTablePanel" style={{ padding: "1.1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "0.75rem" }}>
+                <div>
+                  <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--text-pure)" }}>
+                    🤖 Gemini AI Assistant Configuration
+                  </div>
+                  <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", marginTop: "2px" }}>
+                    Manage model engines, private API keys, and persistent background memory.
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <select
+                    className="techSelect"
+                    value={geminiModel}
+                    onChange={(e) => {
+                      setGeminiModel(e.target.value);
+                      if (e.target.value.includes('3.5')) setGeminiModelLabel("3.5 Flash");
+                      else if (e.target.value.includes('3.6')) setGeminiModelLabel("3.6 Flash");
+                      else if (e.target.value.includes('pro')) setGeminiModelLabel("3.1 Pro");
+                      else setGeminiModelLabel("3.1 Flash-Lite");
+                    }}
+                  >
+                    <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (Default Fast)</option>
+                    <option value="gemini-3.5-flash">gemini-3.5-flash</option>
+                    <option value="gemini-3.6-flash">gemini-3.6-flash</option>
+                    <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (Deep Reasoning)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* API Key Box */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "0.72rem", fontWeight: 600, color: "var(--text-secondary)" }}>
+                  Custom Gemini API Key Override (Optional)
+                </label>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <input
+                    type="password"
+                    className="denseSearchInput"
+                    style={{ flex: 1 }}
+                    placeholder="AQ.Ab8RN6... (uses server key by default)"
+                    value={userApiKey}
+                    onChange={(e) => setUserApiKey(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="actionBtn"
+                    onClick={() => {
+                      saveApiKey(userApiKey);
+                      setContextSaveMsg("API Key updated!");
+                      setTimeout(() => setContextSaveMsg(null), 3000);
+                    }}
+                  >
+                    Save Key
+                  </button>
+                </div>
+              </div>
+
+              {/* EXPANDABLE CONTEXT ACCORDION */}
+              <div style={{ background: "var(--bg-inset)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", overflow: "hidden" }}>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", cursor: "pointer", background: "var(--bg-row)" }}
+                  onClick={() => setContextExpanded(!contextExpanded)}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-pure)" }}>
+                      🧠 Persistent User Memory & Studio Context
+                    </span>
+                    <span style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
+                      ({(userContextData?.principles_and_preferences?.length || 0) + (userContextData?.dynamic_notes?.length || 0)} items recorded)
+                    </span>
+                  </div>
+
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                    {contextExpanded ? "▲ Collapse" : "▼ Expand & Edit"}
+                  </span>
+                </div>
+
+                {contextExpanded && (
+                  <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    {/* Profile Summary */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.5rem", background: "var(--bg-panel)", border: "1px solid var(--border-dim)", borderRadius: "var(--r-sm)", padding: "0.65rem" }}>
+                      <div>
+                        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Name</div>
+                        <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-pure)" }}>{userContextData?.profile?.name || 'Mykyta Solodkyi'}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Location</div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--text-pure)" }}>{userContextData?.profile?.location || 'Warsaw, Poland'}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Education / Studio</div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--text-pure)" }}>{userContextData?.profile?.education || 'PJATK University'}</div>
+                      </div>
+                    </div>
+
+                    {/* Principles & Preferences */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                        Active Principles & Guidelines
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        {(userContextData?.principles_and_preferences || []).map((p, idx) => (
+                          <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", padding: "0.45rem 0.65rem", gap: "0.5rem" }}>
+                            <span style={{ fontSize: "0.74rem", color: "var(--text-pure)", lineHeight: "1.3" }}>
+                              • {p}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePrinciple(idx)}
+                              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "11px", flexShrink: 0 }}
+                              title="Delete from memory"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Add Principle Input */}
+                      <form onSubmit={handleAddPrinciple} style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
+                        <input
+                          type="text"
+                          className="denseSearchInput"
+                          style={{ flex: 1 }}
+                          placeholder="Add new principle (e.g. Always generate typescript types or avoid emojis)..."
+                          value={newPrincipleText}
+                          onChange={e => setNewPrincipleText(e.target.value)}
+                        />
+                        <button type="submit" className="actionBtn">
+                          + Add Rule
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* Dynamic Learned Notes */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                        Dynamic Learned Facts & Dialog Notes
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        {(userContextData?.dynamic_notes || []).map((note, idx) => (
+                          <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", padding: "0.45rem 0.65rem", gap: "0.5rem" }}>
+                            <span style={{ fontSize: "0.74rem", color: "var(--text-pure)", lineHeight: "1.3" }}>
+                              📌 {note}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteNote(idx)}
+                              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "11px", flexShrink: 0 }}
+                              title="Delete note"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                        {(userContextData?.dynamic_notes || []).length === 0 && (
+                          <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontStyle: "italic", padding: "0.4rem 0" }}>
+                            No temporary dialog notes recorded yet. Gemini will silently save or forget details during conversations.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add Dynamic Note Input */}
+                      <form onSubmit={handleAddNote} style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
+                        <input
+                          type="text"
+                          className="denseSearchInput"
+                          style={{ flex: 1 }}
+                          placeholder="Manually add fact or project constraint..."
+                          value={newNoteText}
+                          onChange={e => setNewNoteText(e.target.value)}
+                        />
+                        <button type="submit" className="actionBtn">
+                          + Add Fact
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* SECTION 2: CONNECTED INBOXES & ENVIRONMENT */}
+            <div className="denseTablePanel" style={{ padding: "1.1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--text-pure)" }}>
+                📬 Connected Inboxes & System Timezone
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.5rem" }}>
+                {gmailAccountsList.map((acc, idx) => (
+                  <div key={idx} style={{ background: "var(--bg-inset)", border: "1px solid var(--border-dim)", borderRadius: "var(--r-sm)", padding: "0.55rem 0.75rem" }}>
+                    <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-pure)" }}>{acc.name}</div>
+                    <div style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>{acc.email}</div>
+                    <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginTop: "2px" }}>{acc.desc}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
