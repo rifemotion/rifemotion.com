@@ -326,7 +326,7 @@ body {
   height: 6px;
   border-radius: 50%;
   background-color: var(--acc-green);
-  box-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
+  box-shadow: none;
 }
 
 /* MAIN CANVAS */
@@ -2442,9 +2442,9 @@ body {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.priorityDot.red { background-color: #FF4646; box-shadow: 0 0 6px rgba(255, 70, 70, 0.6); }
-.priorityDot.yellow { background-color: #FFEB66; box-shadow: 0 0 6px rgba(255, 235, 102, 0.6); }
-.priorityDot.green { background-color: #E4FF60; box-shadow: 0 0 6px rgba(228, 255, 96, 0.6); }
+.priorityDot.red { background-color: #FF4646; box-shadow: none; }
+.priorityDot.yellow { background-color: #FFEB66; box-shadow: none; }
+.priorityDot.green { background-color: #E4FF60; box-shadow: none; }
 .priorityDot.grey { background-color: #777777; }
 
 /* MESSAGES TWO COLUMN MASTER-DETAIL GRID */
@@ -4007,7 +4007,7 @@ body {
 .todoCustomCheckbox:checked {
   background: #a36aff !important;
   border-color: #a36aff !important;
-  box-shadow: 0 0 8px rgba(163, 106, 255, 0.4) !important;
+  box-shadow: none;
 }
 
 .todoCustomCheckbox:checked::after {
@@ -4405,9 +4405,17 @@ textarea.gemini-input {
   background: rgba(59, 130, 246, 0.2);
   border-color: #60a5fa;
   color: #ffffff;
-  box-shadow: 0 0 8px rgba(96, 165, 250, 0.25);
+  box-shadow: none;
 }
 
 .msgBodyContent {
   font-family: inherit;
+}
+
+.messageDetailPane::-webkit-scrollbar {
+  width: 5px;
+}
+.messageDetailPane::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
 }

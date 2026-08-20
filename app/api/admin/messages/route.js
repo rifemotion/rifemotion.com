@@ -35,34 +35,35 @@ function stripHtmlJunk(html) {
 
 function formatLinksAsPills(text) {
   if (!text) return '';
-  let cleanText = text.replace(/<((?:https?:\/\/)[^>]+)>/gi, '$1');
+  // Remove standalone tracking/view in browser URLs
+  let cleanText = text
+    .replace(/<((?:https?:\/\/)[^>]+)>/gi, '$1')
+    .replace(/(?:view in browser|unsubscribe|manage notifications)[^\n]*https?:\/\/[^\s<>"']+/gi, '');
+
   const urlRegex = /(https?:\/\/[^\s<>"']+)/gi;
   return cleanText.replace(urlRegex, (url) => {
     return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="emailLinkPill" title="${url}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; vertical-align:-1px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Link</a>`;
   });
 }
 
-// Full AI rewriter: transforms raw email into clean readable executive studio digest
+// Executive rewriter with strict urgency criteria & noise elimination
 async function processEmailWithGemini(subject, sender, rawBody, apiKey) {
   const effectiveKey = apiKey || getGeminiKey();
 
   if (effectiveKey) {
     try {
-      const prompt = `You are an executive studio email parsing engine.
-Your task is to REWRITE and CLEAN this incoming email into a concise, readable, and professional digest.
+      const prompt = `Ты — главный персональный ассистент руководителя студии.
+Твоя задача — проанализировать входящее письмо, отсечь весь шум и выдать максимально четкую, структурированную и полезную информацию (executive summary).
 
-REWRITING RULES (Return STRICT JSON ONLY):
-1. "author": Clean sender name or company/service name (e.g. "Manychat", "Vercel", "Google", "Namecheap", "Lloyd Alvarez"). Max 2 words.
-2. "geminiTitle": Sharp, clean, and informative title in the email's natural language (do NOT force translation if it is in English; if Russian keep Russian, if English keep English). Max 6 words.
-3. "urgency":
-   - "red": Urgent action required, service cancellation, failed deployment, payment issues, security alerts.
-   - "yellow": Maintenance notices, important inquiries, project deadlines.
-   - "green": Verification successful, service restored, payment received.
-   - "grey": Routine notifications, newsletters, marketing.
-4. "cleanBody": Clear, readable, formatted body text.
-   - STRIP ALL JUNK: Remove "Copyright 2026...", "View in browser", office physical addresses, unsubscribe links, duplicate subject headers, tracking fragments.
-   - Retain only the actual meaningful message content.
-   - Keep important URLs clean (e.g. https://vercel.com/help).
+ПРАВИЛА (СТРОГО JSON):
+1. "author": Краткое имя автора или сервиса (например: "Manychat", "Vercel", "Google", "Namecheap", "Lloyd Alvarez"). Максимум 2 слова.
+2. "geminiTitle": Краткий, емкий заголовок в естественном языке письма (без лишних слов и префиксов). Максимум 5-6 слов.
+3. "urgency": СТРОГО по критериям:
+   - "red": Критично, срочно, требует немедленного внимания (ошибка сборки/деплоя, отмена подписки, отклонение платежа, алерт безопасности, срочный запрос клиента).
+   - "yellow": Требует внимания для осведомленности или несрочных действий (новые клиентские брифы, уведомления о плановых работах, запросы, важные обновления).
+   - "grey": Стоящие сообщения, на которые стоит обратить внимание в будущем, но не срочно (квитанции, чеки, подтверждения, полезные дайджесты).
+4. "threadTopic": Нормализованный ключ темы на английском (например: "vercel_deploy_failed", "manychat_subscription", "namecheap_outage").
+5. "cleanBody": Четко структурированное, емкое резюме письма (без "View in browser", без юридических адресов, без дублирования темы). Если в письме есть ключевые действия или ссылки — выдели их понятно.
 
 Email Subject: ${subject}
 Email Sender: ${sender}
@@ -88,12 +89,10 @@ ${rawBody.slice(0, 3000)}`;
             author: parsed.author || sender.split(' ')[0] || sender,
             geminiTitle: parsed.geminiTitle || subject,
             cleanBody: decodeHtmlEntities(parsed.cleanBody || rawBody),
-            urgency: ['red', 'yellow', 'green', 'grey'].includes(parsed.urgency) ? parsed.urgency : 'grey',
-            threadTopic: parsed.threadTopic || subject
+            urgency: ['red', 'yellow', 'grey'].includes(parsed.urgency) ? parsed.urgency : 'grey',
+            threadTopic: (parsed.threadTopic || subject).toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30)
           };
         }
-      } else {
-        console.error("Gemini API HTTP Error:", res.status, await res.text());
       }
     } catch(e) {
       console.error("Gemini email rewriting error:", e);
@@ -105,34 +104,85 @@ ${rawBody.slice(0, 3000)}`;
   const low = (subject + ' ' + rawBody).toLowerCase();
   if (low.includes('cancel') || low.includes('fail') || low.includes('error') || low.includes('отмена') || low.includes('сбой') || low.includes('security') || low.includes('alert')) {
     fallbackUrgency = 'red';
-  } else if (low.includes('warn') || low.includes('update') || low.includes('notice') || low.includes('outage') || low.includes('missing')) {
+  } else if (low.includes('warn') || low.includes('update') || low.includes('notice') || low.includes('outage') || low.includes('inquiry')) {
     fallbackUrgency = 'yellow';
-  } else if (low.includes('success') || low.includes('verified') || low.includes('restored') || low.includes('включена') || low.includes('enabled')) {
-    fallbackUrgency = 'green';
   }
-
-  let cleaned = decodeHtmlEntities(rawBody)
-    .replace(/View in browser/gi, '')
-    .replace(/Copyrights*d{4}[sS]*$/gi, '')
-    .slice(0, 1500);
 
   return {
     author: sender.split(' ')[0] || sender,
     geminiTitle: subject,
-    cleanBody: cleaned,
+    cleanBody: decodeHtmlEntities(rawBody).replace(/View in browser/gi, '').replace(/Copyrights*d{4}[sS]*$/gi, '').slice(0, 1500),
     urgency: fallbackUrgency,
-    threadTopic: subject.toLowerCase().slice(0, 30)
+    threadTopic: subject.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30)
   };
 }
 
-// FETCH REAL GMAIL EMAILS AND PROCESS THEM WITH GEMINI
+// Group individual messages into smart threads by sender + threadTopic
+function groupMessagesIntoThreads(messages) {
+  const threadMap = new Map();
+
+  messages.forEach(msg => {
+    // Group key: same sender email + same threadTopic (or similar subject)
+    const key = `${msg.senderEmail}_${msg.threadTopic || msg.subject}`.toLowerCase();
+    if (!threadMap.has(key)) {
+      threadMap.set(key, {
+        id: msg.id,
+        threadKey: key,
+        platform: msg.platform,
+        from: msg.from,
+        to: msg.to,
+        sender: msg.sender,
+        senderEmail: msg.senderEmail,
+        author: msg.author,
+        account: msg.account,
+        accountEmail: msg.accountEmail,
+        shortTitle: msg.shortTitle,
+        subject: msg.subject,
+        originalSubject: msg.originalSubject,
+        body: msg.body,
+        formattedHtml: msg.formattedHtml,
+        urgency: msg.urgency,
+        threadTopic: msg.threadTopic,
+        read: msg.read,
+        date: msg.date,
+        url: msg.url,
+        threadCount: 1,
+        threadItems: [msg]
+      });
+    } else {
+      const existing = threadMap.get(key);
+      existing.threadCount += 1;
+      existing.threadItems.push(msg);
+
+      // Thread inherits most critical urgency
+      if (msg.urgency === 'red' || existing.urgency === 'red') {
+        existing.urgency = 'red';
+      } else if (msg.urgency === 'yellow' || existing.urgency === 'yellow') {
+        existing.urgency = 'yellow';
+      }
+
+      // Latest date
+      if (new Date(msg.date) > new Date(existing.date)) {
+        existing.date = msg.date;
+        existing.body = msg.body;
+        existing.formattedHtml = msg.formattedHtml;
+        existing.shortTitle = msg.shortTitle;
+      }
+      if (!msg.read) existing.read = false;
+    }
+  });
+
+  return Array.from(threadMap.values());
+}
+
+// FETCH REAL GMAIL EMAILS (LAST 5 PER INBOX/SYNC) AND PROCESS THEM
 async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) {
   if (!accessToken) {
     throw new Error("No Google Access Token found. Please sign in with Google.");
   }
 
-  // 1. Fetch last 20 real message IDs from user's Gmail
-  const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20', {
+  // 1. Fetch last 5 messages as requested
+  const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=5', {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
 
@@ -147,7 +197,7 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) 
 
   const apiKey = userApiKey || getGeminiKey();
 
-  // 2. Fetch full metadata & body for each message
+  // 2. Fetch details for each message
   const detailPromises = messagesList.map(async (item) => {
     try {
       const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${item.id}?format=full`, {
@@ -162,7 +212,6 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) 
       const toHeader = headers.find(h => h.name.toLowerCase() === 'to')?.value || userEmail || '';
       const dateHeader = headers.find(h => h.name.toLowerCase() === 'date')?.value || '';
 
-      // Extract sender display name and email address
       let senderName = fromHeader;
       let senderEmail = fromHeader;
       const fromMatch = fromHeader.match(/^(.*?)\s*<(.+?)>$/);
@@ -171,7 +220,6 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) 
         senderEmail = fromMatch[2].trim();
       }
 
-      // Extract raw body
       let rawText = '';
       if (msg.payload?.parts) {
         const textPart = msg.payload.parts.find(p => p.mimeType === 'text/plain');
@@ -194,7 +242,7 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) 
 
       rawText = decodeHtmlEntities(rawText);
 
-      // Process with Gemini to extract clean human text and clean title
+      // Process with Gemini
       const processed = await processEmailWithGemini(subjectHeader, senderName, rawText, apiKey);
 
       const isUnread = (msg.labelIds || []).includes('UNREAD');
@@ -237,8 +285,8 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) 
     }
   });
 
-  const results = await Promise.all(detailPromises);
-  return results.filter(Boolean);
+  const rawList = (await Promise.all(detailPromises)).filter(Boolean);
+  return groupMessagesIntoThreads(rawList);
 }
 
 export async function GET(request) {
@@ -250,8 +298,6 @@ export async function GET(request) {
   try {
     const db = await getDb();
     let messages = db.messages || [];
-
-    // Filter only real Gmail messages
     messages = messages.filter(m => m.id && m.id.startsWith('gmail_') && !m.id.includes('@'));
 
     return NextResponse.json({ ok: true, messages });

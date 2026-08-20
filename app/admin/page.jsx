@@ -1901,6 +1901,11 @@ export default function AdminDashboardPage() {
                             <img src={platformIcon} alt={msg.platform} style={{ width: "12px", height: "12px", flexShrink: 0 }} />
                             <span style={{ color: "#ffffff", fontWeight: msg.read ? 400 : 600, fontSize: "0.74rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexShrink: 1, minWidth: "90px" }}>
                               {msg.shortTitle || msg.subject}
+                              {msg.threadCount > 1 && (
+                                <span style={{ marginLeft: "4px", background: "rgba(255,255,255,0.12)", color: "#ffffff", padding: "1px 5px", borderRadius: "8px", fontSize: "0.62rem", fontWeight: 700 }}>
+                                  {msg.threadCount}
+                                </span>
+                              )}
                             </span>
                             <span style={{ color: "var(--text-muted)", fontWeight: 300, fontSize: "0.70rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexShrink: 2 }}>
                               {msg.author || cleanAuthorName(msg.sender)}
@@ -1918,7 +1923,7 @@ export default function AdminDashboardPage() {
                   {/* RIGHT: DETAILED MESSAGE READER & INSTANT ACTION PANEL */}
                   <div>
                     {activeMessage ? (
-                      <div className="messageDetailPane">
+                      <div className="messageDetailPane" style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1rem", paddingRight: "0.4rem" }}>
                         <div className="msgDetailHeader">
                           <div>
                             <div className="msgDetailSubject">{activeMessage.shortTitle || activeMessage.subject}</div>
