@@ -505,15 +505,16 @@ export default function AdminDashboardPage() {
           setTodos((prev) => [data.createdTodo, ...prev]);
         }
       } else {
-        setGeminiHistory((prev) => [...prev, { sender: 'ai', text: "Сообщения и база проверены. Все системы в норме." }]);
+        setGeminiHistory((prev) => [...prev, { sender: 'ai', text: "Готово." }]);
       }
     } catch (e) {
       console.error("Gemini frontend error:", e);
+      const isRu = /[а-яА-ЯёЁ]/.test(textToSend);
       setGeminiHistory((prev) => [
         ...prev,
         {
           sender: 'ai',
-          text: "Входящие сообщения по 6 ящикам Gmail и фидбеки под контролем. Проверьте новые сообщения во вкладке Messages & Social."
+          text: isRu ? "Нет связи с сервером. Попробуй еще раз через пару секунд." : "Connection lost. Please try again in a moment."
         }
       ]);
     } finally {
@@ -1402,65 +1403,123 @@ export default function AdminDashboardPage() {
                 <>
                   <div className="geminiBackdropOverlay" onClick={() => setGeminiOpen(false)} />
                   <div className="gemini-glass-menu" onClick={(e) => e.stopPropagation()}>
-                  {/* Header Icon & Greeting */}
-                  <div className="gemini-chat-header">
-                    <div className="gemini-header-left">
-                      <div className="gemini-spark-box">
-                        <img src="/icons/SelfhstColorGoogleGemini.svg" alt="Spark" className="gemini-spark-icon" />
-                      </div>
-                      <h2 className="gemini-greeting">Hey Mykyta, ready to <span className="text-blue-highlight">plan your day?</span></h2>
-                      <span className="gemini-subtitle">Things you can do</span>
-                    </div>
-
-                    <div className="active-model-badge-wrapper" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                      
-                      <div
-                        className="active-model-badge"
-                        onClick={() => setGeminiMenuOpen(!geminiMenuOpen)}
-                      >
-                        {geminiModelLabel}
-                      </div>
-
-                      {geminiMenuOpen && (
-                        <div className="slash-popup" style={{ width: "200px", top: "calc(100% + 6px)", right: 0, bottom: "auto", left: "auto" }}>
-                          <div
-                            className="slash-item"
-                            onClick={() => { setGeminiModel("gemini-3.1-flash-lite"); setGeminiModelLabel("3.1 Flash-Lite"); setGeminiMenuOpen(false); }}
-                          >
-                            <b>3.1 Flash-Lite</b> (Default)
-                          </div>
-                          <div
-                            className="slash-item"
-                            onClick={() => { setGeminiModel("gemini-3.5-flash"); setGeminiModelLabel("3.5 Flash"); setGeminiMenuOpen(false); }}
-                          >
-                            <b>3.5 Flash</b>
-                          </div>
-                          <div
-                            className="slash-item"
-                            onClick={() => { setGeminiModel("gemini-3.6-flash"); setGeminiModelLabel("3.6 Flash"); setGeminiMenuOpen(false); }}
-                          >
-                            <b>3.6 Flash</b>
-                          </div>
-                          <div
-                            className="slash-item"
-                            onClick={() => { setGeminiModel("gemini-3.1-pro"); setGeminiModelLabel("3.1 Pro"); setGeminiMenuOpen(false); }}
-                          >
-                            <b>3.1 Pro</b>
-                          </div>
-                          <div
-                            className="slash-item"
-                            onClick={() => { setGeminiModel("gemini-3.5-pro"); setGeminiModelLabel("3.5 Pro"); setGeminiMenuOpen(false); }}
-                          >
-                            <b>3.5 Pro</b>
-                          </div>
+                  {/* Header Icon & Compact/Full Greeting */}
+                  {geminiHistory.length === 0 && !geminiInput.trim() ? (
+                    <div className="gemini-chat-header">
+                      <div className="gemini-header-left">
+                        <div className="gemini-spark-box">
+                          <img src="/icons/SelfhstColorGoogleGemini.svg" alt="Spark" className="gemini-spark-icon" />
                         </div>
-                      )}
-                    </div>
-                  </div>
+                        <h2 className="gemini-greeting">Hey Mykyta, ready to <span className="text-blue-highlight">plan your day?</span></h2>
+                        <span className="gemini-subtitle">Things you can do</span>
+                      </div>
 
-                  {/* API KEY INPUT ROW IF EXPANDED */}
+                      <div className="active-model-badge-wrapper" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <div
+                          className="active-model-badge"
+                          onClick={() => setGeminiMenuOpen(!geminiMenuOpen)}
+                        >
+                          {geminiModelLabel}
+                        </div>
+
+                        {geminiMenuOpen && (
+                          <div className="slash-popup" style={{ width: "200px", top: "calc(100% + 6px)", right: 0, bottom: "auto", left: "auto" }}>
+                            <div
+                              className="slash-item"
+                              onClick={() => { handleSetDefaultModel("gemini-3.1-flash-lite"); setGeminiMenuOpen(false); }}
+                            >
+                              <b>3.1 Flash-Lite</b> (Default)
+                            </div>
+                            <div
+                              className="slash-item"
+                              onClick={() => { handleSetDefaultModel("gemini-3.5-flash"); setGeminiMenuOpen(false); }}
+                            >
+                              <b>3.5 Flash</b>
+                            </div>
+                            <div
+                              className="slash-item"
+                              onClick={() => { handleSetDefaultModel("gemini-3.6-flash"); setGeminiMenuOpen(false); }}
+                            >
+                              <b>3.6 Flash</b>
+                            </div>
+                            <div
+                              className="slash-item"
+                              onClick={() => { handleSetDefaultModel("gemini-3.1-pro-preview"); setGeminiMenuOpen(false); }}
+                            >
+                              <b>3.1 Pro</b>
+                            </div>
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => setGeminiOpen(false)}
+                          style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "14px", padding: "2px 4px", display: "flex", alignItems: "center" }}
+                          title="Close Gemini"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* COMPACT TOP BAR DURING CHAT */
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.55rem 0.85rem", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                        <img src="/icons/SelfhstColorGoogleGemini.svg" alt="Gemini" style={{ width: "16px", height: "16px" }} />
+                        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#ffffff", letterSpacing: "0.02em" }}>Gemini</span>
+                      </div>
+
+                      <div className="active-model-badge-wrapper" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <div
+                          className="active-model-badge"
+                          onClick={() => setGeminiMenuOpen(!geminiMenuOpen)}
+                        >
+                          {geminiModelLabel}
+                        </div>
+
+                        {geminiMenuOpen && (
+                          <div className="slash-popup" style={{ width: "200px", top: "calc(100% + 6px)", right: 0, bottom: "auto", left: "auto" }}>
+                            <div
+                              className="slash-item"
+                              onClick={() => { handleSetDefaultModel("gemini-3.1-flash-lite"); setGeminiMenuOpen(false); }}
+                            >
+                              <b>3.1 Flash-Lite</b> (Default)
+                            </div>
+                            <div
+                              className="slash-item"
+                              onClick={() => { handleSetDefaultModel("gemini-3.5-flash"); setGeminiMenuOpen(false); }}
+                            >
+                              <b>3.5 Flash</b>
+                            </div>
+                            <div
+                              className="slash-item"
+                              onClick={() => { handleSetDefaultModel("gemini-3.6-flash"); setGeminiMenuOpen(false); }}
+                            >
+                              <b>3.6 Flash</b>
+                            </div>
+                            <div
+                              className="slash-item"
+                              onClick={() => { handleSetDefaultModel("gemini-3.1-pro-preview"); setGeminiMenuOpen(false); }}
+                            >
+                              <b>3.1 Pro</b>
+                            </div>
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => setGeminiOpen(false)}
+                          style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "14px", padding: "2px 4px", display: "flex", alignItems: "center" }}
+                          title="Close Gemini"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Chat History or Action Cards */}
-                  {geminiHistory.length === 0 ? (
+                  {geminiHistory.length === 0 && !geminiInput.trim() ? (
                     <div className="gemini-actions-list">
                       <div
                         className="gemini-action-card"
@@ -1521,7 +1580,7 @@ export default function AdminDashboardPage() {
                       ))}
                       {geminiThinking && (
                         <div className="chat-msg ai" style={{ fontStyle: "italic", opacity: 0.7 }}>
-                          Gemini is analyzing your inboxes and studio database...
+                          Gemini is thinking...
                         </div>
                       )}
                     </div>
@@ -1565,7 +1624,7 @@ export default function AdminDashboardPage() {
                     )}
 
                     <form
-                      className="gemini-input-bar"
+                      className={`gemini-input-bar ${geminiInput.includes('\n') || geminiInput.length > 35 ? 'is-multiline' : ''}`}
                       onSubmit={(e) => {
                         e.preventDefault();
                         handleSendGemini();
@@ -1586,29 +1645,40 @@ export default function AdminDashboardPage() {
                           if (fileEl) fileEl.click();
                         }}
                         title="Attach files or media"
+                        style={{ flexShrink: 0, marginBottom: "2px" }}
                       >
                         <img src="/icons/AddMedia.svg" alt="Plus" style={{ width: "15px", height: "15px" }} />
                       </button>
-                      <input
-                        type="text"
+                      <textarea
                         className="gemini-input"
-                        placeholder="Ask anything"
+                        rows={1}
+                        placeholder="Ask anything..."
                         value={geminiInput}
                         onChange={(e) => {
                           setGeminiInput(e.target.value);
                           if (e.target.value === '/') setGeminiSlashOpen(true);
                           else if (!e.target.value.startsWith('/')) setGeminiSlashOpen(false);
+                          e.target.style.height = 'auto';
+                          e.target.style.height = Math.min(e.target.scrollHeight, 140) + 'px';
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendGemini();
+                            e.target.style.height = '24px';
+                          }
                         }}
                       />
                       <button
                         type="button"
                         className={`btn-input-mic ${isRecordingVoice ? 'recording' : ''}`}
                         onClick={toggleVoiceRecording}
-                        title={isRecordingVoice ? "Listening... click to stop" : "Voice input (Speech-to-text)"}
+                        title={isRecordingVoice ? "Listening... click to stop" : "Voice input"}
+                        style={{ flexShrink: 0, marginBottom: "2px" }}
                       >
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
                       </button>
-                      <button type="submit" className="btn-input-send" title="Send message">
+                      <button type="submit" className="btn-input-send" title="Send message" style={{ flexShrink: 0, marginBottom: "2px" }}>
                         <img src="/icons/MaterialSymbolsArrowUpwardAlt.svg" alt="Send" className="icon-send" />
                       </button>
                     </form>
