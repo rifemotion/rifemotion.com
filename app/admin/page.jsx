@@ -524,6 +524,24 @@ export default function AdminDashboardPage() {
     }
   };
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const acc = params.get('account_connected');
+      const err = params.get('error');
+      if (acc) {
+        setContextSaveMsg(`✓ Successfully connected ${acc}`);
+        setTimeout(() => setContextSaveMsg(null), 4000);
+        fetchConnectedAccounts();
+        window.history.replaceState({}, document.title, '/admin');
+      } else if (err) {
+        setSyncErrorMessage(`Google Connection Error: ${err}`);
+        setTimeout(() => setSyncErrorMessage(null), 6000);
+        window.history.replaceState({}, document.title, '/admin');
+      }
+    }
+  }, []);
+
   const handleDisconnectAccount = async (emailToDisconnect) => {
     if (!confirm(`Disconnect ${emailToDisconnect} from Gmail sync?`)) return;
     try {

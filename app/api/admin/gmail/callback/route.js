@@ -3,18 +3,23 @@ import { getDb, saveDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+function getRedirectUri(req) {
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'rifemotion.com';
+  const proto = req.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
+  return `${proto}://${host}/api/admin/gmail/callback`;
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
-  const origin = new URL(request.url).origin;
 
   if (error || !code) {
     return NextResponse.redirect(new URL(`/admin?error=${encodeURIComponent(error || 'No code returned')}`, request.url));
   }
 
   try {
-    const redirectUri = `${origin}/api/admin/gmail/callback`;
+    const redirectUri = getRedirectUri(request);
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -30,7 +35,8 @@ export async function GET(request) {
     const tokenData = await tokenRes.json();
     if (!tokenRes.ok || !tokenData.access_token) {
       console.error("Token exchange failed:", tokenData);
-      return NextResponse.redirect(new URL('/admin?error=token_exchange_failed', request.url));
+      const errMsg = tokenData.error_description || tokenData.error || 'token_exchange_failed';
+      return NextResponse.redirect(new URL(`/admin?error=${encodeURIComponent(errMsg)}`, request.url));
     }
 
     // Get user email
@@ -42,7 +48,7 @@ export async function GET(request) {
 
     if (email) {
       const db = await getDb();
-      const accounts = db.connectedGmailAccounts || [];
+      const accounts = Array.isArray(db.connectedGmailAccounts) ? [...db.connectedGmailAccounts] : [];
       const existingIdx = accounts.findIndex(a => a.email.toLowerCase() === email);
 
       const accObj = {
@@ -62,7 +68,7 @@ export async function GET(request) {
       await saveDb(db);
     }
 
-    return NextResponse.redirect(new URL('/admin?account_connected=true', request.url));
+    return NextResponse.redirect(new URL(`/admin?account_connected=${encodeURIComponent(email)}`, request.url));
   } catch(err) {
     console.error("Gmail OAuth Callback error:", err);
     return NextResponse.redirect(new URL('/admin?error=server_error', request.url));
