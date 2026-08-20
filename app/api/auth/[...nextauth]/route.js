@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { getDb, saveDb } from "@/lib/db";
 
 async function refreshAccessToken(token) {
   try {
@@ -25,7 +26,7 @@ async function refreshAccessToken(token) {
       ...token,
       accessToken: refreshedTokens.access_token,
       accessTokenExpires: Date.now() + (refreshedTokens.expires_in * 1000),
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
+      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
     console.error("[NextAuth] RefreshAccessTokenError", error);
@@ -70,6 +71,31 @@ export const authOptions = {
           return false;
         }
       }
+
+      // Automatically store/update this account's refresh token in connectedGmailAccounts DB
+      if (user.email && account?.refresh_token) {
+        try {
+          const db = await getDb();
+          const accounts = db.connectedGmailAccounts || [];
+          const existingIdx = accounts.findIndex(a => a.email.toLowerCase() === user.email.toLowerCase());
+          const accObj = {
+            email: user.email.toLowerCase(),
+            name: user.name || user.email,
+            refreshToken: account.refresh_token,
+            updatedAt: Date.now()
+          };
+          if (existingIdx !== -1) {
+            accounts[existingIdx] = { ...accounts[existingIdx], ...accObj };
+          } else {
+            accounts.push(accObj);
+          }
+          db.connectedGmailAccounts = accounts;
+          await saveDb(db);
+        } catch(err) {
+          console.error("Error saving connected gmail account token:", err);
+        }
+      }
+
       return true;
     },
     async jwt({ token, account, user }) {

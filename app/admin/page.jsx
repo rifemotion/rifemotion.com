@@ -1723,12 +1723,23 @@ export default function AdminDashboardPage() {
                   <button
                     type="button"
                     className="actionBtn"
+                    onClick={() => signIn('google', { callbackUrl: '/admin' })}
+                    title="Connect another Gmail account to this unified dashboard"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.72rem", padding: "5px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
+                  >
+                    <img src="/icons/SelfhstGmail.svg" alt="Add" style={{ width: "12px", height: "12px" }} />
+                    <span>+ Connect Account</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="actionBtn active"
                     onClick={handleSyncMessages}
                     disabled={isSyncingMessages}
                     style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.72rem", padding: "5px 12px", opacity: isSyncingMessages ? 0.7 : 1 }}
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: isSyncingMessages ? "spin 1s linear infinite" : "none" }}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                    <span>{isSyncingMessages ? "Syncing with Gemini..." : "Sync Inboxes"}</span>
+                    <span>{isSyncingMessages ? "Syncing with Gemini..." : "Sync All Inboxes"}</span>
                   </button>
 
                   <div style={{ position: "relative", minWidth: "240px" }}>

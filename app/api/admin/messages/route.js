@@ -60,10 +60,30 @@ function normalizeTopicKey(str) {
     .trim();
 }
 
-// Executive rewriter with reply requirement detection
+async function getAccessTokenForRefreshToken(refreshToken) {
+  try {
+    const res = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID || "",
+        client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.access_token || null;
+  } catch(e) {
+    return null;
+  }
+}
+
+// Executive rewriter with C1 English standard
 async function processEmailWithGemini(subject, sender, rawBody, apiKey) {
   const effectiveKey = apiKey || getGeminiKey();
-  const isAuto = /no-?reply|notifications?|alerts?|billing|news|support@|digest|updates@|vercel|manychat|google|namecheap/i.test(sender);
+  const isAuto = /no-?reply|notifications?|alerts?|billing|news|support@|digest|updates@|vercel|manychat|google|namecheap|santander|mbank|allegro/i.test(sender);
 
   if (effectiveKey) {
     try {
@@ -116,7 +136,6 @@ ${rawBody.slice(0, 3000)}`;
     }
   }
 
-  // Fallback
   let fallbackUrgency = 'grey';
   const low = (subject + ' ' + rawBody).toLowerCase();
   if (low.includes('cancel') || low.includes('fail') || low.includes('error') || low.includes('отмена') || low.includes('сбой') || low.includes('security') || low.includes('alert')) {
@@ -138,8 +157,6 @@ ${rawBody.slice(0, 3000)}`;
 // Group individual messages into smart threads by sender + threadTopic
 function groupMessagesIntoThreads(messages) {
   const threadMap = new Map();
-
-  // Sort newest first before grouping
   const sorted = [...messages].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   sorted.forEach(msg => {
@@ -183,7 +200,6 @@ function groupMessagesIntoThreads(messages) {
       });
     } else {
       const existing = threadMap.get(key);
-      // Avoid duplicate sub-items with same date/id
       if (!existing.threadItems.some(item => item.id === msg.id || (Math.abs(new Date(item.date) - new Date(msg.date)) < 10000))) {
         existing.threadCount += 1;
         existing.threadItems.push({
@@ -217,115 +233,106 @@ function groupMessagesIntoThreads(messages) {
   return Array.from(threadMap.values());
 }
 
-// FETCH REAL GMAIL EMAILS (LAST 5 PER INBOX/SYNC) AND PROCESS THEM
-async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) {
-  if (!accessToken) {
-    throw new Error("No Google Access Token found. Please sign in with Google.");
-  }
+// Fetch up to 5 emails for a single given Google account
+async function fetchEmailsForAccount(accessToken, userEmail, apiKey) {
+  try {
+    const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=5', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!listRes.ok) return [];
+    const listData = await listRes.json();
+    const messagesList = listData.messages || [];
+    if (messagesList.length === 0) return [];
 
-  const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=5', {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
+    const detailPromises = messagesList.map(async (item) => {
+      try {
+        const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${item.id}?format=full`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (!msgRes.ok) return null;
+        const msg = await msgRes.json();
 
-  if (!listRes.ok) {
-    const errText = await listRes.text();
-    throw new Error(`Google Gmail API Error (${listRes.status}): ${errText}`);
-  }
+        const headers = msg.payload?.headers || [];
+        const subjectHeader = headers.find(h => h.name.toLowerCase() === 'subject')?.value || '(No Subject)';
+        const fromHeader = headers.find(h => h.name.toLowerCase() === 'from')?.value || 'Unknown Sender';
+        const toHeader = headers.find(h => h.name.toLowerCase() === 'to')?.value || userEmail || '';
+        const dateHeader = headers.find(h => h.name.toLowerCase() === 'date')?.value || '';
 
-  const listData = await listRes.json();
-  const messagesList = listData.messages || [];
-  if (messagesList.length === 0) return [];
-
-  const apiKey = userApiKey || getGeminiKey();
-
-  const detailPromises = messagesList.map(async (item) => {
-    try {
-      const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${item.id}?format=full`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      if (!msgRes.ok) return null;
-      const msg = await msgRes.json();
-
-      const headers = msg.payload?.headers || [];
-      const subjectHeader = headers.find(h => h.name.toLowerCase() === 'subject')?.value || '(No Subject)';
-      const fromHeader = headers.find(h => h.name.toLowerCase() === 'from')?.value || 'Unknown Sender';
-      const toHeader = headers.find(h => h.name.toLowerCase() === 'to')?.value || userEmail || '';
-      const dateHeader = headers.find(h => h.name.toLowerCase() === 'date')?.value || '';
-
-      let senderName = fromHeader;
-      let senderEmail = fromHeader;
-      const fromMatch = fromHeader.match(/^(.*?)\s*<(.+?)>$/);
-      if (fromMatch) {
-        senderName = fromMatch[1].replace(/^["']|["']$/g, '').trim() || fromMatch[2];
-        senderEmail = fromMatch[2].trim();
-      }
-
-      let rawText = '';
-      if (msg.payload?.parts) {
-        const textPart = msg.payload.parts.find(p => p.mimeType === 'text/plain');
-        const htmlPart = msg.payload.parts.find(p => p.mimeType === 'text/html');
-        if (textPart?.body?.data) {
-          try { rawText = Buffer.from(textPart.body.data, 'base64').toString('utf8'); } catch(e) {}
-        } else if (htmlPart?.body?.data) {
-          try { rawText = stripHtmlJunk(Buffer.from(htmlPart.body.data, 'base64').toString('utf8')); } catch(e) {}
+        let senderName = fromHeader;
+        let senderEmail = fromHeader;
+        const fromMatch = fromHeader.match(/^(.*?)\s*<(.+?)>$/);
+        if (fromMatch) {
+          senderName = fromMatch[1].replace(/^["']|["']$/g, '').trim() || fromMatch[2];
+          senderEmail = fromMatch[2].trim();
         }
-      } else if (msg.payload?.body?.data) {
-        try {
-          const decoded = Buffer.from(msg.payload.body.data, 'base64').toString('utf8');
-          rawText = decoded.includes('<html') || decoded.includes('<!DOCTYPE') ? stripHtmlJunk(decoded) : decoded;
-        } catch(e) {}
-      }
 
-      if (!rawText || rawText.includes('<!DOCTYPE') || rawText.includes('<html')) {
-        rawText = stripHtmlJunk(rawText || msg.snippet || '');
-      }
+        let rawText = '';
+        if (msg.payload?.parts) {
+          const textPart = msg.payload.parts.find(p => p.mimeType === 'text/plain');
+          const htmlPart = msg.payload.parts.find(p => p.mimeType === 'text/html');
+          if (textPart?.body?.data) {
+            try { rawText = Buffer.from(textPart.body.data, 'base64').toString('utf8'); } catch(e) {}
+          } else if (htmlPart?.body?.data) {
+            try { rawText = stripHtmlJunk(Buffer.from(htmlPart.body.data, 'base64').toString('utf8')); } catch(e) {}
+          }
+        } else if (msg.payload?.body?.data) {
+          try {
+            const decoded = Buffer.from(msg.payload.body.data, 'base64').toString('utf8');
+            rawText = decoded.includes('<html') || decoded.includes('<!DOCTYPE') ? stripHtmlJunk(decoded) : decoded;
+          } catch(e) {}
+        }
 
-      rawText = decodeHtmlEntities(rawText);
+        if (!rawText || rawText.includes('<!DOCTYPE') || rawText.includes('<html')) {
+          rawText = stripHtmlJunk(rawText || msg.snippet || '');
+        }
 
-      const processed = await processEmailWithGemini(subjectHeader, senderName, rawText, apiKey);
+        rawText = decodeHtmlEntities(rawText);
 
-      const isUnread = (msg.labelIds || []).includes('UNREAD');
+        const processed = await processEmailWithGemini(subjectHeader, senderName, rawText, apiKey);
+        const isUnread = (msg.labelIds || []).includes('UNREAD');
 
-      let parsedDate = new Date().toISOString();
-      if (dateHeader) {
-        try { parsedDate = new Date(dateHeader).toISOString(); } catch(e) {
+        let parsedDate = new Date().toISOString();
+        if (dateHeader) {
+          try { parsedDate = new Date(dateHeader).toISOString(); } catch(e) {
+            parsedDate = new Date(parseInt(msg.internalDate, 10)).toISOString();
+          }
+        } else if (msg.internalDate) {
           parsedDate = new Date(parseInt(msg.internalDate, 10)).toISOString();
         }
-      } else if (msg.internalDate) {
-        parsedDate = new Date(parseInt(msg.internalDate, 10)).toISOString();
+
+        const formattedHtml = formatLinksAsPills(processed.cleanBody);
+
+        return {
+          id: `gmail_${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}_${msg.id}`,
+          platform: 'gmail',
+          from: fromHeader,
+          to: toHeader,
+          sender: processed.author || senderName,
+          senderEmail: senderEmail,
+          author: processed.author || senderName,
+          account: toHeader || userEmail,
+          accountEmail: userEmail,
+          shortTitle: processed.geminiTitle,
+          subject: processed.geminiTitle,
+          originalSubject: subjectHeader,
+          body: processed.cleanBody,
+          formattedHtml: formattedHtml,
+          urgency: processed.urgency,
+          threadTopic: processed.threadTopic,
+          requiresReply: processed.requiresReply,
+          read: !isUnread,
+          date: parsedDate,
+          url: `https://mail.google.com/mail/u/0/#inbox/${msg.id}`
+        };
+      } catch(err) {
+        return null;
       }
+    });
 
-      const formattedHtml = formatLinksAsPills(processed.cleanBody);
-
-      return {
-        id: `gmail_${msg.id}`,
-        platform: 'gmail',
-        from: fromHeader,
-        to: toHeader,
-        sender: processed.author || senderName,
-        senderEmail: senderEmail,
-        author: processed.author || senderName,
-        account: toHeader || userEmail,
-        accountEmail: userEmail,
-        shortTitle: processed.geminiTitle,
-        subject: processed.geminiTitle,
-        originalSubject: subjectHeader,
-        body: processed.cleanBody,
-        formattedHtml: formattedHtml,
-        urgency: processed.urgency,
-        threadTopic: processed.threadTopic,
-        requiresReply: processed.requiresReply,
-        read: !isUnread,
-        date: parsedDate,
-        url: `https://mail.google.com/mail/u/0/#inbox/${msg.id}`
-      };
-    } catch(err) {
-      console.error(`Error processing email ${item.id}:`, err);
-      return null;
-    }
-  });
-
-  return (await Promise.all(detailPromises)).filter(Boolean);
+    return (await Promise.all(detailPromises)).filter(Boolean);
+  } catch(e) {
+    return [];
+  }
 }
 
 export async function GET(request) {
@@ -340,7 +347,13 @@ export async function GET(request) {
     rawMessages = rawMessages.filter(m => m.id && m.id.startsWith('gmail_') && !m.id.includes('@'));
 
     const grouped = groupMessagesIntoThreads(rawMessages);
-    return NextResponse.json({ ok: true, messages: grouped });
+    const connectedAccounts = (db.connectedGmailAccounts || []).map(a => a.email);
+
+    return NextResponse.json({
+      ok: true,
+      messages: grouped,
+      connectedAccounts: Array.from(new Set([session.user.email, ...connectedAccounts]))
+    });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -352,13 +365,6 @@ export async function POST(request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!session.accessToken) {
-    return NextResponse.json({
-      ok: false,
-      error: "No active Google Access Token. Please sign out and sign in with Google to grant Gmail API access."
-    }, { status: 403 });
-  }
-
   try {
     let reqApiKey = "";
     try {
@@ -366,23 +372,46 @@ export async function POST(request) {
       if (body && body.apiKey) reqApiKey = body.apiKey;
     } catch(e) {}
 
-    const realMessages = await fetchAndProcessGmailMessages(session.accessToken, session.user.email, reqApiKey);
-
-    // Consolidate and group into strict unique threads
-    const grouped = groupMessagesIntoThreads(realMessages);
-
+    const apiKey = reqApiKey || getGeminiKey();
     const db = await getDb();
+    const allFetched = [];
+
+    // 1. Fetch current session inbox
+    if (session.accessToken) {
+      const sessionMsgs = await fetchEmailsForAccount(session.accessToken, session.user.email, apiKey);
+      allFetched.push(...sessionMsgs);
+    }
+
+    // 2. Fetch all other connected accounts from Cloudflare KV
+    const connectedAccounts = db.connectedGmailAccounts || [];
+    for (const acc of connectedAccounts) {
+      if (acc.email.toLowerCase() !== session.user.email.toLowerCase() && acc.refreshToken) {
+        const freshToken = await getAccessTokenForRefreshToken(acc.refreshToken);
+        if (freshToken) {
+          const accMsgs = await fetchEmailsForAccount(freshToken, acc.email, apiKey);
+          allFetched.push(...accMsgs);
+        }
+      }
+    }
+
+    // 3. Merge with existing messages in DB
+    const existing = db.messages || [];
+    const mergedMap = new Map();
+    existing.forEach(m => mergedMap.set(m.id, m));
+    allFetched.forEach(m => mergedMap.set(m.id, m));
+
+    const grouped = groupMessagesIntoThreads(Array.from(mergedMap.values()));
     db.messages = grouped;
     await saveDb(db);
 
     return NextResponse.json({
       ok: true,
       messages: grouped,
-      syncedCount: grouped.length,
-      userEmail: session.user.email
+      syncedCount: allFetched.length,
+      connectedAccounts: Array.from(new Set([session.user.email, ...connectedAccounts.map(a => a.email)]))
     });
   } catch (error) {
-    console.error("Gmail Sync Error:", error);
+    console.error("Gmail Multi-Sync Error:", error);
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 }
