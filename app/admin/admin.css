@@ -3977,3 +3977,82 @@ body {
   color: var(--text-pure) !important;
   border-color: var(--border-medium) !important;
 }
+
+
+/* ========================================================================= */
+/* CUSTOM TECHNICAL CHECKBOX & TO-DO MICRO-ANIMATIONS                        */
+/* ========================================================================= */
+
+.todoCustomCheckbox {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 15px !important;
+  height: 15px !important;
+  background: var(--bg-inset) !important;
+  border: 1px solid var(--border-medium) !important;
+  border-radius: 3px !important;
+  cursor: pointer !important;
+  position: relative !important;
+  outline: none !important;
+  transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s ease, box-shadow 0.18s ease !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+}
+
+.todoCustomCheckbox:hover {
+  border-color: var(--border-focus) !important;
+  background: var(--bg-row) !important;
+}
+
+.todoCustomCheckbox:checked {
+  background: #a36aff !important;
+  border-color: #a36aff !important;
+  box-shadow: 0 0 8px rgba(163, 106, 255, 0.4) !important;
+}
+
+.todoCustomCheckbox:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 4px !important;
+  top: 1px !important;
+  width: 4px !important;
+  height: 8px !important;
+  border: solid white !important;
+  border-width: 0 1.5px 1.5px 0 !important;
+  transform: rotate(45deg) scale(1) !important;
+  animation: checkPop 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes checkPop {
+  0% { transform: rotate(45deg) scale(0.6); opacity: 0; }
+  100% { transform: rotate(45deg) scale(1); opacity: 1; }
+}
+
+.todoCard {
+  transition: background-color 0.18s ease, border-color 0.18s ease, opacity 0.22s ease !important;
+}
+
+.todoCard:hover {
+  border-color: var(--border-medium) !important;
+  background-color: var(--bg-row) !important;
+}
+
+.todoCard.completed {
+  opacity: 0.5 !important;
+}
+
+/* COMPACT MESSAGE FEED ITEMS */
+.msgCardItem {
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+  padding: 0.55rem 0.75rem !important;
+  min-height: unset !important;
+}
+
+.msgCardItem:hover {
+  background-color: var(--bg-row) !important;
+}
+
+.msgCardItem.selected {
+  background-color: var(--bg-row-selected) !important;
+  border-left: 2px solid var(--border-focus) !important;
+}

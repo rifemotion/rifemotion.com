@@ -1,5 +1,35 @@
 "use client";
 
+function formatRelativeMessageDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - d;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHours = Math.floor(diffMin / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 30) return `${diffDays}d ago`;
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = months[d.getMonth()];
+  const isSameYear = d.getFullYear() === now.getFullYear();
+
+  if (isSameYear) {
+    return `${day}:${month}`;
+  } else {
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${day}:${month}:${yy}`;
+  }
+}
+
+
+
 function renderFormattedMessage(text) {
   if (!text) return null;
   const lines = text.split('\n');
@@ -1581,7 +1611,7 @@ export default function AdminDashboardPage() {
                   className={`channelPillBtn ${selectedChannel === 'twitter' ? 'active' : ''}`}
                   onClick={() => { setSelectedChannel('twitter'); setSelectedGmailAccount('all'); }}
                 >
-                  <img src="/icons/DeviconTwitter.svg" alt="Twitter" style={{ width: "13px", height: "13px" }} />
+                  <img src="/icons/DeviconTwitter.svg" alt="Twitter" style={{ width: "10px", height: "10px", opacity: 0.85 }} />
                   <span>Twitter / X</span>
                 </button>
 
@@ -1655,18 +1685,17 @@ export default function AdminDashboardPage() {
                               }
                             }}
                           >
-                            <div className="msgCardTop">
-                              <div className="msgCardSenderWrap">
-                                <span className={`priorityDot ${msg.urgency || 'grey'}`} />
-                                <img src={platformIcon} alt={msg.platform} style={{ width: "12px", height: "12px" }} />
-                                <span className="msgCardSender">{msg.sender}</span>
-                                {msg.account && <span className="msgCardAccount">({msg.account})</span>}
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "0.5rem" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "7px", overflow: "hidden" }}>
+                                <span className={`priorityDot ${msg.urgency || 'grey'}`} style={{ flexShrink: 0 }} />
+                                <span className="msgCardSender" style={{ fontSize: "0.76rem", fontWeight: msg.read ? 500 : 700, color: msg.read ? "var(--text-secondary)" : "var(--text-pure)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {msg.sender}
+                                </span>
                               </div>
-                              <span className="msgCardDate">{formatAdminDate(msg.date)}</span>
+                              <span className="msgCardDate" style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)", flexShrink: 0 }}>
+                                {formatRelativeMessageDate(msg.date)}
+                              </span>
                             </div>
-
-                            <div className="msgCardSubject">{msg.subject}</div>
-                            <div className="msgCardSnippet">{msg.body}</div>
                           </div>
                         );
                       })
@@ -1839,9 +1868,9 @@ export default function AdminDashboardPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <input
                         type="checkbox"
+                        className="todoCustomCheckbox"
                         checked={item.completed}
                         onChange={() => handleToggleTodo(item.id, item.completed)}
-                        style={{ width: "14px", height: "14px", accentColor: "#a36aff", cursor: "pointer" }}
                       />
                       <span style={{ fontSize: "0.65rem", fontFamily: "var(--font-mono)", background: "var(--bg-row)", border: "1px solid var(--border-dim)", padding: "2px 6px", borderRadius: "3px", color: "var(--text-secondary)" }}>
                         {item.category || 'General'}
