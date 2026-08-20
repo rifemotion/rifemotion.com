@@ -1375,12 +1375,12 @@ export default function AdminDashboardPage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", paddingBottom: "0.65rem", borderBottom: "1px solid var(--border-subtle)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <h1 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--text-pure)", letterSpacing: "-0.01em", margin: 0 }}>
-              {activeTab === "messages" && "Messages & Social Hub"}
-              {activeTab === "todos" && "Tasks & Project To-Do Hub"}
-              {activeTab === "feedback" && "User Database & Telemetry"}
-              {activeTab === "dispatch" && "Broadcast & Notifications"}
-              {activeTab === "status" && "System Health & Telemetry"}
-              {activeTab === "settings" && "Studio Settings & AI Knowledge Base"}
+              {activeTab === "messages" && "Messages"}
+              {activeTab === "todos" && "To-Do List"}
+              {activeTab === "feedback" && "User Database"}
+              {activeTab === "dispatch" && "Broadcast Notice"}
+              {activeTab === "status" && "System Telemetry"}
+              {activeTab === "settings" && "Settings"}
             </h1>
           </div>
 
@@ -3260,28 +3260,23 @@ export default function AdminDashboardPage() {
         {/* VIEW: DASHBOARD SETTINGS & AI CONTEXT KNOWLEDGE BASE                      */}
         {/* ========================================================================= */}
         {activeTab === "settings" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
             {contextSaveMsg && (
-              <div style={{ marginBottom: "0.5rem" }}>
-                <span style={{ fontSize: "0.74rem", color: "#4ade80", background: "rgba(74, 222, 128, 0.1)", border: "1px solid rgba(74, 222, 128, 0.3)", padding: "3px 8px", borderRadius: "4px" }}>
+              <div>
+                <span style={{ fontSize: "0.72rem", color: "#4ade80", background: "rgba(74, 222, 128, 0.1)", border: "1px solid rgba(74, 222, 128, 0.25)", padding: "3px 8px", borderRadius: "3px" }}>
                   ✓ {contextSaveMsg}
                 </span>
               </div>
             )}
 
-            {/* SECTION 1: AI ASSISTANT & CONTEXT MEMORY */}
-            <div className="denseTablePanel" style={{ padding: "1.1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "0.75rem" }}>
-                <div>
-                  <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--text-pure)" }}>
-                    🤖 Gemini AI Assistant Configuration
-                  </div>
-                  <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", marginTop: "2px" }}>
-                    Manage model engines, private API keys, and persistent background memory.
-                  </div>
-                </div>
+            {/* SECTION 1: AI ASSISTANT & MEMORY CONTEXT */}
+            <div className="denseTablePanel" style={{ padding: "0.9rem 1rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "0.6rem" }}>
+                <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-pure)" }}>
+                  AI Assistant
+                </span>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <select
                     className="techSelect"
                     value={geminiModel}
@@ -3293,186 +3288,122 @@ export default function AdminDashboardPage() {
                       else setGeminiModelLabel("3.1 Flash-Lite");
                     }}
                   >
-                    <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (Default Fast)</option>
+                    <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (Default)</option>
                     <option value="gemini-3.5-flash">gemini-3.5-flash</option>
                     <option value="gemini-3.6-flash">gemini-3.6-flash</option>
-                    <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (Deep Reasoning)</option>
+                    <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (Pro)</option>
                   </select>
                 </div>
               </div>
 
-              {/* API Key Box */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "0.72rem", fontWeight: 600, color: "var(--text-secondary)" }}>
-                  Custom Gemini API Key Override (Optional)
-                </label>
-                <div style={{ display: "flex", gap: "6px" }}>
-                  <input
-                    type="password"
-                    className="denseSearchInput"
-                    style={{ flex: 1 }}
-                    placeholder="AQ.Ab8RN6... (uses server key by default)"
-                    value={userApiKey}
-                    onChange={(e) => setUserApiKey(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="actionBtn"
-                    onClick={() => {
-                      saveApiKey(userApiKey);
-                      setContextSaveMsg("API Key updated!");
-                      setTimeout(() => setContextSaveMsg(null), 3000);
-                    }}
-                  >
-                    Save Key
-                  </button>
-                </div>
+              {/* API Key Row */}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)", minWidth: "100px" }}>
+                  API Key Override:
+                </span>
+                <input
+                  type="password"
+                  className="denseSearchInput"
+                  style={{ flex: 1, minWidth: "200px" }}
+                  placeholder="AQ.Ab8RN6... (uses server key by default)"
+                  value={userApiKey}
+                  onChange={(e) => setUserApiKey(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="actionBtn"
+                  onClick={() => {
+                    saveApiKey(userApiKey);
+                    setContextSaveMsg("API Key updated");
+                    setTimeout(() => setContextSaveMsg(null), 3000);
+                  }}
+                >
+                  Save Key
+                </button>
               </div>
 
-              {/* EXPANDABLE CONTEXT ACCORDION */}
+              {/* 1-ROW ACCORDION FOR CONTEXT MEMORY */}
               <div style={{ background: "var(--bg-inset)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", overflow: "hidden" }}>
                 <div
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", cursor: "pointer", background: "var(--bg-row)" }}
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.6rem 0.85rem", cursor: "pointer", background: "var(--bg-row)" }}
                   onClick={() => setContextExpanded(!contextExpanded)}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-pure)" }}>
-                      🧠 Persistent User Memory & Studio Context
+                    <span style={{ fontSize: "0.76rem", fontWeight: 600, color: "var(--text-pure)" }}>
+                      AI Context Memory
                     </span>
                     <span style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
-                      ({(userContextData?.principles_and_preferences?.length || 0) + (userContextData?.dynamic_notes?.length || 0)} items recorded)
+                      ({(userContextData?.principles_and_preferences?.length || 0)} items)
                     </span>
                   </div>
 
-                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                    {contextExpanded ? "▲ Collapse" : "▼ Expand & Edit"}
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                    {contextExpanded ? "▲ Collapse" : "▼ Expand"}
                   </span>
                 </div>
 
                 {contextExpanded && (
-                  <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-                    {/* Profile Summary */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.5rem", background: "var(--bg-panel)", border: "1px solid var(--border-dim)", borderRadius: "var(--r-sm)", padding: "0.65rem" }}>
-                      <div>
-                        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Name</div>
-                        <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-pure)" }}>{userContextData?.profile?.name || 'Mykyta Solodkyi'}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Location</div>
-                        <div style={{ fontSize: "0.75rem", color: "var(--text-pure)" }}>{userContextData?.profile?.location || 'Warsaw, Poland'}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Education / Studio</div>
-                        <div style={{ fontSize: "0.75rem", color: "var(--text-pure)" }}>{userContextData?.profile?.education || 'PJATK University'}</div>
-                      </div>
+                  <div style={{ padding: "0.85rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      {(userContextData?.principles_and_preferences || []).map((item, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", padding: "0.4rem 0.65rem", gap: "0.5rem" }}>
+                          <span style={{ fontSize: "0.73rem", color: "var(--text-pure)", lineHeight: "1.35" }}>
+                            {item}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePrinciple(idx)}
+                            style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "11px", flexShrink: 0, padding: "2px 4px" }}
+                            title="Delete"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+
+                      {(userContextData?.principles_and_preferences || []).length === 0 && (
+                        <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontStyle: "italic", padding: "0.3rem 0" }}>
+                          No context items recorded. Add items below or let Gemini learn during conversations.
+                        </div>
+                      )}
                     </div>
 
-                    {/* Principles & Preferences */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                      <div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.03em" }}>
-                        Active Principles & Guidelines
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        {(userContextData?.principles_and_preferences || []).map((p, idx) => (
-                          <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", padding: "0.45rem 0.65rem", gap: "0.5rem" }}>
-                            <span style={{ fontSize: "0.74rem", color: "var(--text-pure)", lineHeight: "1.3" }}>
-                              • {p}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleDeletePrinciple(idx)}
-                              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "11px", flexShrink: 0 }}
-                              title="Delete from memory"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Add Principle Input */}
-                      <form onSubmit={handleAddPrinciple} style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
-                        <input
-                          type="text"
-                          className="denseSearchInput"
-                          style={{ flex: 1 }}
-                          placeholder="Add new principle (e.g. Always generate typescript types or avoid emojis)..."
-                          value={newPrincipleText}
-                          onChange={e => setNewPrincipleText(e.target.value)}
-                        />
-                        <button type="submit" className="actionBtn">
-                          + Add Rule
-                        </button>
-                      </form>
-                    </div>
-
-                    {/* Dynamic Learned Notes */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                      <div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.03em" }}>
-                        Dynamic Learned Facts & Dialog Notes
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        {(userContextData?.dynamic_notes || []).map((note, idx) => (
-                          <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", padding: "0.45rem 0.65rem", gap: "0.5rem" }}>
-                            <span style={{ fontSize: "0.74rem", color: "var(--text-pure)", lineHeight: "1.3" }}>
-                              📌 {note}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteNote(idx)}
-                              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "11px", flexShrink: 0 }}
-                              title="Delete note"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                        {(userContextData?.dynamic_notes || []).length === 0 && (
-                          <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontStyle: "italic", padding: "0.4rem 0" }}>
-                            No temporary dialog notes recorded yet. Gemini will silently save or forget details during conversations.
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Add Dynamic Note Input */}
-                      <form onSubmit={handleAddNote} style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
-                        <input
-                          type="text"
-                          className="denseSearchInput"
-                          style={{ flex: 1 }}
-                          placeholder="Manually add fact or project constraint..."
-                          value={newNoteText}
-                          onChange={e => setNewNoteText(e.target.value)}
-                        />
-                        <button type="submit" className="actionBtn">
-                          + Add Fact
-                        </button>
-                      </form>
-                    </div>
+                    {/* Add Context Item Form */}
+                    <form onSubmit={handleAddPrinciple} style={{ display: "flex", gap: "6px", marginTop: "2px" }}>
+                      <input
+                        type="text"
+                        className="denseSearchInput"
+                        style={{ flex: 1 }}
+                        placeholder="Add new context rule or fact..."
+                        value={newPrincipleText}
+                        onChange={e => setNewPrincipleText(e.target.value)}
+                      />
+                      <button type="submit" className="actionBtn">
+                        + Add
+                      </button>
+                    </form>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* SECTION 2: CONNECTED INBOXES & ENVIRONMENT */}
-            <div className="denseTablePanel" style={{ padding: "1.1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-              <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--text-pure)" }}>
-                📬 Connected Inboxes & System Timezone
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.5rem" }}>
+            {/* SECTION 2: SYSTEM & INBOXES */}
+            <div className="denseTablePanel" style={{ padding: "0.9rem 1rem", display: "flex", flexDirection: "column", gap: "0.65rem" }}>
+              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-pure)" }}>
+                Connected Inboxes
+              </span>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "0.5rem" }}>
                 {gmailAccountsList.map((acc, idx) => (
-                  <div key={idx} style={{ background: "var(--bg-inset)", border: "1px solid var(--border-dim)", borderRadius: "var(--r-sm)", padding: "0.55rem 0.75rem" }}>
-                    <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-pure)" }}>{acc.name}</div>
+                  <div key={idx} style={{ background: "var(--bg-inset)", border: "1px solid var(--border-dim)", borderRadius: "var(--r-sm)", padding: "0.5rem 0.7rem", display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <div style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text-pure)" }}>{acc.name}</div>
                     <div style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>{acc.email}</div>
-                    <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginTop: "2px" }}>{acc.desc}</div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
         )}
-
-      </main>
+            </main>
 
       {/* MOBILE SLIDE-OUT DRAWER */}
       {mobileMenuOpen && (
