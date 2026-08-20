@@ -210,7 +210,7 @@ export default function AdminDashboardPage() {
     ],
     dynamic_notes: []
   });
-  const [contextExpanded, setContextExpanded] = useState(true);
+  const [contextExpanded, setContextExpanded] = useState(false);
   const [newPrincipleText, setNewPrincipleText] = useState("");
   const [newNoteText, setNewNoteText] = useState("");
   const [contextSaveMsg, setContextSaveMsg] = useState(null);
@@ -421,8 +421,35 @@ export default function AdminDashboardPage() {
   // GEMINI AI CHAT STATE & HANDLERS
   // ==========================================
   const [geminiOpen, setGeminiOpen] = useState(false);
-  const [geminiModel, setGeminiModel] = useState("gemini-3.1-flash-lite");
-  const [geminiModelLabel, setGeminiModelLabel] = useState("3.1 Flash-Lite");
+  const [geminiModel, setGeminiModel] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('rifemotion_default_model') || "gemini-3.1-flash-lite";
+    }
+    return "gemini-3.1-flash-lite";
+  });
+  const [geminiModelLabel, setGeminiModelLabel] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const m = localStorage.getItem('rifemotion_default_model') || "gemini-3.1-flash-lite";
+      if (m.includes('3.5')) return "3.5 Flash";
+      if (m.includes('3.6')) return "3.6 Flash";
+      if (m.includes('pro')) return "3.1 Pro";
+      return "3.1 Flash-Lite";
+    }
+    return "3.1 Flash-Lite";
+  });
+
+  const handleSetDefaultModel = (m) => {
+    setGeminiModel(m);
+    if (m.includes('3.5')) setGeminiModelLabel("3.5 Flash");
+    else if (m.includes('3.6')) setGeminiModelLabel("3.6 Flash");
+    else if (m.includes('pro')) setGeminiModelLabel("3.1 Pro");
+    else setGeminiModelLabel("3.1 Flash-Lite");
+    try {
+      localStorage.setItem('rifemotion_default_model', m);
+      setContextSaveMsg("Default model updated to " + m);
+      setTimeout(() => setContextSaveMsg(null), 2500);
+    } catch(e) {}
+  };
   const [geminiMenuOpen, setGeminiMenuOpen] = useState(false);
   const [geminiInput, setGeminiInput] = useState("");
   const [geminiHistory, setGeminiHistory] = useState([]);
@@ -3269,7 +3296,7 @@ export default function AdminDashboardPage() {
               </div>
             )}
 
-            {/* SECTION 1: AI ASSISTANT & MEMORY CONTEXT */}
+            {/* AI ASSISTANT SETTINGS */}
             <div className="denseTablePanel" style={{ padding: "0.9rem 1rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "0.6rem" }}>
                 <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-pure)" }}>
@@ -3277,16 +3304,11 @@ export default function AdminDashboardPage() {
                 </span>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>Default Model:</span>
                   <select
                     className="techSelect"
                     value={geminiModel}
-                    onChange={(e) => {
-                      setGeminiModel(e.target.value);
-                      if (e.target.value.includes('3.5')) setGeminiModelLabel("3.5 Flash");
-                      else if (e.target.value.includes('3.6')) setGeminiModelLabel("3.6 Flash");
-                      else if (e.target.value.includes('pro')) setGeminiModelLabel("3.1 Pro");
-                      else setGeminiModelLabel("3.1 Flash-Lite");
-                    }}
+                    onChange={(e) => handleSetDefaultModel(e.target.value)}
                   >
                     <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (Default)</option>
                     <option value="gemini-3.5-flash">gemini-3.5-flash</option>
@@ -3314,15 +3336,15 @@ export default function AdminDashboardPage() {
                   className="actionBtn"
                   onClick={() => {
                     saveApiKey(userApiKey);
-                    setContextSaveMsg("API Key updated");
-                    setTimeout(() => setContextSaveMsg(null), 3000);
+                    setContextSaveMsg("API Key saved");
+                    setTimeout(() => setContextSaveMsg(null), 2500);
                   }}
                 >
                   Save Key
                 </button>
               </div>
 
-              {/* 1-ROW ACCORDION FOR CONTEXT MEMORY */}
+              {/* 1-ROW EXPANDABLE CONTEXT */}
               <div style={{ background: "var(--bg-inset)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", overflow: "hidden" }}>
                 <div
                   style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.6rem 0.85rem", cursor: "pointer", background: "var(--bg-row)" }}
@@ -3363,7 +3385,7 @@ export default function AdminDashboardPage() {
 
                       {(userContextData?.principles_and_preferences || []).length === 0 && (
                         <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontStyle: "italic", padding: "0.3rem 0" }}>
-                          No context items recorded. Add items below or let Gemini learn during conversations.
+                          No custom context items yet. Add your facts or rules below.
                         </div>
                       )}
                     </div>
@@ -3384,21 +3406,6 @@ export default function AdminDashboardPage() {
                     </form>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* SECTION 2: SYSTEM & INBOXES */}
-            <div className="denseTablePanel" style={{ padding: "0.9rem 1rem", display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-pure)" }}>
-                Connected Inboxes
-              </span>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "0.5rem" }}>
-                {gmailAccountsList.map((acc, idx) => (
-                  <div key={idx} style={{ background: "var(--bg-inset)", border: "1px solid var(--border-dim)", borderRadius: "var(--r-sm)", padding: "0.5rem 0.7rem", display: "flex", flexDirection: "column", gap: "2px" }}>
-                    <div style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text-pure)" }}>{acc.name}</div>
-                    <div style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>{acc.email}</div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
