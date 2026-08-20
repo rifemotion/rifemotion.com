@@ -45,11 +45,25 @@ function formatLinksAsPills(text) {
   });
 }
 
+function normalizeTopicKey(str) {
+  if (!str) return 'general';
+  return str
+    .toLowerCase()
+    .replace(/rifemotion/g, '')
+    .replace(/подписка|subscription/g, 'sub')
+    .replace(/отменена|истекла|expired|cancelled|cancellation/g, 'cancel')
+    .replace(/деплой|deployment|deploy/g, 'deploy')
+    .replace(/сбой|failed|failure|error/g, 'fail')
+    .replace(/диалоги|conversions|dms/g, 'dms')
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .trim();
+}
+
 // Executive rewriter with reply requirement detection
 async function processEmailWithGemini(subject, sender, rawBody, apiKey) {
   const effectiveKey = apiKey || getGeminiKey();
-
-  const isAutomatedSender = /no-?reply|notifications?|alerts?|billing|news|support@|digest|updates@/i.test(sender);
+  const isAuto = /no-?reply|notifications?|alerts?|billing|news|support@|digest|updates@|vercel|manychat|google|namecheap/i.test(sender);
 
   if (effectiveKey) {
     try {
@@ -61,7 +75,7 @@ async function processEmailWithGemini(subject, sender, rawBody, apiKey) {
 2. "geminiTitle": Краткий, емкий заголовок в естественном языке письма. Максимум 5-6 слов.
 3. "urgency": "red" (критично/срочно: ошибка деплоя, отмена подписки, сбой оплаты, алерт) | "yellow" (внимание/осведомленность: клиентский бриф, техработы, запрос) | "grey" (полезно в будущем: квитанция, дайджест).
 4. "threadTopic": Нормализованный ключ темы на английском (например: "vercel_deploy", "manychat_sub", "namecheap_status").
-5. "requiresReply": boolean (true ТОЛЬКО если это письмо от живого человека/клиента, требующее ответа; false если это автоматическое системное уведомление, робот, рассылка, чек или отчет).
+5. "requiresReply": boolean (false если это системное уведомление/робот/рассылка; true ТОЛЬКО если это письмо от живого человека/клиента, требующее ответа).
 6. "cleanBody": Четко структурированное, емкое резюме письма (без юридических адресов, футеров и повторов тем).
 
 Email Subject: ${subject}
@@ -89,8 +103,8 @@ ${rawBody.slice(0, 3000)}`;
             geminiTitle: parsed.geminiTitle || subject,
             cleanBody: decodeHtmlEntities(parsed.cleanBody || rawBody),
             urgency: ['red', 'yellow', 'grey'].includes(parsed.urgency) ? parsed.urgency : 'grey',
-            threadTopic: (parsed.threadTopic || subject).toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30),
-            requiresReply: typeof parsed.requiresReply === 'boolean' ? parsed.requiresReply : !isAutomatedSender
+            threadTopic: normalizeTopicKey(parsed.threadTopic || subject),
+            requiresReply: typeof parsed.requiresReply === 'boolean' ? parsed.requiresReply : !isAuto
           };
         }
       }
@@ -113,8 +127,8 @@ ${rawBody.slice(0, 3000)}`;
     geminiTitle: subject,
     cleanBody: decodeHtmlEntities(rawBody).replace(/View in browser/gi, '').replace(/Copyrights*d{4}[sS]*$/gi, '').slice(0, 1500),
     urgency: fallbackUrgency,
-    threadTopic: subject.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30),
-    requiresReply: !isAutomatedSender
+    threadTopic: normalizeTopicKey(subject),
+    requiresReply: !isAuto
   };
 }
 
@@ -122,28 +136,34 @@ ${rawBody.slice(0, 3000)}`;
 function groupMessagesIntoThreads(messages) {
   const threadMap = new Map();
 
-  messages.forEach(msg => {
-    const key = `${msg.senderEmail}_${msg.threadTopic || msg.subject}`.toLowerCase();
+  // Sort newest first before grouping
+  const sorted = [...messages].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  sorted.forEach(msg => {
+    const normSender = (msg.senderEmail || msg.sender || 'unknown').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normTopic = normalizeTopicKey(msg.threadTopic || msg.shortTitle || msg.subject);
+    const key = `${normSender}_${normTopic}`;
+
     if (!threadMap.has(key)) {
       threadMap.set(key, {
         id: msg.id,
         threadKey: key,
-        platform: msg.platform,
-        from: msg.from,
-        to: msg.to,
+        platform: msg.platform || 'gmail',
+        from: msg.from || msg.sender,
+        to: msg.to || msg.accountEmail,
         sender: msg.sender,
         senderEmail: msg.senderEmail,
-        author: msg.author,
-        account: msg.account,
+        author: msg.author || msg.sender,
+        account: msg.account || msg.to,
         accountEmail: msg.accountEmail,
-        shortTitle: msg.shortTitle,
-        subject: msg.subject,
-        originalSubject: msg.originalSubject,
+        shortTitle: msg.shortTitle || msg.subject,
+        subject: msg.subject || msg.shortTitle,
+        originalSubject: msg.originalSubject || msg.subject,
         body: msg.body,
-        formattedHtml: msg.formattedHtml,
-        urgency: msg.urgency,
-        threadTopic: msg.threadTopic,
-        requiresReply: msg.requiresReply,
+        formattedHtml: msg.formattedHtml || formatLinksAsPills(msg.body),
+        urgency: msg.urgency || 'grey',
+        threadTopic: normTopic,
+        requiresReply: msg.requiresReply !== undefined ? msg.requiresReply : !/no-?reply|notifications?|alerts?|billing|news|support@|digest|updates@|vercel|manychat|google|namecheap/i.test(msg.senderEmail || msg.sender),
         read: msg.read,
         date: msg.date,
         url: msg.url,
@@ -153,23 +173,26 @@ function groupMessagesIntoThreads(messages) {
           date: msg.date,
           subject: msg.shortTitle || msg.subject,
           body: msg.body,
-          formattedHtml: msg.formattedHtml,
-          from: msg.from,
-          to: msg.to
+          formattedHtml: msg.formattedHtml || formatLinksAsPills(msg.body),
+          from: msg.from || msg.sender,
+          to: msg.to || msg.accountEmail
         }]
       });
     } else {
       const existing = threadMap.get(key);
-      existing.threadCount += 1;
-      existing.threadItems.push({
-        id: msg.id,
-        date: msg.date,
-        subject: msg.shortTitle || msg.subject,
-        body: msg.body,
-        formattedHtml: msg.formattedHtml,
-        from: msg.from,
-        to: msg.to
-      });
+      // Avoid duplicate sub-items with same date/id
+      if (!existing.threadItems.some(item => item.id === msg.id || (Math.abs(new Date(item.date) - new Date(msg.date)) < 10000))) {
+        existing.threadCount += 1;
+        existing.threadItems.push({
+          id: msg.id,
+          date: msg.date,
+          subject: msg.shortTitle || msg.subject,
+          body: msg.body,
+          formattedHtml: msg.formattedHtml || formatLinksAsPills(msg.body),
+          from: msg.from || msg.sender,
+          to: msg.to || msg.accountEmail
+        });
+      }
 
       if (msg.urgency === 'red' || existing.urgency === 'red') {
         existing.urgency = 'red';
@@ -180,8 +203,8 @@ function groupMessagesIntoThreads(messages) {
       if (new Date(msg.date) > new Date(existing.date)) {
         existing.date = msg.date;
         existing.body = msg.body;
-        existing.formattedHtml = msg.formattedHtml;
-        existing.shortTitle = msg.shortTitle;
+        existing.formattedHtml = msg.formattedHtml || formatLinksAsPills(msg.body);
+        existing.shortTitle = msg.shortTitle || msg.subject;
         existing.requiresReply = msg.requiresReply;
       }
       if (!msg.read) existing.read = false;
@@ -299,8 +322,7 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) 
     }
   });
 
-  const rawList = (await Promise.all(detailPromises)).filter(Boolean);
-  return groupMessagesIntoThreads(rawList);
+  return (await Promise.all(detailPromises)).filter(Boolean);
 }
 
 export async function GET(request) {
@@ -311,10 +333,11 @@ export async function GET(request) {
 
   try {
     const db = await getDb();
-    let messages = db.messages || [];
-    messages = messages.filter(m => m.id && m.id.startsWith('gmail_') && !m.id.includes('@'));
+    let rawMessages = db.messages || [];
+    rawMessages = rawMessages.filter(m => m.id && m.id.startsWith('gmail_') && !m.id.includes('@'));
 
-    return NextResponse.json({ ok: true, messages });
+    const grouped = groupMessagesIntoThreads(rawMessages);
+    return NextResponse.json({ ok: true, messages: grouped });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -342,30 +365,17 @@ export async function POST(request) {
 
     const realMessages = await fetchAndProcessGmailMessages(session.accessToken, session.user.email, reqApiKey);
 
+    // Consolidate and group into strict unique threads
+    const grouped = groupMessagesIntoThreads(realMessages);
+
     const db = await getDb();
-    
-    // MERGE newly synced messages with existing messages from other inboxes (by threadKey / id)
-    const existingMessages = db.messages || [];
-    const mergedMap = new Map();
-
-    existingMessages.forEach(m => {
-      if (m.threadKey) mergedMap.set(m.threadKey, m);
-      else mergedMap.set(m.id, m);
-    });
-
-    realMessages.forEach(m => {
-      if (m.threadKey) mergedMap.set(m.threadKey, m);
-      else mergedMap.set(m.id, m);
-    });
-
-    const finalMessages = Array.from(mergedMap.values());
-    db.messages = finalMessages;
+    db.messages = grouped;
     await saveDb(db);
 
     return NextResponse.json({
       ok: true,
-      messages: finalMessages,
-      syncedCount: realMessages.length,
+      messages: grouped,
+      syncedCount: grouped.length,
       userEmail: session.user.email
     });
   } catch (error) {
