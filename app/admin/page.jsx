@@ -1903,19 +1903,6 @@ export default function AdminDashboardPage() {
         {/* ========================================================================= */}
         {activeTab === "todos" && (
           <div>
-            <div className="viewHeader">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                <h1 className="viewTitle">Studio Tasks & Goals</h1>
-                <button
-                  type="button"
-                  className="mobileMenuToggleBtn"
-                  onClick={() => setMobileMenuOpen(true)}
-                  aria-label="Open Navigation Menu"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                </button>
-              </div>
-            </div>
 
             {/* DENSE TOP TOOLBAR (MATCHES USER DATABASE STYLE) */}
             <div className="denseToolbar">
@@ -2178,19 +2165,6 @@ export default function AdminDashboardPage() {
         {/* ========================================================================= */}
         {activeTab === "feedback" && (
           <div>
-            <div className="viewHeader">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                <h1 className="viewTitle">User Database</h1>
-                <button
-                  type="button"
-                  className="mobileMenuToggleBtn"
-                  onClick={() => setMobileMenuOpen(true)}
-                  aria-label="Open Navigation Menu"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                </button>
-              </div>
-            </div>
 
             {/* DENSE TOP TOOLBAR */}
             <div className="denseToolbar">
@@ -3284,16 +3258,13 @@ export default function AdminDashboardPage() {
         {/* ========================================================================= */}
         {activeTab === "settings" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div className="viewHeader">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                <h1 className="viewTitle">Studio Settings & AI Knowledge Base</h1>
-                {contextSaveMsg && (
-                  <span style={{ fontSize: "0.74rem", color: "#4ade80", background: "rgba(74, 222, 128, 0.1)", border: "1px solid rgba(74, 222, 128, 0.3)", padding: "3px 8px", borderRadius: "4px" }}>
-                    ✓ {contextSaveMsg}
-                  </span>
-                )}
+            {contextSaveMsg && (
+              <div style={{ marginBottom: "0.5rem" }}>
+                <span style={{ fontSize: "0.74rem", color: "#4ade80", background: "rgba(74, 222, 128, 0.1)", border: "1px solid rgba(74, 222, 128, 0.3)", padding: "3px 8px", borderRadius: "4px" }}>
+                  ✓ {contextSaveMsg}
+                </span>
               </div>
-            </div>
+            )}
 
             {/* SECTION 1: AI ASSISTANT & CONTEXT MEMORY */}
             <div className="denseTablePanel" style={{ padding: "1.1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
