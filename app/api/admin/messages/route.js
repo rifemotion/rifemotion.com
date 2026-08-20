@@ -35,7 +35,6 @@ function stripHtmlJunk(html) {
 
 function formatLinksAsPills(text) {
   if (!text) return '';
-  // Remove standalone tracking/view in browser URLs
   let cleanText = text
     .replace(/<((?:https?:\/\/)[^>]+)>/gi, '$1')
     .replace(/(?:view in browser|unsubscribe|manage notifications)[^\n]*https?:\/\/[^\s<>"']+/gi, '');
@@ -46,24 +45,24 @@ function formatLinksAsPills(text) {
   });
 }
 
-// Executive rewriter with strict urgency criteria & noise elimination
+// Executive rewriter with reply requirement detection
 async function processEmailWithGemini(subject, sender, rawBody, apiKey) {
   const effectiveKey = apiKey || getGeminiKey();
+
+  const isAutomatedSender = /no-?reply|notifications?|alerts?|billing|news|support@|digest|updates@/i.test(sender);
 
   if (effectiveKey) {
     try {
       const prompt = `Ты — главный персональный ассистент руководителя студии.
-Твоя задача — проанализировать входящее письмо, отсечь весь шум и выдать максимально четкую, структурированную и полезную информацию (executive summary).
+Проанализируй входящее письмо, отсеки весь шум и выдай четкую структурированную информацию.
 
 ПРАВИЛА (СТРОГО JSON):
 1. "author": Краткое имя автора или сервиса (например: "Manychat", "Vercel", "Google", "Namecheap", "Lloyd Alvarez"). Максимум 2 слова.
-2. "geminiTitle": Краткий, емкий заголовок в естественном языке письма (без лишних слов и префиксов). Максимум 5-6 слов.
-3. "urgency": СТРОГО по критериям:
-   - "red": Критично, срочно, требует немедленного внимания (ошибка сборки/деплоя, отмена подписки, отклонение платежа, алерт безопасности, срочный запрос клиента).
-   - "yellow": Требует внимания для осведомленности или несрочных действий (новые клиентские брифы, уведомления о плановых работах, запросы, важные обновления).
-   - "grey": Стоящие сообщения, на которые стоит обратить внимание в будущем, но не срочно (квитанции, чеки, подтверждения, полезные дайджесты).
-4. "threadTopic": Нормализованный ключ темы на английском (например: "vercel_deploy_failed", "manychat_subscription", "namecheap_outage").
-5. "cleanBody": Четко структурированное, емкое резюме письма (без "View in browser", без юридических адресов, без дублирования темы). Если в письме есть ключевые действия или ссылки — выдели их понятно.
+2. "geminiTitle": Краткий, емкий заголовок в естественном языке письма. Максимум 5-6 слов.
+3. "urgency": "red" (критично/срочно: ошибка деплоя, отмена подписки, сбой оплаты, алерт) | "yellow" (внимание/осведомленность: клиентский бриф, техработы, запрос) | "grey" (полезно в будущем: квитанция, дайджест).
+4. "threadTopic": Нормализованный ключ темы на английском (например: "vercel_deploy", "manychat_sub", "namecheap_status").
+5. "requiresReply": boolean (true ТОЛЬКО если это письмо от живого человека/клиента, требующее ответа; false если это автоматическое системное уведомление, робот, рассылка, чек или отчет).
+6. "cleanBody": Четко структурированное, емкое резюме письма (без юридических адресов, футеров и повторов тем).
 
 Email Subject: ${subject}
 Email Sender: ${sender}
@@ -90,7 +89,8 @@ ${rawBody.slice(0, 3000)}`;
             geminiTitle: parsed.geminiTitle || subject,
             cleanBody: decodeHtmlEntities(parsed.cleanBody || rawBody),
             urgency: ['red', 'yellow', 'grey'].includes(parsed.urgency) ? parsed.urgency : 'grey',
-            threadTopic: (parsed.threadTopic || subject).toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30)
+            threadTopic: (parsed.threadTopic || subject).toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30),
+            requiresReply: typeof parsed.requiresReply === 'boolean' ? parsed.requiresReply : !isAutomatedSender
           };
         }
       }
@@ -99,7 +99,7 @@ ${rawBody.slice(0, 3000)}`;
     }
   }
 
-  // Smart fallback
+  // Fallback
   let fallbackUrgency = 'grey';
   const low = (subject + ' ' + rawBody).toLowerCase();
   if (low.includes('cancel') || low.includes('fail') || low.includes('error') || low.includes('отмена') || low.includes('сбой') || low.includes('security') || low.includes('alert')) {
@@ -113,7 +113,8 @@ ${rawBody.slice(0, 3000)}`;
     geminiTitle: subject,
     cleanBody: decodeHtmlEntities(rawBody).replace(/View in browser/gi, '').replace(/Copyrights*d{4}[sS]*$/gi, '').slice(0, 1500),
     urgency: fallbackUrgency,
-    threadTopic: subject.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30)
+    threadTopic: subject.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30),
+    requiresReply: !isAutomatedSender
   };
 }
 
@@ -122,7 +123,6 @@ function groupMessagesIntoThreads(messages) {
   const threadMap = new Map();
 
   messages.forEach(msg => {
-    // Group key: same sender email + same threadTopic (or similar subject)
     const key = `${msg.senderEmail}_${msg.threadTopic || msg.subject}`.toLowerCase();
     if (!threadMap.has(key)) {
       threadMap.set(key, {
@@ -143,30 +143,46 @@ function groupMessagesIntoThreads(messages) {
         formattedHtml: msg.formattedHtml,
         urgency: msg.urgency,
         threadTopic: msg.threadTopic,
+        requiresReply: msg.requiresReply,
         read: msg.read,
         date: msg.date,
         url: msg.url,
         threadCount: 1,
-        threadItems: [msg]
+        threadItems: [{
+          id: msg.id,
+          date: msg.date,
+          subject: msg.shortTitle || msg.subject,
+          body: msg.body,
+          formattedHtml: msg.formattedHtml,
+          from: msg.from,
+          to: msg.to
+        }]
       });
     } else {
       const existing = threadMap.get(key);
       existing.threadCount += 1;
-      existing.threadItems.push(msg);
+      existing.threadItems.push({
+        id: msg.id,
+        date: msg.date,
+        subject: msg.shortTitle || msg.subject,
+        body: msg.body,
+        formattedHtml: msg.formattedHtml,
+        from: msg.from,
+        to: msg.to
+      });
 
-      // Thread inherits most critical urgency
       if (msg.urgency === 'red' || existing.urgency === 'red') {
         existing.urgency = 'red';
       } else if (msg.urgency === 'yellow' || existing.urgency === 'yellow') {
         existing.urgency = 'yellow';
       }
 
-      // Latest date
       if (new Date(msg.date) > new Date(existing.date)) {
         existing.date = msg.date;
         existing.body = msg.body;
         existing.formattedHtml = msg.formattedHtml;
         existing.shortTitle = msg.shortTitle;
+        existing.requiresReply = msg.requiresReply;
       }
       if (!msg.read) existing.read = false;
     }
@@ -181,7 +197,6 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) 
     throw new Error("No Google Access Token found. Please sign in with Google.");
   }
 
-  // 1. Fetch last 5 messages as requested
   const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=5', {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
@@ -197,7 +212,6 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) 
 
   const apiKey = userApiKey || getGeminiKey();
 
-  // 2. Fetch details for each message
   const detailPromises = messagesList.map(async (item) => {
     try {
       const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${item.id}?format=full`, {
@@ -242,7 +256,6 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) 
 
       rawText = decodeHtmlEntities(rawText);
 
-      // Process with Gemini
       const processed = await processEmailWithGemini(subjectHeader, senderName, rawText, apiKey);
 
       const isUnread = (msg.labelIds || []).includes('UNREAD');
@@ -275,6 +288,7 @@ async function fetchAndProcessGmailMessages(accessToken, userEmail, userApiKey) 
         formattedHtml: formattedHtml,
         urgency: processed.urgency,
         threadTopic: processed.threadTopic,
+        requiresReply: processed.requiresReply,
         read: !isUnread,
         date: parsedDate,
         url: `https://mail.google.com/mail/u/0/#inbox/${msg.id}`
@@ -329,12 +343,28 @@ export async function POST(request) {
     const realMessages = await fetchAndProcessGmailMessages(session.accessToken, session.user.email, reqApiKey);
 
     const db = await getDb();
-    db.messages = realMessages;
+    
+    // MERGE newly synced messages with existing messages from other inboxes (by threadKey / id)
+    const existingMessages = db.messages || [];
+    const mergedMap = new Map();
+
+    existingMessages.forEach(m => {
+      if (m.threadKey) mergedMap.set(m.threadKey, m);
+      else mergedMap.set(m.id, m);
+    });
+
+    realMessages.forEach(m => {
+      if (m.threadKey) mergedMap.set(m.threadKey, m);
+      else mergedMap.set(m.id, m);
+    });
+
+    const finalMessages = Array.from(mergedMap.values());
+    db.messages = finalMessages;
     await saveDb(db);
 
     return NextResponse.json({
       ok: true,
-      messages: realMessages,
+      messages: finalMessages,
       syncedCount: realMessages.length,
       userEmail: session.user.email
     });
