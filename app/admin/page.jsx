@@ -501,6 +501,8 @@ export default function AdminDashboardPage() {
   };
   const [geminiMenuOpen, setGeminiMenuOpen] = useState(false);
   const [geminiInput, setGeminiInput] = useState("");
+  const chatEndRef = useRef(null);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [geminiHistory, geminiThinking]);
   const [geminiHistory, setGeminiHistory] = useState([]);
   const [geminiThinking, setGeminiThinking] = useState(false);
   const [geminiSlashOpen, setGeminiSlashOpen] = useState(false);
@@ -735,9 +737,29 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (data && data.reply) {
         setGeminiHistory((prev) => [...prev, { sender: 'ai', text: data.reply }]);
+        
         if (data.createdTodo) {
           setTodos((prev) => [data.createdTodo, ...prev]);
         }
+        if (data.triggersReorganize) {
+          setContextSaveMsg("⏳ Reorganizing all database messages... This might take a minute.");
+          fetch('/api/admin/messages/reorganize', { method: 'POST' })
+            .then(r => r.json())
+            .then(res => {
+              if (res.ok) {
+                setContextSaveMsg("✓ Database fully reorganized! Restarting app...");
+                setTimeout(() => window.location.reload(), 2000);
+              } else {
+                setContextSaveMsg("⚠️ Reorganization failed.");
+                setTimeout(() => setContextSaveMsg(null), 3000);
+              }
+            })
+            .catch(() => {
+              setContextSaveMsg("⚠️ Reorganization network error.");
+              setTimeout(() => setContextSaveMsg(null), 3000);
+            });
+        }
+
       } else {
         setGeminiHistory((prev) => [...prev, { sender: 'ai', text: "Готово." }]);
       }
@@ -1695,6 +1717,7 @@ export default function AdminDashboardPage() {
                           Gemini is thinking...
                         </div>
                       )}
+                      <div ref={chatEndRef} />
                     </div>
                   )}
 
@@ -2026,6 +2049,21 @@ export default function AdminDashboardPage() {
                               {formatRelativeMessageDate(msg.date)}
                             </span>
                             <span className={`priorityDot ${msg.urgency || 'grey'}`} style={{ flexShrink: 0, marginLeft: "2px" }} />
+
+                            {/* MOBILE INLINE ACCORDION */}
+                            {isSelected && (
+                              <div className="mobileInlineDetail" style={{ width: "100%", marginTop: "10px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "10px" }}>
+                                <div style={{ fontSize: "0.78rem", color: "#e5e5e5", lineHeight: "1.65", overflowWrap: "break-word" }}
+                                     dangerouslySetInnerHTML={{ __html: activeMessage.formattedHtml || activeMessage.body }}
+                                />
+                                {activeMessage.url && (
+                                  <a href={activeMessage.url} target="_blank" className="channelPillBtn active" style={{ display: "inline-block", marginTop: "10px", fontSize: "0.7rem", padding: "0.3rem 0.6rem" }}>
+                                    Open in GMAIL ↗
+                                  </a>
+                                )}
+                              </div>
+                            )}
+
                           </div>
                         );
                       })
@@ -2041,7 +2079,7 @@ export default function AdminDashboardPage() {
                         );
 
                       return (
-                        <div className="messageDetailPane" style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1rem", paddingRight: "0.4rem" }}>
+                        <div className="messageDetailPane desktopOnlyPane" style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1rem", paddingRight: "0.4rem" }}>
                           <div className="msgDetailHeader">
                             <div>
                               <div className="msgDetailSubject">{activeMessage.shortTitle || activeMessage.subject}</div>

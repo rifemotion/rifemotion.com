@@ -114,6 +114,9 @@ TASK AUTOMATION & TITLES (STRICT RULES):
   * STRICTLY NO colons (двоеточия ':') and NO ampersands ('&').
   * For action tasks: Clear, direct imperative guidance (e.g. 'Помыть посуду', 'Забрать выписку в банке Santander', 'Отрендерить правки сцены 4 для клиента').
   * For meetings & reminders: Clear event description with person, location, and time (e.g. 'Встреча в кафе Green Caffe Nero в 15:00 с клиентом', 'Позвонить в деканат PJATK').
+
+- If the user asks to "reorganize", "переорганизовать", "re-evaluate", or "overwrite" the existing emails/messages in the database to fix formatting, append:
+[TRIGGER_REORGANIZE]
 - If explicitly asked to schedule, remind, or create a task, append:
 [CREATE_TODO: {"title": "Четкое название задачи на русском без двоеточий", "details": "Подробности или пусто", "type": "short"|"long", "category": "Client"|"Banking"|"Motion"|"Personal"|"General", "timeMode": "deadline"|"interval", "deadline": "15:00", "reminder": "30m", "timeFrom": "14:00", "timeTo": "16:30"}]`;
 
@@ -179,6 +182,13 @@ TASK AUTOMATION & TITLES (STRICT RULES):
     let candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Empty response from model.";
 
     // 1. Process [CREATE_TODO: ...] (WITH STRICT DEDUPLICATION AND UPDATING)
+    
+    let triggersReorganize = false;
+    if (candidateText.includes('[TRIGGER_REORGANIZE]')) {
+      triggersReorganize = true;
+      candidateText = candidateText.replace(/\[TRIGGER_REORGANIZE\]/g, '').trim();
+    }
+
     let createdTodo = null;
     const todoMatch = candidateText.match(/\[CREATE_TODO:\s*({[\s\S]*?})\]/);
     if (todoMatch && todoMatch[1]) {
@@ -272,7 +282,8 @@ TASK AUTOMATION & TITLES (STRICT RULES):
     return NextResponse.json({
       ok: true,
       reply: candidateText,
-      createdTodo
+      createdTodo,
+      triggersReorganize
     });
 
   } catch (error) {

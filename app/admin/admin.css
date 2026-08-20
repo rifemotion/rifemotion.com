@@ -4447,3 +4447,25 @@ textarea.gemini-input {
   stroke: currentColor;
   fill: none;
 }
+
+/* Mobile Accordion overrides */
+.msgCardItem {
+  display: flex;
+  flex-wrap: wrap; /* allow inline detail to break to new line */
+}
+.mobileInlineDetail {
+  display: none;
+}
+@media (max-width: 768px) {
+  .desktopOnlyPane {
+    display: none !important;
+  }
+  .mobileInlineDetail {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
+  }
+  .messagesFeedCol {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+  }
+}
