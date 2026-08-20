@@ -416,38 +416,6 @@ export default function AdminDashboardPage() {
   // SPEECH RECOGNITION (VOICE INPUT)
   // ==========================================
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
-  const [isSyncingMessages, setIsSyncingMessages] = useState(false);
-
-  const fetchMessagesFromApi = async () => {
-    try {
-      const res = await fetch('/api/admin/messages');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ok && Array.isArray(data.messages)) {
-          setSocialMessages(data.messages);
-        }
-      }
-    } catch(e) {
-      console.error("Error fetching messages:", e);
-    }
-  };
-
-  const handleSyncMessages = async () => {
-    setIsSyncingMessages(true);
-    try {
-      const res = await fetch('/api/admin/messages', { method: 'POST' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ok && Array.isArray(data.messages)) {
-          setSocialMessages(data.messages);
-        }
-      }
-    } catch(e) {
-      console.error("Error syncing messages:", e);
-    } finally {
-      setIsSyncingMessages(false);
-    }
-  };
   const recognitionRef = useRef(null);
 
   const toggleVoiceRecording = () => {
@@ -538,6 +506,40 @@ export default function AdminDashboardPage() {
   const [geminiSlashOpen, setGeminiSlashOpen] = useState(false);
   const [geminiAttachments, setGeminiAttachments] = useState([]);
   const [userApiKey, setUserApiKey] = useState("");
+  const [isSyncingMessages, setIsSyncingMessages] = useState(false);
+  const [syncErrorMessage, setSyncErrorMessage] = useState(null);
+
+  const fetchMessagesFromApi = async () => {
+    try {
+      const res = await fetch('/api/admin/messages');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.messages)) {
+          setSocialMessages(data.messages);
+        }
+      }
+    } catch(e) {
+      console.error("Error fetching messages:", e);
+    }
+  };
+
+  const handleSyncMessages = async () => {
+    setIsSyncingMessages(true);
+    setSyncErrorMessage(null);
+    try {
+      const res = await fetch('/api/admin/messages', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.messages)) {
+        setSocialMessages(data.messages);
+      } else if (data.error) {
+        setSyncErrorMessage(data.error);
+      }
+    } catch(e) {
+      setSyncErrorMessage("Network error connecting to Gmail API");
+    } finally {
+      setIsSyncingMessages(false);
+    }
+  };
   const [showKeyInput, setShowKeyInput] = useState(false);
 
   useEffect(() => {
