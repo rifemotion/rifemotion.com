@@ -3843,24 +3843,27 @@ export default function AdminDashboardPage() {
         {/* VIEW: DASHBOARD SETTINGS & AI CONTEXT KNOWLEDGE BASE                      */}
         {/* ========================================================================= */}
         {activeTab === "settings" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: "860px" }}>
             {contextSaveMsg && (
               <div>
-                <span style={{ fontSize: "0.72rem", color: "#4ade80", background: "rgba(74, 222, 128, 0.1)", border: "1px solid rgba(74, 222, 128, 0.25)", padding: "3px 8px", borderRadius: "3px" }}>
+                <span style={{ fontSize: "0.72rem", color: "#4ade80", background: "rgba(74, 222, 128, 0.1)", border: "1px solid rgba(74, 222, 128, 0.25)", padding: "4px 10px", borderRadius: "4px", fontWeight: 600 }}>
                   ✓ {contextSaveMsg}
                 </span>
               </div>
             )}
 
-            {/* AI ASSISTANT SETTINGS */}
-            <div className="denseTablePanel" style={{ padding: "0.9rem 1rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "0.6rem" }}>
-                <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-pure)" }}>
-                  AI Assistant
-                </span>
+            {/* AI ASSISTANT SETTINGS PANEL */}
+            <div style={{ background: "var(--bg-panel, #131316)", border: "1px solid var(--border-subtle, rgba(255,255,255,0.08))", borderRadius: "6px", padding: "1.2rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle, rgba(255,255,255,0.08))", paddingBottom: "0.75rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <img src="/icons/MingcuteGoogleGeminiFill.svg" alt="AI" style={{ width: "15px", height: "15px", opacity: 0.9 }} />
+                  <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-pure, #ffffff)", letterSpacing: "-0.01em" }}>
+                    AI Assistant Preferences
+                  </span>
+                </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>Default Model:</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-secondary, #a3a3a3)" }}>Default Model:</span>
                   <select
                     className="techSelect"
                     value={geminiModel}
@@ -3874,16 +3877,16 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {/* API Key Row */}
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)", minWidth: "100px" }}>
+              {/* API Key Override Row */}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "0.72rem", color: "var(--text-secondary, #a3a3a3)", minWidth: "120px" }}>
                   API Key Override:
                 </span>
                 <input
                   type="password"
                   className="denseSearchInput"
-                  style={{ flex: 1, minWidth: "200px" }}
-                  placeholder="AQ.Ab8RN6... (uses server key by default)"
+                  style={{ flex: 1, minWidth: "220px" }}
+                  placeholder="AQ.Ab8RN6... (uses server environment key by default)"
                   value={userApiKey}
                   onChange={(e) => setUserApiKey(e.target.value)}
                 />
@@ -3900,61 +3903,61 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
 
-              {/* 1-ROW EXPANDABLE CONTEXT */}
-              <div style={{ background: "var(--bg-inset)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", overflow: "hidden" }}>
+              {/* 1-ROW ACCORDION FOR CONTEXT MEMORY */}
+              <div style={{ background: "#0e0e11", border: "1px solid var(--border-subtle, rgba(255,255,255,0.08))", borderRadius: "5px", overflow: "hidden" }}>
                 <div
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.6rem 0.85rem", cursor: "pointer", background: "var(--bg-row)" }}
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.7rem 0.9rem", cursor: "pointer", background: "rgba(255, 255, 255, 0.03)", transition: "background 0.15s ease" }}
                   onClick={() => setContextExpanded(!contextExpanded)}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ fontSize: "0.76rem", fontWeight: 600, color: "var(--text-pure)" }}>
+                    <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-pure, #ffffff)" }}>
                       AI Context Memory
                     </span>
-                    <span style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
-                      ({(userContextData?.principles_and_preferences?.length || 0)} items)
+                    <span style={{ fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted, #737373)", background: "rgba(255,255,255,0.06)", padding: "1px 6px", borderRadius: "3px" }}>
+                      {(userContextData?.items?.length || 0)} items
                     </span>
                   </div>
 
-                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-secondary, #a3a3a3)" }}>
                     {contextExpanded ? "▲ Collapse" : "▼ Expand"}
                   </span>
                 </div>
 
                 {contextExpanded && (
-                  <div style={{ padding: "0.85rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                  <div style={{ padding: "0.9rem", display: "flex", flexDirection: "column", gap: "0.75rem", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                      {(userContextData?.principles_and_preferences || []).map((item, idx) => (
-                        <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-sm)", padding: "0.4rem 0.65rem", gap: "0.5rem" }}>
-                          <span style={{ fontSize: "0.73rem", color: "var(--text-pure)", lineHeight: "1.35" }}>
+                      {(userContextData?.items || []).map((item, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)", borderRadius: "4px", padding: "0.45rem 0.75rem", gap: "0.5rem" }}>
+                          <span style={{ fontSize: "0.74rem", color: "#e5e5e5", lineHeight: "1.4" }}>
                             {item}
                           </span>
                           <button
                             type="button"
-                            onClick={() => handleDeletePrinciple(idx)}
-                            style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "11px", flexShrink: 0, padding: "2px 4px" }}
-                            title="Delete"
+                            onClick={() => handleDeleteContextItem(idx)}
+                            style={{ background: "none", border: "none", color: "var(--text-muted, #737373)", cursor: "pointer", fontSize: "12px", flexShrink: 0, padding: "2px 6px" }}
+                            title="Delete item"
                           >
                             ✕
                           </button>
                         </div>
                       ))}
 
-                      {(userContextData?.principles_and_preferences || []).length === 0 && (
-                        <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", fontStyle: "italic", padding: "0.3rem 0" }}>
-                          No custom context items yet. Add your facts or rules below.
+                      {(userContextData?.items || []).length === 0 && (
+                        <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #737373)", fontStyle: "italic", padding: "0.4rem 0" }}>
+                          No personal facts recorded. Add details below or let Gemini remember them during conversations.
                         </div>
                       )}
                     </div>
 
                     {/* Add Context Item Form */}
-                    <form onSubmit={handleAddPrinciple} style={{ display: "flex", gap: "6px", marginTop: "2px" }}>
+                    <form onSubmit={handleAddContextItem} style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
                       <input
                         type="text"
                         className="denseSearchInput"
                         style={{ flex: 1 }}
-                        placeholder="Add new context rule or fact..."
-                        value={newPrincipleText}
-                        onChange={e => setNewPrincipleText(e.target.value)}
+                        placeholder="Add personal fact, preference, or project constraint..."
+                        value={newContextItemText}
+                        onChange={e => setNewContextItemText(e.target.value)}
                       />
                       <button type="submit" className="actionBtn">
                         + Add
@@ -3966,7 +3969,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         )}
-            </main>
+      </main>
 
       {/* MOBILE SLIDE-OUT DRAWER (MATCHES PC SIDEBAR 1:1) */}
       {mobileMenuOpen && (
