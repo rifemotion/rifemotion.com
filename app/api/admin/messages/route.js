@@ -67,16 +67,19 @@ async function processEmailWithGemini(subject, sender, rawBody, apiKey) {
 
   if (effectiveKey) {
     try {
-      const prompt = `Ты — главный персональный ассистент руководителя студии.
-Проанализируй входящее письмо, отсеки весь шум и выдай четкую структурированную информацию.
+      const prompt = `You are the executive assistant for the studio director.
+Analyze this incoming email, eliminate all boilerplate noise, and translate/adapt the summary strictly into polished, concise, studio-grade ENGLISH (C1 level).
 
-ПРАВИЛА (СТРОГО JSON):
-1. "author": Краткое имя автора или сервиса (например: "Manychat", "Vercel", "Google", "Namecheap", "Lloyd Alvarez"). Максимум 2 слова.
-2. "geminiTitle": Краткий, емкий заголовок в естественном языке письма. Максимум 5-6 слов.
-3. "urgency": "red" (критично/срочно: ошибка деплоя, отмена подписки, сбой оплаты, алерт) | "yellow" (внимание/осведомленность: клиентский бриф, техработы, запрос) | "grey" (полезно в будущем: квитанция, дайджест).
-4. "threadTopic": Нормализованный ключ темы на английском (например: "vercel_deploy", "manychat_sub", "namecheap_status").
-5. "requiresReply": boolean (false если это системное уведомление/робот/рассылка; true ТОЛЬКО если это письмо от живого человека/клиента, требующее ответа).
-6. "cleanBody": Четко структурированное, емкое резюме письма (без юридических адресов, футеров и повторов тем).
+RULES (Strict JSON format only):
+1. "author": Clean sender name or company/service name (e.g. "Manychat", "Vercel", "Google", "Namecheap", "Lloyd Alvarez", "Santander"). Max 2 words.
+2. "geminiTitle": Sharp, concise, and informative title strictly in ENGLISH (e.g. "Pro Subscription Expired", "Failed Production Deployment", "Namecheap Services Restored", "VAT & Banking Statement"). Max 6 words.
+3. "urgency":
+   - "red": Critical/urgent action needed (deployment failure, subscription cancelled/expired, payment declined, security incident).
+   - "yellow": Attention/awareness (client design brief, scheduled maintenance, customer support inquiry).
+   - "grey": Informational/reference for later (invoices, receipts, verification codes, curated digests).
+4. "threadTopic": Normalized English topic slug (e.g. "manychat_pro_sub", "vercel_deployment", "namecheap_outage").
+5. "requiresReply": boolean (false if automated system, bot, receipt, alert; true ONLY if it is a real human client/collaborator asking for a response).
+6. "cleanBody": Structured, high-density, readable digest strictly in ENGLISH. Remove all legal boilerplate, copyright footers, unsubscribe links, duplicate subjects, and tracking noise. Preserve key URLs cleanly.
 
 Email Subject: ${subject}
 Email Sender: ${sender}
