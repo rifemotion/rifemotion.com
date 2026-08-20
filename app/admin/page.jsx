@@ -1826,6 +1826,30 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
 
+              {/* GMAIL SUB-ACCOUNTS ROW */}
+              {(selectedChannel === 'gmail' || selectedChannel === 'all') && (
+                <div className="channelsFilterRow" style={{ marginTop: "0.45rem", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "0.45rem" }}>
+                  <button
+                    type="button"
+                    className={`channelPillBtn ${selectedGmailAccount === 'all' ? 'active' : ''}`}
+                    onClick={() => setSelectedGmailAccount('all')}
+                  >
+                    <span>All Accounts</span>
+                  </button>
+                  {gmailAccountsList.map(acc => (
+                    <button
+                      key={acc.email}
+                      type="button"
+                      className={`channelPillBtn ${selectedGmailAccount === acc.email ? 'active' : ''}`}
+                      onClick={() => { setSelectedChannel('gmail'); setSelectedGmailAccount(acc.email); }}
+                      title={acc.email}
+                    >
+                      <span>{acc.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
 
             </div>
 
@@ -1833,15 +1857,14 @@ export default function AdminDashboardPage() {
             {(() => {
               const filteredList = socialMessages.filter((msg) => {
                 const matchChannel = selectedChannel === 'all' || msg.platform === selectedChannel;
-                const matchAccount = true;
-                const matchPriority = true;
-                const matchSearch =
-                  msg.subject.toLowerCase().includes(messagesSearch.toLowerCase()) ||
-                  msg.sender.toLowerCase().includes(messagesSearch.toLowerCase()) ||
-                  msg.body.toLowerCase().includes(messagesSearch.toLowerCase()) ||
+                const matchAccount = selectedGmailAccount === 'all' || msg.accountEmail === selectedGmailAccount || msg.account === selectedGmailAccount;
+                const matchSearch = !messagesSearch.trim() ||
+                  (msg.subject && msg.subject.toLowerCase().includes(messagesSearch.toLowerCase())) ||
+                  (msg.sender && msg.sender.toLowerCase().includes(messagesSearch.toLowerCase())) ||
+                  (msg.body && msg.body.toLowerCase().includes(messagesSearch.toLowerCase())) ||
                   (msg.account && msg.account.toLowerCase().includes(messagesSearch.toLowerCase()));
 
-                return matchChannel && matchAccount && matchPriority && matchSearch;
+                return matchChannel && matchAccount && matchSearch;
               });
 
               const activeMessage = socialMessages.find(m => m.id === selectedMessageId) || filteredList[0] || null;
