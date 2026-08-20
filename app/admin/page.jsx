@@ -579,6 +579,7 @@ export default function AdminDashboardPage() {
   // 5-Second Background Polling for New Emails
   useEffect(() => {
     if (status !== 'authenticated') return;
+    fetchMessagesFromApi();
     const interval = setInterval(async () => {
       try {
         const res = await fetch('/api/admin/messages/poll');
