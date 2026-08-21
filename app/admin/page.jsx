@@ -422,7 +422,8 @@ export default function AdminDashboardPage() {
   };
   
   const handleResetFetchMessages = async () => {
-    if (!confirm("Delete ALL messages from database and re-fetch 5 latest?")) return;
+    if (!confirm("Delete ALL messages from database and re-fetch 5 latest from each connected account?")) return;
+    setContextSaveMsg("⏳ Deleting messages and fetching 5 latest per account via Gemini...");
     try {
       const res = await fetch('/api/admin/messages/reset', { method: 'POST' });
       const data = await res.json();
@@ -431,9 +432,21 @@ export default function AdminDashboardPage() {
           setSocialMessages(data.messages);
           setSelectedMessageId(null);
         }
-        alert("Messages reset and fetched successfully.");
+        if (data.msg) {
+          alert(data.msg);
+          setContextSaveMsg(data.msg);
+        } else {
+          setContextSaveMsg(`✅ Database reset! Fetched ${data.messages?.length || 0} messages.`);
+        }
+        setTimeout(() => setContextSaveMsg(null), 4000);
+      } else {
+        alert("Error: " + (data.error || "Failed to reset"));
+        setContextSaveMsg(null);
       }
-    } catch(e) {}
+    } catch(e) {
+      alert("Error: " + e.message);
+      setContextSaveMsg(null);
+    }
   };
 
   const handleToggleTodo = async (id, currentStatus) => {

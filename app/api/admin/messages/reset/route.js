@@ -54,7 +54,7 @@ export async function POST(request) {
 
     if (activeAccounts.length === 0) {
        await saveDb(db);
-       return NextResponse.json({ ok: true, msg: "Cleared. No active accounts to fetch." });
+       return NextResponse.json({ ok: true, messages: [], msg: "База сообщений очищена! Но в списке 0 подключенных почт. Нажмите кнопку '+ Connect New Account' выше, чтобы подключить нужный ящик Gmail!" });
     }
 
     const apiKey = getGeminiKey();
