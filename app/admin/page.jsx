@@ -632,6 +632,19 @@ export default function AdminDashboardPage() {
     }
   };
 
+  
+  const handleToggleRead = async (msgId, currentReadState) => {
+    const newReadState = !currentReadState;
+    setSocialMessages(prev => prev.map(m => m.id === msgId ? { ...m, read: newReadState } : m));
+    try {
+      await fetch('/api/admin/messages/toggle-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId: msgId, read: newReadState })
+      });
+    } catch(e) {}
+  };
+
   const handleSyncMessages = async () => {
     setIsSyncingMessages(true);
     setSyncErrorMessage(null);
@@ -1993,8 +2006,10 @@ export default function AdminDashboardPage() {
                   return matchChannel && matchAccount && matchSearch;
                 })
                 .sort((a, b) => {
-                  const rankA = urgencyRank[a.urgency] || 4;
-                  const rankB = urgencyRank[b.urgency] || 4;
+                  const effUrgencyA = (a.isAuthCode && a.read) ? 'grey' : (a.urgency || 'grey');
+                   const effUrgencyB = (b.isAuthCode && b.read) ? 'grey' : (b.urgency || 'grey');
+                   const rankA = urgencyRank[effUrgencyA] || 4;
+                   const rankB = urgencyRank[effUrgencyB] || 4;
                   if (rankA !== rankB) return rankA - rankB; // Urgent on top!
                   return new Date(b.date) - new Date(a.date);
                 });
@@ -2028,7 +2043,7 @@ export default function AdminDashboardPage() {
                             onClick={() => {
                               setSelectedMessageId(msg.id);
                               if (!msg.read) {
-                                setSocialMessages((prev) => prev.map(m => m.id === msg.id ? { ...m, read: true } : m));
+                                handleToggleRead(msg.id, false);
                               }
                             }}
                             style={{ display: "flex", alignItems: "center", width: "100%", gap: "8px", padding: "0.55rem 0.75rem", cursor: "pointer" }}
@@ -2048,7 +2063,7 @@ export default function AdminDashboardPage() {
                             <span style={{ fontSize: "0.67rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)", flexShrink: 0, marginLeft: "auto" }}>
                               {formatRelativeMessageDate(msg.date)}
                             </span>
-                            <span className={`priorityDot ${msg.urgency || 'grey'}`} style={{ flexShrink: 0, marginLeft: "2px" }} />
+                            <span className={`priorityDot ${(msg.isAuthCode && msg.read) ? 'grey' : (msg.urgency || 'grey')}`} style={{ flexShrink: 0, marginLeft: "2px" }} />
 
                             {/* MOBILE INLINE ACCORDION */}
                             {isSelected && (
@@ -2056,6 +2071,16 @@ export default function AdminDashboardPage() {
                                 <div style={{ fontSize: "0.78rem", color: "#e5e5e5", lineHeight: "1.65", overflowWrap: "break-word" }}
                                      dangerouslySetInnerHTML={{ __html: activeMessage.formattedHtml || activeMessage.body }}
                                 />
+                                
+                                <button
+                                  type="button"
+                                  className="channelPillBtn"
+                                  style={{ fontSize: "0.7rem", padding: "0.25rem 0.6rem", background: activeMessage.read ? "rgba(255,255,255,0.1)" : "rgba(96, 165, 250, 0.2)" }}
+                                  onClick={() => handleToggleRead(activeMessage.id, activeMessage.read)}
+                                >
+                                  {activeMessage.read ? "Mark Unread" : "Mark Read"}
+                                </button>
+
                                 {activeMessage.url && (
                                   <a href={activeMessage.url} target="_blank" className="channelPillBtn active" style={{ display: "inline-block", marginTop: "10px", fontSize: "0.7rem", padding: "0.3rem 0.6rem" }}>
                                     Open in GMAIL ↗
