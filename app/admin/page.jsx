@@ -547,10 +547,10 @@ export default function AdminDashboardPage() {
   };
   const [geminiMenuOpen, setGeminiMenuOpen] = useState(false);
   const [geminiInput, setGeminiInput] = useState("");
-  const chatEndRef = useRef(null);
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [geminiHistory, geminiThinking]);
   const [geminiHistory, setGeminiHistory] = useState([]);
   const [geminiThinking, setGeminiThinking] = useState(false);
+  const chatEndRef = useRef(null);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [geminiHistory, geminiThinking]);
   const [geminiSlashOpen, setGeminiSlashOpen] = useState(false);
   const [geminiAttachments, setGeminiAttachments] = useState([]);
   const [userApiKey, setUserApiKey] = useState("");
