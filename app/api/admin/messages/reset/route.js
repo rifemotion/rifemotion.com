@@ -39,14 +39,16 @@ export async function POST(request) {
     // Clear existing messages!
     db.messages = [];
 
+    const userEmail = (session?.user?.email || '').toLowerCase();
     const activeAccounts = [];
-    if (session.accessToken) {
+    if (session.accessToken && session?.user?.email) {
       activeAccounts.push({ token: session.accessToken, email: session.user.email });
     }
 
     const connectedAccounts = db.connectedGmailAccounts || [];
     for (const acc of connectedAccounts) {
-      if (acc.email.toLowerCase() !== session.user.email.toLowerCase() && acc.refreshToken) {
+      const accEmail = (acc?.email || '').toLowerCase();
+      if (accEmail && accEmail !== userEmail && acc.refreshToken) {
         const fresh = await getAccessTokenForRefreshToken(acc.refreshToken);
         if (fresh) activeAccounts.push({ token: fresh, email: acc.email });
       }
