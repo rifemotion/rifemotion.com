@@ -390,6 +390,52 @@ export default function AdminDashboardPage() {
     }
   };
 
+  
+  const handleSaveEditTodo = async () => {
+    if (!editingTodoId) return;
+    try {
+      const res = await fetch('/api/admin/todos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingTodoId, ...editTodoData })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setTodos(data.todos);
+      }
+    } catch(e) {}
+    setEditingTodoId(null);
+  };
+  
+  const handleToggleSubtask = async (todoId, subtaskId, currentCompleted) => {
+    const todo = todos.find(t => t.id === todoId);
+    if (!todo || !todo.subtasks) return;
+    const newSubtasks = todo.subtasks.map(s => s.id === subtaskId ? { ...s, completed: !currentCompleted } : s);
+    setTodos(prev => prev.map(t => t.id === todoId ? { ...t, subtasks: newSubtasks } : t));
+    try {
+      await fetch('/api/admin/todos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: todoId, subtasks: newSubtasks })
+      });
+    } catch(e) {}
+  };
+  
+  const handleResetFetchMessages = async () => {
+    if (!confirm("Delete ALL messages from database and re-fetch 5 latest?")) return;
+    try {
+      const res = await fetch('/api/admin/messages/reset', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        if (data.messages) {
+          setSocialMessages(data.messages);
+          setSelectedMessageId(null);
+        }
+        alert("Messages reset and fetched successfully.");
+      }
+    } catch(e) {}
+  };
+
   const handleToggleTodo = async (id, currentStatus) => {
     try {
       setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: !currentStatus } : t));

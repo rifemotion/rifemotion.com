@@ -4469,3 +4469,7 @@ textarea.gemini-input {
     overflow-y: auto;
   }
 }
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
