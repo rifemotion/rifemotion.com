@@ -422,29 +422,67 @@ export default function AdminDashboardPage() {
   };
   
   const handleResetFetchMessages = async () => {
-    if (!confirm("Delete ALL messages from database and re-fetch 5 latest from each connected account?")) return;
-    setContextSaveMsg("⏳ Deleting messages and fetching 5 latest per account via Gemini...");
+    if (!confirm("Удалить все сообщения из базы и загрузить по 5 последних с каждого ящика через Gemini?")) return;
+    
+    // Switch to messages tab so user sees cards appearing live in real time!
+    setActiveTab("messages");
+    setSelectedMessageId(null);
+    setContextSaveMsg("🗑️ Очистка базы данных...");
+    setSocialMessages([]);
+
     try {
-      const res = await fetch('/api/admin/messages/reset', { method: 'POST' });
-      const data = await res.json();
-      if (data.ok) {
-        if (data.messages) {
-          setSocialMessages(data.messages);
-          setSelectedMessageId(null);
-        }
-        if (data.msg) {
-          alert(data.msg);
-          setContextSaveMsg(data.msg);
-        } else {
-          setContextSaveMsg(`✅ Database reset! Fetched ${data.messages?.length || 0} messages.`);
-        }
-        setTimeout(() => setContextSaveMsg(null), 4000);
-      } else {
-        alert("Error: " + (data.error || "Failed to reset"));
+      const response = await fetch('/api/admin/messages/reset-stream');
+      if (!response.ok) {
+        const err = await response.text();
+        alert("Ошибка: " + err);
         setContextSaveMsg(null);
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop(); // keep last incomplete chunk
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const event = JSON.parse(line.slice(6));
+              
+              if (event.type === 'cleared') {
+                setSocialMessages([]);
+                setContextSaveMsg("🗑️ База очищена. Начинаем опрос почт...");
+              } else if (event.type === 'step') {
+                setContextSaveMsg("⏳ " + event.text);
+              } else if (event.type === 'analyzing') {
+                setContextSaveMsg(`⚡ [${event.current}/${event.total}] Анализ Gemini: "${event.subject}"...`);
+              } else if (event.type === 'new_card') {
+                // Prepend card directly to live state!
+                setSocialMessages(prev => {
+                  const filtered = prev.filter(m => m.id !== event.card.id);
+                  return [event.card, ...filtered];
+                });
+                setContextSaveMsg(`✨ [${event.current}/${event.total}] Добавлено: "${event.card.shortTitle || event.card.subject}"`);
+              } else if (event.type === 'done') {
+                setContextSaveMsg(`✅ ${event.text || 'Все письма успешно проанализированы и сохранены!'}`);
+                setTimeout(() => setContextSaveMsg(null), 5000);
+              } else if (event.type === 'error') {
+                alert("Внимание: " + event.text);
+                setContextSaveMsg(event.text);
+                setTimeout(() => setContextSaveMsg(null), 4000);
+              }
+            } catch(e) {}
+          }
+        }
       }
     } catch(e) {
-      alert("Error: " + e.message);
+      alert("Сбой подключения к потоку: " + e.message);
       setContextSaveMsg(null);
     }
   };
