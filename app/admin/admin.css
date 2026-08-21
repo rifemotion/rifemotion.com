@@ -4473,3 +4473,48 @@ textarea.gemini-input {
 @keyframes spin {
   100% { transform: rotate(360deg); }
 }
+
+
+@keyframes cardPopIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes titleFade {
+  0% {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulsePlaceholder {
+  0%, 100% {
+    opacity: 0.5;
+    border-color: rgba(96, 165, 250, 0.25);
+    background: rgba(96, 165, 250, 0.05);
+  }
+  50% {
+    opacity: 0.95;
+    border-color: rgba(96, 165, 250, 0.6);
+    background: rgba(96, 165, 250, 0.12);
+  }
+}
+
+.msgCardItem {
+  animation: cardPopIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.msgCardTitle {
+  animation: titleFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

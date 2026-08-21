@@ -533,19 +533,20 @@ export default function AdminDashboardPage() {
               
               if (event.type === 'cleared') {
                 setSocialMessages([]);
+                setCurrentAnalyzingItem(null);
                 setContextSaveMsg("🗑️ База очищена. Начинаем опрос почт...");
               } else if (event.type === 'step') {
                 setContextSaveMsg("⏳ " + event.text);
               } else if (event.type === 'analyzing') {
+                setCurrentAnalyzingItem({ current: event.current, total: event.total, subject: event.subject });
                 setContextSaveMsg(`⚡ [${event.current}/${event.total}] Анализ Gemini: "${event.subject}"...`);
               } else if (event.type === 'threads_update') {
-                // Update live state with threaded messages!
                 setSocialMessages(event.threads);
-                setContextSaveMsg(`✨ [${event.current}/${event.total}] Цепочки обновлены: "${event.lastAdded}"`);
-              } else if (event.type === 'new_card') {
-                setSocialMessages(prev => [event.card, ...prev]);
+                setCurrentAnalyzingItem(null);
+                setContextSaveMsg(`✨ [${event.current}/${event.total}] Добавлено: "${event.lastAdded}"`);
               } else if (event.type === 'done') {
-                setContextSaveMsg(`✅ ${event.text || 'Все письма успешно проанализированы и сохранены!'}`);
+                setCurrentAnalyzingItem(null);
+                setContextSaveMsg(`✅ ${event.text || 'Все письма успешно сохранены!'}`);
                 setTimeout(() => setContextSaveMsg(null), 5000);
               } else if (event.type === 'error') {
                 alert("Внимание: " + event.text);
@@ -681,6 +682,7 @@ export default function AdminDashboardPage() {
   const [geminiAttachments, setGeminiAttachments] = useState([]);
   const [userApiKey, setUserApiKey] = useState("");
   const [isSyncingMessages, setIsSyncingMessages] = useState(false);
+  const [currentAnalyzingItem, setCurrentAnalyzingItem] = useState(null);
   const [syncErrorMessage, setSyncErrorMessage] = useState(null);
   const [connectedGmailAccounts, setConnectedGmailAccounts] = useState([]);
 
@@ -2192,7 +2194,19 @@ export default function AdminDashboardPage() {
                 <div className="messagesLayoutGrid">
                   {/* LEFT: SCROLLABLE MESSAGE CARDS FEED */}
                   <div className="messagesFeedCol">
-                    {filteredList.length === 0 ? (
+                    
+                      {/* LIVE PULSING GEMINI PLACEHOLDER CARD */}
+                      {currentAnalyzingItem && (
+                        <div style={{ animation: "pulsePlaceholder 1.4s infinite ease-in-out", display: "flex", alignItems: "center", gap: "8px", padding: "0.55rem 0.75rem", background: "rgba(96, 165, 250, 0.08)", border: "1px dashed rgba(96, 165, 250, 0.45)", borderRadius: "4px", marginBottom: "6px" }}>
+                          <span style={{ fontSize: "11px" }}>⚡</span>
+                          <span style={{ fontSize: "0.74rem", color: "#60a5fa", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                            Analyzing [{currentAnalyzingItem.current}/{currentAnalyzingItem.total}]: {currentAnalyzingItem.subject}...
+                          </span>
+                          <span style={{ fontSize: "0.64rem", color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-mono)" }}>Gemini AI</span>
+                        </div>
+                      )}
+
+                      {filteredList.length === 0 ? (
                       <div className="msgCardItem" style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
                         No messages in this filter.
                       </div>
