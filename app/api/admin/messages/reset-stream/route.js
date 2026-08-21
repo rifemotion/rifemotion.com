@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getDb, saveDb } from '@/lib/db';
 import { getGeminiKey } from '@/lib/gemini-config';
-import { processEmailWithGemini, formatLinksAsPills } from '@/lib/gmail-service';
+import { processEmailWithGemini, formatLinksAsPills, groupMessagesIntoThreads } from '@/lib/gmail-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -185,12 +185,16 @@ export async function GET(request) {
 
               finalMessages.push(messageObj);
 
-              // STREAM NEW CARD TO FRONTEND IN REAL-TIME!
+              // Dynamically group messages into threads in real-time
+              const currentThreaded = groupMessagesIntoThreads(finalMessages);
+
+              // STREAM UPDATED THREADS TO FRONTEND IN REAL-TIME!
               send({
-                type: 'new_card',
-                card: messageObj,
+                type: 'threads_update',
+                threads: currentThreaded,
                 current: i + 1,
-                total: itemsToProcess.length
+                total: itemsToProcess.length,
+                lastAdded: messageObj.shortTitle || messageObj.subject
               });
             }
           } catch(err) {
@@ -198,8 +202,9 @@ export async function GET(request) {
           }
         }
 
-        // 5. Save all accumulated cards to DB
-        db.messages = finalMessages;
+        // 5. Save final threaded cards to DB
+        const finalThreaded = groupMessagesIntoThreads(finalMessages);
+        db.messages = finalThreaded;
         await saveDb(db);
 
         send({

@@ -538,13 +538,12 @@ export default function AdminDashboardPage() {
                 setContextSaveMsg("⏳ " + event.text);
               } else if (event.type === 'analyzing') {
                 setContextSaveMsg(`⚡ [${event.current}/${event.total}] Анализ Gemini: "${event.subject}"...`);
+              } else if (event.type === 'threads_update') {
+                // Update live state with threaded messages!
+                setSocialMessages(event.threads);
+                setContextSaveMsg(`✨ [${event.current}/${event.total}] Цепочки обновлены: "${event.lastAdded}"`);
               } else if (event.type === 'new_card') {
-                // Prepend card directly to live state!
-                setSocialMessages(prev => {
-                  const filtered = prev.filter(m => m.id !== event.card.id);
-                  return [event.card, ...filtered];
-                });
-                setContextSaveMsg(`✨ [${event.current}/${event.total}] Добавлено: "${event.card.shortTitle || event.card.subject}"`);
+                setSocialMessages(prev => [event.card, ...prev]);
               } else if (event.type === 'done') {
                 setContextSaveMsg(`✅ ${event.text || 'Все письма успешно проанализированы и сохранены!'}`);
                 setTimeout(() => setContextSaveMsg(null), 5000);
