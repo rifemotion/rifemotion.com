@@ -2600,7 +2600,8 @@ export default function AdminDashboardPage() {
                         )}
                       </div>
                     </div>
-                  ))}}
+                  ))}
+
 
               {todos.filter(t => {
                 if (todoFilter === 'completed') return t.completed;
