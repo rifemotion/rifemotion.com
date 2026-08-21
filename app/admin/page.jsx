@@ -2115,23 +2115,25 @@ export default function AdminDashboardPage() {
                             {isSelected && (
                               <div className="mobileInlineDetail" style={{ width: "100%", marginTop: "10px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "10px" }}>
                                 <div style={{ fontSize: "0.78rem", color: "#e5e5e5", lineHeight: "1.65", overflowWrap: "break-word" }}
-                                     dangerouslySetInnerHTML={{ __html: activeMessage.formattedHtml || activeMessage.body }}
+                                     dangerouslySetInnerHTML={{ __html: msg?.formattedHtml || msg?.body || "" }}
                                 />
                                 
-                                <button
-                                  type="button"
-                                  className="channelPillBtn"
-                                  style={{ fontSize: "0.7rem", padding: "0.25rem 0.6rem", background: activeMessage.read ? "rgba(255,255,255,0.1)" : "rgba(96, 165, 250, 0.2)" }}
-                                  onClick={() => handleToggleRead(activeMessage.id, activeMessage.read)}
-                                >
-                                  {activeMessage.read ? "Mark Unread" : "Mark Read"}
-                                </button>
+                                <div style={{ display: "flex", gap: "8px", marginTop: "8px", flexWrap: "wrap" }}>
+                                  <button
+                                    type="button"
+                                    className="channelPillBtn"
+                                    style={{ fontSize: "0.7rem", padding: "0.25rem 0.6rem", background: msg?.read ? "rgba(255,255,255,0.1)" : "rgba(96, 165, 250, 0.2)" }}
+                                    onClick={(e) => { e.stopPropagation(); handleToggleRead(msg?.id, msg?.read); }}
+                                  >
+                                    {msg?.read ? "Mark Unread" : "Mark Read"}
+                                  </button>
 
-                                {activeMessage.url && (
-                                  <a href={activeMessage.url} target="_blank" className="channelPillBtn active" style={{ display: "inline-block", marginTop: "10px", fontSize: "0.7rem", padding: "0.3rem 0.6rem" }}>
-                                    Open in GMAIL ↗
-                                  </a>
-                                )}
+                                  {msg?.url && (
+                                    <a href={msg.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="channelPillBtn active" style={{ fontSize: "0.7rem", padding: "0.25rem 0.6rem" }}>
+                                      Open in GMAIL ↗
+                                    </a>
+                                  )}
+                                </div>
                               </div>
                             )}
 
