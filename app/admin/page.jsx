@@ -599,7 +599,7 @@ export default function AdminDashboardPage() {
         body: JSON.stringify({ email: emailToDisconnect })
       });
       if (res.ok) {
-        setConnectedGmailAccounts(prev => prev.filter(a => a.(email ? String(email).toLowerCase() : "") !== (emailToDisconnect ? String(emailToDisconnect).toLowerCase() : "")));
+        setConnectedGmailAccounts(prev => prev.filter(a => (a.email ? a.email.toLowerCase() : "") !== (emailToDisconnect ? String(emailToDisconnect).toLowerCase() : "")));
         setContextSaveMsg(`Disconnected ${emailToDisconnect}`);
         setTimeout(() => setContextSaveMsg(null), 2500);
       }
@@ -1367,10 +1367,10 @@ export default function AdminDashboardPage() {
   // Filter User Profiles
   const filteredUserProfiles = userProfilesList.filter((profile) => {
     const matchesSearch =
-      profile.(userId ? String(userId).toLowerCase() : "").includes((feedbackSearchQuery ? String(feedbackSearchQuery).toLowerCase() : "")) ||
-      profile.(email ? String(email).toLowerCase() : "").includes((feedbackSearchQuery ? String(feedbackSearchQuery).toLowerCase() : "")) ||
-      (profile.hardware && profile.(hardware ? String(hardware).toLowerCase() : "").includes((feedbackSearchQuery ? String(feedbackSearchQuery).toLowerCase() : ""))) ||
-      profile.items.some(i => (i.title && i.(title ? String(title).toLowerCase() : "").includes((feedbackSearchQuery ? String(feedbackSearchQuery).toLowerCase() : ""))) || (i.message && i.(message ? String(message).toLowerCase() : "").includes((feedbackSearchQuery ? String(feedbackSearchQuery).toLowerCase() : ""))));
+      (profile.userId ? profile.userId.toLowerCase() : "").includes((feedbackSearchQuery ? String(feedbackSearchQuery).toLowerCase() : "")) ||
+      (profile.email ? profile.email.toLowerCase() : "").includes((feedbackSearchQuery ? String(feedbackSearchQuery).toLowerCase() : "")) ||
+      (profile.hardware && (profile.hardware ? profile.hardware.toLowerCase() : "").includes((feedbackSearchQuery ? String(feedbackSearchQuery).toLowerCase() : ""))) ||
+      profile.items.some(i => (i.title && (i.title ? i.title.toLowerCase() : "").includes((feedbackSearchQuery ? String(feedbackSearchQuery).toLowerCase() : ""))) || (i.message && (i.message ? i.message.toLowerCase() : "").includes((feedbackSearchQuery ? String(feedbackSearchQuery).toLowerCase() : ""))));
 
     if (feedbackFilter === "all") return matchesSearch;
     if (feedbackFilter === "lapath") return matchesSearch && (profile.extension === "lapath" || profile.items.some(i => i.extension === "lapath"));
@@ -2042,12 +2042,12 @@ export default function AdminDashboardPage() {
                   const matchChannel = selectedChannel === 'all' || msg.platform === selectedChannel;
                   const matchAccount = selectedGmailAccount === 'all' || msg.accountEmail === selectedGmailAccount || msg.account === selectedGmailAccount;
                   const matchSearch = !messagesSearch.trim() ||
-                    (msg.subject && msg.(subject ? String(subject).toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : ""))) ||
-                    (msg.shortTitle && msg.(shortTitle ? String(shortTitle).toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : ""))) ||
-                    (msg.author && msg.(author ? String(author).toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : ""))) ||
-                    (msg.sender && msg.(sender ? String(sender).toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : ""))) ||
-                    (msg.body && msg.(body ? String(body).toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : ""))) ||
-                    (msg.account && msg.(account ? String(account).toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : "")));
+                    (msg.subject && (msg.subject ? msg.subject.toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : ""))) ||
+                    (msg.shortTitle && (msg.shortTitle ? msg.shortTitle.toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : ""))) ||
+                    (msg.author && (msg.author ? msg.author.toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : ""))) ||
+                    (msg.sender && (msg.sender ? msg.sender.toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : ""))) ||
+                    (msg.body && (msg.body ? msg.body.toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : ""))) ||
+                    (msg.account && (msg.account ? msg.account.toLowerCase() : "").includes((messagesSearch ? String(messagesSearch).toLowerCase() : "")));
 
                   return matchChannel && matchAccount && matchSearch;
                 })
@@ -3662,7 +3662,7 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                   connectedGmailAccounts.map(acc => {
-                    const isPrimary = session?.user?.email && session.user.(email ? String(email).toLowerCase() : "") === acc.(email ? String(email).toLowerCase() : "");
+                    const isPrimary = session?.user?.email && (session?.user?.email ? session.user.email.toLowerCase() : "") === (acc.email ? acc.email.toLowerCase() : "");
                     return (
                       <div key={acc.email} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0e0e11", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "4px", padding: "0.6rem 0.85rem" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
