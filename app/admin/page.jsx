@@ -345,6 +345,9 @@ export default function AdminDashboardPage() {
   const [newTodoReminder, setNewTodoReminder] = useState("30m");
   const [newTodoTimeFrom, setNewTodoTimeFrom] = useState("14:00");
   const [newTodoTimeTo, setNewTodoTimeTo] = useState("16:00");
+  const [showEditTodoModal, setShowEditTodoModal] = useState(false);
+  const [editingTodo, setEditingTodo] = useState(null);
+  const [newSubtaskInput, setNewSubtaskInput] = useState({});
 
   // Fetch To-Dos on mount
   useEffect(() => {
@@ -355,6 +358,79 @@ export default function AdminDashboardPage() {
       })
       .catch(err => console.error("Error loading todos:", err));
   }, []);
+
+  
+  const handleOpenEditTodo = (item) => {
+    setEditingTodo({
+      ...item,
+      subtasks: Array.isArray(item.subtasks) ? [...item.subtasks] : []
+    });
+    setShowEditTodoModal(true);
+  };
+
+  const handleSaveEditedTodo = async (e) => {
+    if (e) e.preventDefault();
+    if (!editingTodo || !editingTodo.id) return;
+    try {
+      const res = await fetch('/api/admin/todos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingTodo)
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setTodos(data.todos);
+      }
+    } catch(err) {
+      console.error("Failed to save edited todo:", err);
+    }
+    setShowEditTodoModal(false);
+    setEditingTodo(null);
+  };
+
+  const handleAddSubtaskInline = async (todoId, e) => {
+    if (e) e.preventDefault();
+    const text = (newSubtaskInput[todoId] || '').trim();
+    if (!text) return;
+
+    const todo = todos.find(t => t.id === todoId);
+    if (!todo) return;
+
+    const currentSubtasks = Array.isArray(todo.subtasks) ? todo.subtasks : [];
+    const newSubtask = {
+      id: 'sub_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      text: text,
+      time: '',
+      reminder: '30m',
+      completed: false
+    };
+
+    const updatedSubtasks = [...currentSubtasks, newSubtask];
+    setTodos(prev => prev.map(t => t.id === todoId ? { ...t, subtasks: updatedSubtasks } : t));
+    setNewSubtaskInput(prev => ({ ...prev, [todoId]: '' }));
+
+    try {
+      await fetch('/api/admin/todos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: todoId, subtasks: updatedSubtasks })
+      });
+    } catch(err) {}
+  };
+
+  const handleDeleteSubtask = async (todoId, subtaskId) => {
+    const todo = todos.find(t => t.id === todoId);
+    if (!todo || !todo.subtasks) return;
+    const updatedSubtasks = todo.subtasks.filter(s => s.id !== subtaskId);
+    setTodos(prev => prev.map(t => t.id === todoId ? { ...t, subtasks: updatedSubtasks } : t));
+    try {
+      await fetch('/api/admin/todos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: todoId, subtasks: updatedSubtasks })
+      });
+    } catch(err) {}
+  };
 
   const handleAddTodo = async (e) => {
     if (e) e.preventDefault();
@@ -2385,67 +2461,146 @@ export default function AdminDashboardPage() {
                 })
                 .map(item => (
                   <div
-                    key={item.id}
-                    className={`todoCard ${item.completed ? 'completed' : ''}`}
-                    style={{
-                      background: item.completed ? "rgba(255, 255, 255, 0.02)" : "var(--bg-panel)",
-                      border: item.completed ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid var(--border-subtle)",
-                      borderRadius: "var(--r-sm)",
-                      padding: "0.75rem 0.85rem",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.5rem",
-                      opacity: item.completed ? 0.75 : 1,
-                      transition: "all 0.15s ease"
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <input
-                        type="checkbox"
-                        className="todoCustomCheckbox"
-                        checked={item.completed}
-                        onChange={() => handleToggleTodo(item.id, item.completed)}
-                      />
-                      <span style={{ fontSize: "0.65rem", fontFamily: "var(--font-mono)", background: "var(--bg-row)", border: "1px solid var(--border-dim)", padding: "2px 6px", borderRadius: "3px", color: "var(--text-secondary)" }}>
-                        {item.category || 'General'}
-                      </span>
-                      <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-                        {item.type === 'long' ? '[GOAL]' : '[DAILY]'}
-                      </span>
-
-                      {item.completed && (
-                        <span style={{ fontSize: "0.62rem", background: "rgba(16, 185, 129, 0.15)", border: "1px solid rgba(16, 185, 129, 0.3)", color: "#10b981", padding: "1px 6px", borderRadius: "3px", fontWeight: 700 }}>
-                          ✓ Done
+                      key={item.id}
+                      className={`todoCard ${item.completed ? 'completed' : ''}`}
+                      style={{
+                        background: item.completed ? "rgba(255, 255, 255, 0.02)" : "var(--bg-panel)",
+                        border: item.completed ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid var(--border-subtle)",
+                        borderRadius: "var(--r-sm)",
+                        padding: "0.85rem 1rem",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.65rem",
+                        opacity: item.completed ? 0.75 : 1,
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {/* CARD HEADER */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <input
+                          type="checkbox"
+                          className="todoCustomCheckbox"
+                          checked={item.completed}
+                          onChange={() => handleToggleTodo(item.id, item.completed)}
+                        />
+                        <span style={{ fontSize: "0.65rem", fontFamily: "var(--font-mono)", background: "var(--bg-row)", border: "1px solid var(--border-dim)", padding: "2px 6px", borderRadius: "3px", color: "var(--text-secondary)" }}>
+                          {item.category || 'General'}
                         </span>
+                        <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                          {item.type === 'long' ? '[GOAL]' : '[DAILY]'}
+                        </span>
+
+                        {item.completed && (
+                          <span style={{ fontSize: "0.62rem", background: "rgba(16, 185, 129, 0.15)", border: "1px solid rgba(16, 185, 129, 0.3)", color: "#10b981", padding: "1px 6px", borderRadius: "3px", fontWeight: 700 }}>
+                            ✓ Done
+                          </span>
+                        )}
+
+                        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditTodo(item)}
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#ffffff", borderRadius: "4px", padding: "2px 7px", cursor: "pointer", fontSize: "0.68rem", display: "flex", alignItems: "center", gap: "4px", fontWeight: 600 }}
+                            title="Edit task & subtasks"
+                          >
+                            <span>✏️</span> Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTodo(item.id)}
+                            style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "13px", padding: "2px 4px" }}
+                            title="Delete"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* TASK TITLE & DETAILS */}
+                      <div style={{ fontSize: "0.82rem", fontWeight: 600, color: item.completed ? "var(--text-muted)" : "var(--text-pure)", textDecoration: item.completed ? "line-through" : "none", lineHeight: "1.35" }}>
+                        {item.title}
+                      </div>
+
+                      {item.details && (
+                        <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", lineHeight: "1.35" }}>
+                          {item.details}
+                        </div>
                       )}
 
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteTodo(item.id)}
-                        style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "11px" }}
-                        title="Delete"
+                      {/* NESTED SUBTASKS LIST */}
+                      {Array.isArray(item.subtasks) && item.subtasks.length > 0 && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "5px", padding: "6px 8px", background: "rgba(0, 0, 0, 0.25)", border: "1px solid rgba(255, 255, 255, 0.05)", borderRadius: "4px", marginTop: "2px" }}>
+                          <span style={{ fontSize: "0.62rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.03em", fontWeight: 700 }}>
+                            Subtasks ({item.subtasks.filter(s => s.completed).length}/{item.subtasks.length}):
+                          </span>
+                          {item.subtasks.map(sub => (
+                            <div key={sub.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1, minWidth: 0 }}>
+                                <input
+                                  type="checkbox"
+                                  checked={sub.completed}
+                                  onChange={() => handleToggleSubtask(item.id, sub.id, sub.completed)}
+                                  style={{ cursor: "pointer", transform: "scale(0.85)" }}
+                                />
+                                <span style={{ fontSize: "0.72rem", color: sub.completed ? "var(--text-muted)" : "var(--text-pure)", textDecoration: sub.completed ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  {sub.text}
+                                </span>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                                {sub.time && (
+                                  <span style={{ fontSize: "0.62rem", background: "rgba(96, 165, 250, 0.15)", color: "#60a5fa", padding: "1px 4px", borderRadius: "3px", fontFamily: "var(--font-mono)" }}>
+                                    {sub.time}
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteSubtask(item.id, sub.id)}
+                                  style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "11px", opacity: 0.6 }}
+                                  title="Remove subtask"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* INLINE QUICK ADD SUBTASK FORM */}
+                      <form
+                        onSubmit={(e) => handleAddSubtaskInline(item.id, e)}
+                        style={{ display: "flex", gap: "4px", marginTop: "2px" }}
                       >
-                        ✕
-                      </button>
-                    </div>
+                        <input
+                          type="text"
+                          className="denseSearchInput"
+                          style={{ flex: 1, fontSize: "0.7rem", padding: "3px 7px" }}
+                          placeholder="+ Add subtask (e.g. '14:30 Buy tickets')..."
+                          value={newSubtaskInput[item.id] || ''}
+                          onChange={(e) => setNewSubtaskInput({ ...newSubtaskInput, [item.id]: e.target.value })}
+                        />
+                        <button
+                          type="submit"
+                          className="actionBtn"
+                          style={{ fontSize: "0.68rem", padding: "2px 8px" }}
+                        >
+                          Add
+                        </button>
+                      </form>
 
-                    <div style={{ fontSize: "0.8rem", fontWeight: 600, color: item.completed ? "var(--text-muted)" : "var(--text-pure)", textDecoration: item.completed ? "line-through" : "none", lineHeight: "1.35" }}>
-                      {item.title}
-                    </div>
-
-                    {item.details && (
-                      <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", lineHeight: "1.35" }}>
-                        {item.details}
+                      {/* CARD FOOTER */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "6px", borderTop: "1px solid var(--border-dim)", fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
+                        <span>
+                          {formatTaskDeadline(item.deadline, item.timeMode, item.timeFrom, item.timeTo)}
+                        </span>
+                        {item.reminder && item.reminder !== 'none' && (
+                          <span style={{ fontSize: "0.62rem", color: "var(--text-secondary)" }}>
+                            🔔 {item.reminder}
+                          </span>
+                        )}
                       </div>
-                    )}
-
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "4px", borderTop: "1px solid var(--border-dim)", fontSize: "0.68rem", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
-                      <span>
-                        {formatTaskDeadline(item.deadline, item.timeMode, item.timeFrom, item.timeTo)}
-                      </span>
                     </div>
-                  </div>
-                ))}
+                  ))}}
 
               {todos.filter(t => {
                 if (todoFilter === 'completed') return t.completed;
@@ -2460,6 +2615,163 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* MODAL: CREATE TO-DO (DARK MONOCHROME TECHNICAL STYLE) */}
+            
+              {/* EDIT TO-DO MODAL */}
+              {showEditTodoModal && editingTodo && (
+                <div className="todoModalOverlay" onClick={() => setShowEditTodoModal(false)} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999, padding: "1rem" }}>
+                  <div className="todoModalContent" onClick={e => e.stopPropagation()} style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-md)", width: "100%", maxWidth: "480px", maxHeight: "90vh", overflowY: "auto", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "0.5rem" }}>
+                      <h3 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 700, color: "var(--text-pure)" }}>Edit Task & Subtasks</h3>
+                      <button type="button" onClick={() => setShowEditTodoModal(false)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "16px" }}>✕</button>
+                    </div>
+
+                    <form onSubmit={handleSaveEditedTodo} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-secondary)" }}>Task Title</label>
+                        <input
+                          type="text"
+                          className="denseSearchInput"
+                          style={{ width: "100%" }}
+                          value={editingTodo.title || ''}
+                          onChange={e => setEditingTodo({ ...editingTodo, title: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-secondary)" }}>Details / Notes</label>
+                        <textarea
+                          className="denseSearchInput"
+                          style={{ width: "100%", minHeight: "55px" }}
+                          value={editingTodo.details || ''}
+                          onChange={e => setEditingTodo({ ...editingTodo, details: e.target.value })}
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-secondary)" }}>Type</label>
+                          <select className="techSelect" style={{ width: "100%" }} value={editingTodo.type || 'short'} onChange={e => setEditingTodo({ ...editingTodo, type: e.target.value })}>
+                            <option value="short">Daily / Short-Term</option>
+                            <option value="long">Goal / Project</option>
+                          </select>
+                        </div>
+
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-secondary)" }}>Category</label>
+                          <select className="techSelect" style={{ width: "100%" }} value={editingTodo.category || 'General'} onChange={e => setEditingTodo({ ...editingTodo, category: e.target.value })}>
+                            <option value="Client Edit">Client Edit</option>
+                            <option value="Banking / Admin">Banking / Admin</option>
+                            <option value="Motion Project">Motion Project</option>
+                            <option value="Personal">Personal</option>
+                            <option value="General">General</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-secondary)" }}>Deadline</label>
+                          <input
+                            type="text"
+                            className="denseSearchInput"
+                            placeholder="e.g. 15:00 or 2026-08-30"
+                            value={editingTodo.deadline || ''}
+                            onChange={e => setEditingTodo({ ...editingTodo, deadline: e.target.value })}
+                          />
+                        </div>
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <label style={{ fontSize: "0.68rem", fontWeight: 600, color: "var(--text-secondary)" }}>Reminder</label>
+                          <select className="techSelect" style={{ width: "100%" }} value={editingTodo.reminder || '30m'} onChange={e => setEditingTodo({ ...editingTodo, reminder: e.target.value })}>
+                            <option value="none">No reminder</option>
+                            <option value="15m">15 minutes before</option>
+                            <option value="30m">30 minutes before</option>
+                            <option value="1h">1 hour before</option>
+                            <option value="2h">2 hours before</option>
+                            <option value="1d">1 day before</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* SUBTASKS BUILDER IN MODAL */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderTop: "1px solid var(--border-subtle)", paddingTop: "0.65rem" }}>
+                        <label style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--text-pure)", textTransform: "uppercase" }}>
+                          Subtasks (Nested Steps)
+                        </label>
+                        {(editingTodo.subtasks || []).map((sub, idx) => (
+                          <div key={idx} style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                            <input
+                              type="text"
+                              className="denseSearchInput"
+                              style={{ flex: 1, fontSize: "0.72rem" }}
+                              value={sub.text}
+                              onChange={e => {
+                                const copy = [...editingTodo.subtasks];
+                                copy[idx].text = e.target.value;
+                                setEditingTodo({ ...editingTodo, subtasks: copy });
+                              }}
+                              placeholder="Subtask name"
+                            />
+                            <input
+                              type="text"
+                              className="denseSearchInput"
+                              style={{ width: "70px", fontSize: "0.72rem" }}
+                              value={sub.time || ''}
+                              onChange={e => {
+                                const copy = [...editingTodo.subtasks];
+                                copy[idx].time = e.target.value;
+                                setEditingTodo({ ...editingTodo, subtasks: copy });
+                              }}
+                              placeholder="Time (14:00)"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const copy = editingTodo.subtasks.filter((_, i) => i !== idx);
+                                setEditingTodo({ ...editingTodo, subtasks: copy });
+                              }}
+                              style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "14px" }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          className="actionBtn"
+                          style={{ alignSelf: "flex-start", fontSize: "0.7rem", marginTop: "2px" }}
+                          onClick={() => {
+                            const newSub = {
+                              id: 'sub_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                              text: '',
+                              time: '',
+                              reminder: '30m',
+                              completed: false
+                            };
+                            setEditingTodo({
+                              ...editingTodo,
+                              subtasks: [...(editingTodo.subtasks || []), newSub]
+                            });
+                          }}
+                        >
+                          + Add Subtask Step
+                        </button>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+                        <button type="button" className="modalCancelBtn" onClick={() => setShowEditTodoModal(false)}>
+                          Cancel
+                        </button>
+                        <button type="submit" className="modalSubmitBtn" style={{ background: "rgba(16, 185, 129, 0.25)", borderColor: "#10b981", color: "#10b981" }}>
+                          Save Changes
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
             {showAddTodoModal && (
               <div className="todoModalOverlay" onClick={() => setShowAddTodoModal(false)} style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999 }}>
                 <div className="todoModalContent" onClick={e => e.stopPropagation()} style={{ background: "var(--bg-panel)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-md)", width: "100%", maxWidth: "420px", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
